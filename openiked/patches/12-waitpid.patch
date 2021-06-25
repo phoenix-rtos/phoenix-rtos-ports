@@ -1,0 +1,16 @@
+diff -ruN a/iked/proc.c b/iked/proc.c
+--- a/iked/proc.c	2021-04-15 19:18:01.000000000 +0200
++++ b/iked/proc.c	2021-08-23 14:01:45.407634214 +0200
+@@ -142,7 +142,11 @@
+ 	}
+ 
+ 	do {
++#ifdef __phoenix__
++		pid = waitpid(-1, NULL, 0);
++#else
+ 		pid = waitpid(WAIT_ANY, NULL, 0);
++#endif
+ 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+ 
+ 	proc_close(ps);
+

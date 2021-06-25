@@ -1,0 +1,12 @@
+diff -ruN x/CMakeLists.txt y/CMakeLists.txt
+--- a/CMakeLists.txt	2021-06-25 16:25:48.328605231 +0200
++++ b/CMakeLists.txt	2021-06-25 16:18:51.092344406 +0200
+@@ -14,7 +14,7 @@
+ 
+ cmake_minimum_required(VERSION 3.12)
+ 
+-project(openiked)
++project(openiked C)
+ 
+ include(CheckFunctionExists)
+ include(CheckLibraryExists)

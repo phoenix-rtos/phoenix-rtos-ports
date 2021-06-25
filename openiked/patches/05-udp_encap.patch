@@ -1,0 +1,38 @@
+diff -ruN a/iked/config.c b/iked/config.c
+--- a/iked/config.c	2021-08-18 22:06:06.646936779 +0200
++++ b/iked/config.c	2021-08-18 21:39:47.677371931 +0200
+@@ -585,6 +585,7 @@
+ 		return (-1);
+ 
+ #if defined(UDP_ENCAP_ESPINUDP)
++#ifndef __phoenix__
+ 	if (natt
+ #if !defined(HAVE_UDPENCAP6)
+ 	    && ss->ss_family != AF_INET6
+@@ -600,6 +601,7 @@
+ 		}
+ 	}
+ #endif
++#endif
+ 
+ 	proc_compose_imsg(&env->sc_ps, id, -1,
+ 	    IMSG_UDP_SOCKET, -1, s, ss, sizeof(*ss));
+diff -ruN a/iked/ikev2.c b/iked/ikev2.c
+--- a/iked/ikev2.c  2021-06-11 10:54:25.809012684 +0200
++++ b/iked/ikev2.c  2021-06-22 14:28:49.005838843 +0200
+@@ -1608,6 +1611,7 @@
+ 		return (0);	/* ignored */
+ 
+ #if defined(UDP_ENCAP_ESPINUDP)
++#ifndef __phoenix__
+ 	if (sa->sa_udpencap) {
+ 		int	 sopt;
+ 		sopt = UDP_ENCAP_ESPINUDP;
+@@ -1619,6 +1623,7 @@
+ 		}
+ 	}
+ #endif
++#endif
+ 
+ 	ret = ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
+ 	    sa->sa_hdr.sh_initiator, 0);

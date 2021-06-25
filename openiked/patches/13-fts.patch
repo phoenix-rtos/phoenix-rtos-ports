@@ -1,0 +1,36 @@
+diff -ruN a/ikectl/ikeca.c b/ikectl/ikeca.c
+--- a/ikectl/ikeca.c	2021-04-15 19:18:01.000000000 +0200
++++ b/ikectl/ikeca.c	2021-08-18 22:25:45.367650782 +0200
+@@ -27,7 +27,9 @@
+ #include <stdlib.h>
+ #include <pwd.h>
+ #include <fcntl.h>
++#ifndef __phoenix__
+ #include <fts.h>
++#endif
+ #include <dirent.h>
+ #include <limits.h>
+ 
+@@ -665,6 +667,13 @@
+ int
+ rm_dir(char *path)
+ {
++#ifdef __phoenix__
++	char buf[PATH_MAX + 10];
++
++	/* WARN: literal ' in the path is not quoted */
++	snprintf(buf, PATH_MAX + 10, "rm -rf '%s'", path);
++	system(buf);
++#else
+ 	FTS		*fts;
+ 	FTSENT		*p;
+ 	static char	*fpath[] = { NULL, NULL };
+@@ -693,6 +702,7 @@
+ 		}
+ 	}
+ 	fts_close(fts);
++#endif
+ 
+ 	return (0);
+ }
+

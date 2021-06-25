@@ -1,0 +1,19 @@
+diff -ruN a/iked/control.c b/iked/control.c
+--- a/iked/control.c	2021-04-15 19:18:01.000000000 +0200
++++ b/iked/control.c	2021-08-13 09:18:27.703468009 +0200
+@@ -118,12 +118,14 @@
+ 	}
+ 	(void)umask(old_umask);
+ 
++#ifndef __phoenix__
+ 	if (chmod(cs->cs_name, mode) == -1) {
+ 		log_warn("%s: chmod", __func__);
+ 		close(fd);
+ 		(void)unlink(cs->cs_name);
+ 		return (-1);
+ 	}
++#endif
+ 
+ 	cs->cs_fd = fd;
+ 	cs->cs_env = env;
+
