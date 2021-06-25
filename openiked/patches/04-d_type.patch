@@ -1,0 +1,36 @@
+diff -ruN a/iked/ca.c b/iked/ca.c
+--- a/iked/ca.c	2021-06-11 10:54:25.712863544 +0200
++++ b/iked/ca.c	2021-06-10 16:49:40.809876325 +0200
+@@ -725,8 +725,8 @@
+ 		return (-1);
+ 
+ 	while ((entry = readdir(dir)) != NULL) {
+-		if ((entry->d_type != DT_REG) &&
+-		    (entry->d_type != DT_LNK))
++		if ((entry->d_type != dtFile) &&
++		    (entry->d_type != dtSymlink))
+ 			continue;
+ 
+ 		if (snprintf(file, sizeof(file), "%s%s",
+@@ -751,8 +751,8 @@
+ 		return (-1);
+ 
+ 	while ((entry = readdir(dir)) != NULL) {
+-		if ((entry->d_type != DT_REG) &&
+-		    (entry->d_type != DT_LNK))
++		if ((entry->d_type != dtFile) &&
++		    (entry->d_type != dtSymlink))
+ 			continue;
+ 
+ 		if (snprintf(file, sizeof(file), "%s%s",
+@@ -830,8 +830,8 @@
+ 		return (-1);
+ 
+ 	while ((entry = readdir(dir)) != NULL) {
+-		if ((entry->d_type != DT_REG) &&
+-		    (entry->d_type != DT_LNK))
++		if ((entry->d_type != dtFile) &&
++		    (entry->d_type != dtSymlink))
+ 			continue;
+ 
+ 		if (snprintf(file, sizeof(file), "%s%s",

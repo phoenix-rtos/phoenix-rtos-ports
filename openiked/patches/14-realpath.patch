@@ -1,0 +1,16 @@
+diff -ruN a/ikectl/ikeca.c b/ikectl/ikeca.c
+--- a/ikectl/ikeca.c    2021-06-11 10:53:18.662818574 +0200
++++ b/ikectl/ikeca.c    2021-06-22 15:52:21.954907240 +0200
+@@ -878,8 +878,12 @@
+ 			    NULL };
+ 			ca_execv(cmd);
+ 		}
++#ifdef __phoenix__
++		printf("exported files in %s\n", src);
++#else
+ 		if (realpath(src, dst) != NULL)
+ 			printf("exported files in %s\n", dst);
++#endif
+ 	}
+ 
+ 	if (stat(PATH_ZIP, &st) == 0) {

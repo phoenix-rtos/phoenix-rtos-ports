@@ -1,0 +1,77 @@
+diff -ruN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt    2021-06-11 10:48:47.424551984 +0200
++++ b/CMakeLists.txt    2021-05-30 22:06:32.024674597 +0200
+@@ -21,9 +21,6 @@
+ include(CheckSymbolExists)
+ include(CheckIncludeFiles)
+ 
+-include_directories("/usr/local/include")
+-link_directories("/usr/local/lib")
+-
+ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+ 	if (NOT DEFINED CMAKE_INSTALL_SYSCONFDIR)
+		set (CMAKE_INSTALL_SYSCONFDIR /etc)
+diff -ruN a/ikectl/CMakeLists.txt b/ikectl/CMakeLists.txt
+--- a/ikectl/CMakeLists.txt 2021-06-11 10:53:18.598854848 +0200
++++ b/ikectl/CMakeLists.txt 2021-06-09 10:48:33.735760818 +0200
+@@ -48,7 +48,7 @@
+ )
+ 
+ target_link_libraries(ikectl
+-	PRIVATE util event crypto ssl compat
++	PRIVATE event crypto ssl compat
+ )
+ 
+ install(TARGETS ikectl RUNTIME DESTINATION sbin)
+diff -ruN a/iked/CMakeLists.txt b/iked/CMakeLists.txt
+--- a/iked/CMakeLists.txt   2021-06-11 10:54:25.648764118 +0200
++++ b/iked/CMakeLists.txt   2021-05-31 11:26:21.175249990 +0200
+@@ -101,10 +101,10 @@
+ target_include_directories(iked-shared PRIVATE ${INC_DIRS})
+ 
+ target_link_libraries(iked-shared
+-	PRIVATE util event crypto ssl compat
++	PRIVATE event crypto ssl compat
+ )
+ target_link_libraries(iked
+-	PRIVATE util event crypto ssl compat iked-shared
++	PRIVATE event crypto ssl compat iked-shared
+ )
+ 
+ add_custom_command(
+diff -ruN a/regress/dh/CMakeLists.txt b/regress/dh/CMakeLists.txt
+--- a/regress/dh/CMakeLists.txt 2021-06-11 10:54:56.261978452 +0200
++++ b/regress/dh/CMakeLists.txt 2021-06-09 11:23:53.819487890 +0200
+@@ -27,7 +27,7 @@
+ )
+ 
+ target_link_libraries(dhtest
+-	PRIVATE util crypto compat
++	PRIVATE crypto compat
+ )
+ 
+ target_compile_options(dhtest PRIVATE ${CFLAGS})
+diff -ruN a/regress/parser/CMakeLists.txt b/regress/parser/CMakeLists.txt
+--- a/regress/parser/CMakeLists.txt 2021-06-11 10:55:01.937502442 +0200
++++ b/regress/parser/CMakeLists.txt 2021-06-09 11:23:42.641422689 +0200
+@@ -27,7 +27,7 @@
+ )
+ 
+ target_link_libraries(test_parser
+-	PRIVATE util event crypto ssl test_helper compat iked-shared
++	PRIVATE event crypto ssl test_helper compat iked-shared
+ )
+ 
+ target_compile_options(test_parser PRIVATE ${CFLAGS})
+diff -ruN a/regress/parser-libfuzzer/CMakeLists.txt b/regress/parser-libfuzzer/CMakeLists.txt
+--- a/regress/parser-libfuzzer/CMakeLists.txt   2021-06-11 10:55:12.075314845 +0200
++++ b/regress/parser-libfuzzer/CMakeLists.txt   2021-06-09 11:23:48.814486581 +0200
+@@ -31,7 +31,7 @@
+ )
+ 
+ target_link_libraries(test_libfuzzer
+-	PRIVATE util event crypto ssl compat iked-shared
++	PRIVATE event crypto ssl compat iked-shared
+ )
+ 
+ target_compile_options(test_libfuzzer PRIVATE ${CFLAGS})

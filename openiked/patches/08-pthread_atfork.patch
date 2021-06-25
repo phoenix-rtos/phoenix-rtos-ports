@@ -1,0 +1,12 @@
+diff -ruN a/compat/arc4random_linux.h b/compat/arc4random_linux.h
+--- a/compat/arc4random_linux.h 2021-06-11 10:52:05.430795223 +0200
++++ b/compat/arc4random_linux.h 2021-06-11 11:34:46.119865994 +0200
+@@ -37,7 +37,7 @@
+ extern int __register_atfork(void (*)(void), void(*)(void), void (*)(void), void *);
+ #define _ARC4_ATFORK(f) __register_atfork(NULL, NULL, (f), __dso_handle)
+ #else
+-#define _ARC4_ATFORK(f) pthread_atfork(NULL, NULL, (f))
++#define _ARC4_ATFORK(f)
+ #endif
+ 
+ static inline void

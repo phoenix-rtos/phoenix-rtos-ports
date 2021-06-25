@@ -1,0 +1,23 @@
+diff -ruN a/compat/arc4random.c b/compat/arc4random.c
+--- a/compat/arc4random.c	2021-06-11 10:52:05.398832923 +0200
++++ b/compat/arc4random.c	2021-06-11 11:09:17.514340892 +0200
+@@ -65,6 +65,19 @@
+ static inline void _rs_forkdetect(void);
+ #include "arc4random.h"
+ 
++#ifndef HAVE_GETENTROPY
++int getentropy(void *buffer, size_t length)
++{
++	uint8_t *p = (uint8_t *)buffer;
++
++	for (size_t i = 0; i < length; ++i) {
++		 p[i] = random() % 0x100;
++	}
++
++	return 0;
++}
++#endif
++
+ static inline void _rs_rekey(u_char *dat, size_t datlen);
+ 
+ static inline void

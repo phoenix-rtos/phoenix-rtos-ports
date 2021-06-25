@@ -1,0 +1,50 @@
+diff -ruN a/ikectl/ikeca.c b/ikectl/ikeca.c
+--- a/ikectl/ikeca.c    2021-06-11 10:53:18.662818574 +0200
++++ b/ikectl/ikeca.c    2021-06-22 15:52:21.954907240 +0200
+@@ -27,7 +27,6 @@
+ #include <stdlib.h>
+ #include <pwd.h>
+ #include <fcntl.h>
+-#include <fts.h>
+ #include <dirent.h>
+ #include <limits.h>
+ 
+@@ -665,34 +665,11 @@
+ int
+ rm_dir(char *path)
+ {
+-	FTS		*fts;
+-	FTSENT		*p;
+-	static char	*fpath[] = { NULL, NULL };
+-
+-	fpath[0] = path;
+-	if ((fts = fts_open(fpath, FTS_PHYSICAL, NULL)) == NULL) {
+-		warn("fts_open %s", path);
+-		return (1);
+-	}
++	char buf[PATH_MAX + 10];
+ 
+-	while ((p = fts_read(fts)) != NULL) {
+-		switch (p->fts_info) {
+-		case FTS_DP:
+-		case FTS_DNR:
+-			if (rmdir(p->fts_accpath) == -1)
+-				warn("rmdir %s", p->fts_accpath);
+-			break;
+-		case FTS_F:
+-			if (unlink(p->fts_accpath) == -1)
+-				warn("unlink %s", p->fts_accpath);
+-			break;
+-		case FTS_D:
+-		case FTS_DOT:
+-		default:
+-			continue;
+-		}
+-	}
+-	fts_close(fts);
++	/* WARN: literal ' in the path is not quoted */
++	snprintf(buf, PATH_MAX + 10, "rm -rf '%s'", path);
++	system(buf);
+ 
+ 	return (0);
+ }

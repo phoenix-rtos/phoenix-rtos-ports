@@ -1,0 +1,17 @@
+diff -ruN a/compat/arc4random_linux.h b/compat/arc4random_linux.h
+--- a/compat/arc4random_linux.h 2021-06-11 10:52:05.430795223 +0200
++++ b/compat/arc4random_linux.h 2021-06-11 11:34:46.119865994 +0200
+@@ -73,11 +73,11 @@
+ _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
+ {
+ 	if ((*rsp = mmap(NULL, sizeof(**rsp), PROT_READ|PROT_WRITE,
+-	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
++	    MAP_ANON|MAP_PRIVATE, NULL, 0)) == MAP_FAILED)
+ 		return (-1);
+ 
+ 	if ((*rsxp = mmap(NULL, sizeof(**rsxp), PROT_READ|PROT_WRITE,
+-	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED) {
++	    MAP_ANON|MAP_PRIVATE, NULL, 0)) == MAP_FAILED) {
+ 		munmap(*rsp, sizeof(**rsp));
+ 		*rsp = NULL;
+ 		return (-1);
