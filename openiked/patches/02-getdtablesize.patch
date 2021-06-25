@@ -1,0 +1,16 @@
+diff -ruN a/compat/imsg.c b/compat/imsg.c
+--- a/compat/imsg.c	2021-08-18 22:06:04.195290939 +0200
++++ b/compat/imsg.c	2021-08-18 22:22:29.196419035 +0200
+@@ -93,7 +93,11 @@
+ again:
+ 	if (getdtablecount() + imsg_fd_overhead +
+ 	    (int)((CMSG_SPACE(sizeof(int))-CMSG_SPACE(0))/sizeof(int))
++#ifdef __phoenix__
++	    >= sysconf(_SC_OPEN_MAX)) {
++#else
+ 	    >= getdtablesize()) {
++#endif
+ 		errno = EAGAIN;
+ 		free(ifd);
+ 		return (-1);
+

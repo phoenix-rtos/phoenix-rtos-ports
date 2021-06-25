@@ -1,0 +1,31 @@
+diff -ruN a/iked/parse.y b/iked/parse.y
+--- a/iked/parse.y	2021-08-23 14:47:35.838017937 +0200
++++ b/iked/parse.y	2021-08-23 14:48:25.484850358 +0200
+@@ -78,7 +78,7 @@
+     __attribute__((__format__ (printf, 1, 2)))
+     __attribute__((__nonnull__ (1)));
+ int		 kw_cmp(const void *, const void *);
+-int		 lookup(char *);
++int		 parse_lookup(char *);
+ int		 igetc(void);
+ int		 lgetc(int);
+ void		 lungetc(int);
+@@ -1330,7 +1330,7 @@
+ }
+ 
+ int
+-lookup(char *s)
++parse_lookup(char *s)
+ {
+ 	/* this has to be sorted always */
+ 	static const struct keywords keywords[] = {
+@@ -1663,7 +1663,7 @@
+ 		} while ((c = lgetc(0)) != EOF && (allowed_in_string(c)));
+ 		lungetc(c);
+ 		*p = '\0';
+-		if ((token = lookup(buf)) == STRING)
++		if ((token = parse_lookup(buf)) == STRING)
+ 			if ((yylval.v.string = strdup(buf)) == NULL)
+ 				err(1, "%s", __func__);
+ 		return (token);
+

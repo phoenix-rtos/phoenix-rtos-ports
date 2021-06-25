@@ -1,0 +1,93 @@
+diff -ruN a/iked/iked.h b/iked/iked.h
+--- a/iked/iked.h	2021-08-30 18:05:51.741771473 +0200
++++ b/iked/iked.h	2021-08-23 14:01:40.108454844 +0200
+@@ -34,6 +34,8 @@
+ #ifndef IKED_H
+ #define IKED_H
+ 
++#define IKED_MAX_INPUT_CERTS 4
++
+ /*
+  * Common IKEv1/IKEv2 header
+  */
+@@ -602,7 +604,7 @@
+ 	struct ibuf		*msg_ke;	/* dh key exchange */
+ 	struct iked_id		 msg_auth;	/* AUTH payload */
+ 	struct iked_id		 msg_id;
+-	struct iked_id		 msg_cert;
++	struct iked_id		 msg_cert[IKED_MAX_INPUT_CERTS];
+ 	struct ibuf		*msg_cookie;
+ 	uint16_t		 msg_group;
+ 	uint16_t		 msg_cpi;
+diff -ruN a/iked/ikev2.c b/iked/ikev2.c
+--- a/iked/ikev2.c	2021-08-30 18:05:51.781769367 +0200
++++ b/iked/ikev2.c	2021-08-30 12:27:04.396410705 +0200
+@@ -1007,11 +1007,11 @@
+ 		ikev2_auth_verify(env, sa);
+ 	/* For CERT and Pubkey AUTH the CA process must find a matching key */
+ 	else if (sa->sa_peerauth.id_type) {
+-		if (msg->msg_cert.id_type) {
+-			certtype = msg->msg_cert.id_type;
+-			cert = ibuf_data(msg->msg_cert.id_buf);
+-			certlen = ibuf_length(msg->msg_cert.id_buf);
+-			bzero(&msg->msg_cert, sizeof(msg->msg_cert));
++		if (msg->msg_cert[0].id_type) {
++			certtype = msg->msg_cert[0].id_type;
++			cert = ibuf_data(msg->msg_cert[0].id_buf);
++			certlen = ibuf_length(msg->msg_cert[0].id_buf);
++			bzero(&msg->msg_cert[0], sizeof(msg->msg_cert[0]));
+ 		}
+ 		sa->sa_stateflags &= ~IKED_REQ_CERTVALID;
+ 		if (ca_setcert(env, &sa->sa_hdr, id, certtype, cert, certlen, PROC_CERT) == -1)
+diff -ruN a/iked/ikev2_msg.c b/iked/ikev2_msg.c
+--- a/iked/ikev2_msg.c	2021-08-30 18:05:51.781769367 +0200
++++ b/iked/ikev2_msg.c	2021-08-30 18:12:03.947523256 +0200
+@@ -190,7 +190,10 @@
+ 		ibuf_release(msg->msg_ke);
+ 		ibuf_release(msg->msg_auth.id_buf);
+ 		ibuf_release(msg->msg_id.id_buf);
+-		ibuf_release(msg->msg_cert.id_buf);
++		for (int i = 0; i < IKED_MAX_INPUT_CERTS; ++i) {
++			ibuf_release(msg->msg_cert[i].id_buf);
++			msg->msg_cert[i].id_buf = NULL;
++		}
+ 		ibuf_release(msg->msg_cookie);
+ 		ibuf_release(msg->msg_cookie2);
+ 		ibuf_release(msg->msg_del_buf);
+@@ -202,7 +205,6 @@
+ 		msg->msg_ke = NULL;
+ 		msg->msg_auth.id_buf = NULL;
+ 		msg->msg_id.id_buf = NULL;
+-		msg->msg_cert.id_buf = NULL;
+ 		msg->msg_cookie = NULL;
+ 		msg->msg_cookie2 = NULL;
+ 		msg->msg_del_buf = NULL;
+diff -ruN a/iked/ikev2_pld.c b/iked/ikev2_pld.c
+--- a/iked/ikev2_pld.c	2021-08-30 18:05:51.785769157 +0200
++++ b/iked/ikev2_pld.c	2021-08-30 18:11:58.575375721 +0200
+@@ -806,6 +806,7 @@
+ 	struct iked_id			*certid;
+ 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
+ 	const struct iked_sa		*sa = msg->msg_sa;
++	int i;
+ 
+ 	if (ikev2_validate_cert(msg, offset, left, &cert))
+ 		return (-1);
+@@ -822,10 +823,13 @@
+ 	if (!ikev2_msg_frompeer(msg))
+ 		return (0);
+ 
+-	certid = &msg->msg_parent->msg_cert;
+-	if (certid->id_type) {
+-		log_info("%s: multiple cert payloads not supported",
+-		   SPI_SA(sa, __func__));
++	for (i = 0; i < IKED_MAX_INPUT_CERTS; ++i) {
++		certid = &msg->msg_parent->msg_cert[i];
++		if (!certid->id_type)
++			break;
++	}
++	if (i >= IKED_MAX_INPUT_CERTS) {
++		log_debug("%s: too many cert payloads (> %d)", __func__, IKED_MAX_INPUT_CERTS);
+ 		return (-1);
+ 	}
+ 

@@ -1,0 +1,30 @@
+diff -ruN a/compat/arc4random_linux.h b/compat/arc4random_linux.h
+--- a/compat/arc4random_linux.h	2021-08-23 14:35:01.411010882 +0200
++++ b/compat/arc4random_linux.h	2021-08-23 12:45:40.550667256 +0200
+@@ -76,6 +76,17 @@
+ static inline int
+ _rs_allocate(struct _rs **rsp, struct _rsx **rsxp)
+ {
++#ifdef __phoenix__
++	/* libphoenix mmap is not posix compliant */
++	if ((*rsp = malloc(sizeof(**rsp))) == NULL)
++		return (-1);
++
++	if ((*rsxp = malloc(sizeof(**rsxp))) == NULL) {
++		free(*rsp);
++		*rsp = NULL;
++		return (-1);
++	}
++#else
+ 	if ((*rsp = mmap(NULL, sizeof(**rsp), PROT_READ|PROT_WRITE,
+ 	    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+ 		return (-1);
+@@ -86,6 +97,7 @@
+ 		*rsp = NULL;
+ 		return (-1);
+ 	}
++#endif
+ 
+ 	_ARC4_ATFORK(_rs_forkhandler);
+ 	return (0);
+

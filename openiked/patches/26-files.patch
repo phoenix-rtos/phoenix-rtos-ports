@@ -1,0 +1,100 @@
+diff -ruN a/iked/ca.c b/iked/ca.c
+--- a/iked/ca.c	2021-04-15 19:18:01.000000000 +0200
++++ b/iked/ca.c	2021-08-23 12:53:39.586024287 +0200
+@@ -721,6 +721,17 @@
+ 	/*
+ 	 * Load CAs
+ 	 */
++#ifdef IKED_CA_FILE
++    (void)dir; (void)entry; (void)file;
++
++	if (!X509_load_cert_file(store->ca_calookup, IKED_CA_FILE,
++		X509_FILETYPE_PEM)) {
++		log_warn("%s: failed to load ca file %s", __func__,
++		    IKED_CA_FILE);
++		ca_sslerror(__func__);
++	}
++	log_debug("%s: loaded ca file %s", __func__, IKED_CA_FILE);
++#else
+ 	if ((dir = opendir(IKED_CA_DIR)) == NULL)
+ 		return (-1);
+ 
+@@ -743,7 +754,9 @@
+ 		log_debug("%s: loaded ca file %s", __func__, entry->d_name);
+ 	}
+ 	closedir(dir);
++#endif /* IKED_CA_FILE */
+ 
++#ifdef IKED_CRL_DIR
+ 	/*
+ 	 * Load CRLs for the CAs
+ 	 */
+@@ -773,6 +786,7 @@
+ 		log_debug("%s: loaded crl file %s", __func__, entry->d_name);
+ 	}
+ 	closedir(dir);
++#endif /* IKED_CRL_DIR */
+ 
+ 	/*
+ 	 * Save CAs signatures for the IKEv2 CERTREQ
+@@ -826,6 +840,15 @@
+ 	/*
+ 	 * Load certificates
+ 	 */
++#ifdef IKED_CERT_FILE
++	if (!X509_load_cert_file(store->ca_certlookup, IKED_CERT_FILE,
++	    X509_FILETYPE_PEM)) {
++		log_warn("%s: failed to load cert file %s", __func__,
++		    IKED_CERT_FILE);
++		ca_sslerror(__func__);
++	}
++	log_debug("%s: loaded cert file %s", __func__, IKED_CERT_FILE);
++#else
+ 	if ((dir = opendir(IKED_CERT_DIR)) == NULL)
+ 		return (-1);
+ 
+@@ -848,6 +871,7 @@
+ 		log_debug("%s: loaded cert file %s", __func__, entry->d_name);
+ 	}
+ 	closedir(dir);
++#endif /* IKED_CERT_FILE */
+ 
+ 	h = X509_STORE_get0_objects(store->ca_certs);
+ 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
+diff -ruN a/iked/types.h b/iked/types.h
+--- a/iked/types.h	2021-04-15 19:18:01.000000000 +0200
++++ b/iked/types.h	2021-08-18 21:50:12.339749012 +0200
+@@ -20,6 +20,13 @@
+ #ifndef IKED_TYPES_H
+ #define IKED_TYPES_H
+ 
++#ifdef __phoenix__
++#define IKED_USER		"root"
++#define IKED_CA			"/etc/ssl/active/"
++#define IKED_CA_FILE		"/etc/ssl/active/ca.crt"
++#define IKED_CERT_FILE		"/etc/ssl/active/device.pem"
++#endif
++
+ #ifndef IKED_USER
+ #define IKED_USER		"_iked"
+ #endif
+@@ -35,11 +42,18 @@
+ #endif
+ 
+ #define IKED_CA_DIR		"ca/"
++#ifndef __phoenix__
+ #define IKED_CRL_DIR		"crls/"
++#endif
+ #define IKED_CERT_DIR		"certs/"
+ #define IKED_PUBKEY_DIR		"pubkeys/"
++#ifdef __phoenix__
++#define IKED_PRIVKEY		IKED_CERT_FILE
++#define IKED_PUBKEY		IKED_CA "local.pub"
++#else
+ #define IKED_PRIVKEY		IKED_CA "private/local.key"
+ #define IKED_PUBKEY		"local.pub"
++#endif
+ 
+ #define IKED_OCSP_RESPCERT	"ocsp/responder.crt"
+ 
+
