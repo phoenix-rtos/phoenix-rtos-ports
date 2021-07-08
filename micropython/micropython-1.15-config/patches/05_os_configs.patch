@@ -1,15 +1,6 @@
 diff -Naur micropython-1.15/ports/unix/mpconfigport.h micropython-phoenix/ports/unix/mpconfigport.h
 --- micropython-1.15/ports/unix/mpconfigport.h	2021-04-18 16:27:07.000000000 +0200
 +++ micropython-phoenix/ports/unix/mpconfigport.h	2021-06-30 11:48:28.980936563 +0200
-@@ -34,7 +34,7 @@
- // If we're building the minimal variant, ignore the rest of this file.
- #ifndef MICROPY_UNIX_MINIMAL
- 
--#define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
-+#define MICROPY_ALLOC_PATH_MAX      (260)
- #define MICROPY_PERSISTENT_CODE_LOAD (1)
- #if !defined(MICROPY_EMIT_X64) && defined(__x86_64__)
-     #define MICROPY_EMIT_X64        (1)
 @@ -137,9 +137,9 @@
  #define MICROPY_STACKLESS_STRICT    (0)
  #endif
