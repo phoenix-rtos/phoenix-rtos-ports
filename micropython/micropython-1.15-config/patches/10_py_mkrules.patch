@@ -1,0 +1,16 @@
+diff -Naur micropython-1.15/py/mkrules.mk micropython-phoenix/py/mkrules.mk
+--- micropython-1.15/py/mkrules.mk	2021-04-18 16:27:07.000000000 +0200
++++ micropython-phoenix/py/mkrules.mk	2021-06-30 11:48:28.976939829 +0200
+@@ -184,7 +184,11 @@
+ 	$(ECHO) "LINK $@"
+ # Do not pass COPT here - it's *C* compiler optimizations. For example,
+ # we may want to compile using Thumb, but link with non-Thumb libc.
+-	$(Q)$(CC) -o $@ $^ $(LIB) $(LDFLAGS)
++ifndef PHOENIX_PORT_LDFLAGS
++	$(Q)$(CC) -o $@ $^ $(LIB) $(LDFLAGS)
++else
++	$(Q)$(LD) -o $@ $^ $(LIB) $(LDLIBS) $(PHOENIX_PORT_LDFLAGS)
++endif
+ ifndef DEBUG
+ 	$(Q)$(STRIP) $(STRIPFLAGS_EXTRA) $(PROG)
+ endif
