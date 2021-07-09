@@ -52,3 +52,10 @@ fi
 make -C "${PREFIX_BUSYBOX_BUILD}" KBUILD_SRC="$PREFIX_BUSYBOX_SRC" -f "${PREFIX_BUSYBOX_SRC}"/Makefile CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" all
 make -C "${PREFIX_BUSYBOX_BUILD}" KBUILD_SRC="$PREFIX_BUSYBOX_SRC" -f "${PREFIX_BUSYBOX_SRC}"/Makefile CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" install
 cp -a "$PREFIX_BUSYBOX_BUILD/busybox_unstripped" "$PREFIX_PROG"
+
+if [ -f "$PREFIX_FS/root/bin/test_busybox" ]; then
+mkdir -p "$PREFIX_FS/root/bin/scripts"
+cp -a "$PREFIX_BUSYBOX_BUILD/busybox-1.27.2/testsuite" "$PREFIX_FS/root/bin/"
+cp "$PREFIX_BUSYBOX_BUILD/busybox-1.27.2/scripts/echo.c" "$PREFIX_FS/root/bin/scripts"
+cp "$PREFIX_BUSYBOX_BUILD/.config" "$PREFIX_FS/root/bin/"
+fi
