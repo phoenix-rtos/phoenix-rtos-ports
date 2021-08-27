@@ -1,0 +1,24 @@
+diff -Naur micropython-1.15/ports/unix/Makefile micropython-phoenix/ports/unix/Makefile
+--- micropython-1.15/ports/unix/Makefile	2021-04-18 16:27:07.000000000 +0200
++++ micropython-phoenix/ports/unix/Makefile	2021-06-30 11:48:28.980936563 +0200
+@@ -38,7 +43,7 @@
+ INC += -I$(BUILD)
+ 
+ # compiler settings
+-CWARN = -Wall -Werror
++CWARN = -Wall
+ CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
+ CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) -I$(VARIANT_DIR) $(CFLAGS_EXTRA)
+ 
+@@ -238,9 +240,10 @@
+ 	mpbtstackport_usb.c \
+ 	mpnimbleport.c \
+ 	$(SRC_MOD) \
++	$(addprefix ../../lib/libm_dbl/, $(addsuffix .c, $(PHOENIX_MATH_ABSENT))) \
+ 	$(wildcard $(VARIANT_DIR)/*.c)
+ 
+-LIB_SRC_C += $(addprefix lib/,\
++LIB_SRC_C += $(addprefix ../../lib/,\
+ 	$(LIB_SRC_C_EXTRA) \
+ 	timeutils/timeutils.c \
+ 	utils/gchelper_generic.c \
