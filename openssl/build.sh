@@ -9,13 +9,25 @@ PREFIX_OPENSSL="${TOPDIR}/phoenix-rtos-ports/openssl"
 PREFIX_OPENSSL_BUILD="${PREFIX_BUILD}/openssl"
 PREFIX_OPENSSL_SRC="${PREFIX_OPENSSL_BUILD}/${OPENSSL}"
 PREFIX_OPENSSL_INSTALL="$PREFIX_OPENSSL_BUILD/install"
+PREFIX_OPENSSL_MARKERS="$PREFIX_OPENSSL_BUILD/markers/"
 
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_OPENSSL_BUILD" "$PREFIX_OPENSSL_INSTALL"
+mkdir -p "$PREFIX_OPENSSL_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS"
 [ -f "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" ] || wget https://www.openssl.org/source/${OPENSSL}.tar.gz -P "$PREFIX_OPENSSL" --no-check-certificate
 [ -d "$PREFIX_OPENSSL_SRC" ] || tar zxf "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" -C "$PREFIX_OPENSSL_BUILD"
+
+#
+# Apply patches
+#
+for patchfile in "$PREFIX_OPENSSL"/*.patch; do
+	if [ ! -f "$PREFIX_OPENSSL_MARKERS/$(basename "$patchfile").applied" ]; then
+		echo "applying patch: $patchfile"
+		patch -d "$PREFIX_OPENSSL_SRC" -p1 < "$patchfile"
+		touch "$PREFIX_OPENSSL_MARKERS/$(basename "$patchfile").applied"
+	fi
+done
 
 #
 # Configure
