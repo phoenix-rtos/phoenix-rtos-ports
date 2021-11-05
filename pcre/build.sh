@@ -17,7 +17,7 @@ fi
 # Download and unpack
 #
 mkdir -p "$PREFIX_PCRE_BUILD"
-[ -f "$PREFIX_PCRE/${PCRE}.tar.bz2" ] || wget http://ftp.pcre.org/pub/pcre/${PCRE}.tar.bz2 -P "$PREFIX_PCRE"
+[ -f "$PREFIX_PCRE/${PCRE}.tar.bz2" ] || wget http://ftp.exim.org/pub/pcre/${PCRE}.tar.bz2 -P "$PREFIX_PCRE"
 [ -d "$PREFIX_PCRE_SRC" ] || tar jxf "$PREFIX_PCRE/${PCRE}.tar.bz2" -C "$PREFIX_PCRE_BUILD"
 
 
