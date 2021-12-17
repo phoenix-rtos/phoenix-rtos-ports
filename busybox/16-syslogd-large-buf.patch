@@ -1,0 +1,12 @@
+diff -Naur a/sysklogd/syslogd.c b/sysklogd/syslogd.c
+--- a/sysklogd/syslogd.c	2021-12-16 23:27:24.952624736 +0100
++++ b/sysklogd/syslogd.c	2021-12-16 23:29:06.745597042 +0100
+@@ -949,7 +949,7 @@
+ 	}
+ 	unlink(sunx.sun_path);
+ 
+-	sock_fd = xsocket(AF_UNIX, SOCK_DGRAM, 0);
++	sock_fd = xsocket(AF_UNIX, SOCK_DGRAM | SOCK_LARGEBUF, 0);
+ 	xbind(sock_fd, (struct sockaddr *) &sunx, sizeof(sunx));
+ 	chmod(_PATH_LOG, 0666);
+ 
