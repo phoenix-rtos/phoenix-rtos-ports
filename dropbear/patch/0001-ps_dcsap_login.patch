@@ -1,23 +1,68 @@
-From c845683134fa6287088c05f9eeae34cc7c35c3bf Mon Sep 17 00:00:00 2001
-From: Kamil Amanowicz <kamil.amanowicz@phoenix-rtos.com>
-Date: Tue, 13 Aug 2019 14:14:15 +0200
-Subject: [PATCH] ps_dcsap_login
-
----
- Makefile.in      |  3 ++-
- phoenix.c        | 65 ++++++++++++++++++++++++++++++++++++++++++++++++
- phoenix.h        | 16 ++++++++++++
- svr-auth.c       |  7 ++++--
- svr-authpasswd.c |  5 +++-
- 5 files changed, 92 insertions(+), 4 deletions(-)
- create mode 100644 phoenix.c
- create mode 100644 phoenix.h
-
-diff --git a/Makefile.in b/Makefile.in
-index e7d52a2..96b5687 100644
---- a/Makefile.in
-+++ b/Makefile.in
-@@ -36,7 +36,8 @@ COMMONOBJS=dbutil.o buffer.o dbhelpers.o \
+diff -Nuar dropbear-2018.76/common-session.c dropbear-2018.76.phoenix/common-session.c
+--- dropbear-2018.76/common-session.c	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76.phoenix/common-session.c	2021-12-22 13:28:52.482352829 +0100
+@@ -586,7 +586,12 @@
+ 	if (ses.authstate.pw_passwd)
+ 		m_free(ses.authstate.pw_passwd);
+ 
++#ifdef ENABLE_PS_LOGIN_SERVICE
++	pw = phoenix_getpwnam(username);
++#else
+ 	pw = getpwnam(username);
++#endif
++
+ 	if (!pw) {
+ 		return;
+ 	}
+diff -Nuar dropbear-2018.76/dbutil.c dropbear-2018.76.phoenix/dbutil.c
+--- dropbear-2018.76/dbutil.c	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76.phoenix/dbutil.c	2021-12-22 14:58:11.337209481 +0100
+@@ -603,7 +603,11 @@
+ char * expand_homedir_path(const char *inpath) {
+ 	struct passwd *pw = NULL;
+ 	if (inpath[0] != '/') {
++#ifdef ENABLE_PS_LOGIN_SERVICE
++		pw = phoenix_getpwuid(getuid());
++#else
+ 		pw = getpwuid(getuid());
++#endif
+ 		if (pw && pw->pw_dir) {
+ 			int len = strlen(inpath) + strlen(pw->pw_dir) + 2;
+ 			char *buf = m_malloc(len);
+diff -Nuar dropbear-2018.76/dropbearkey.c dropbear-2018.76.phoenix/dropbearkey.c
+--- dropbear-2018.76/dropbearkey.c	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76.phoenix/dropbearkey.c	2021-12-22 14:58:51.889321587 +0100
+@@ -326,7 +326,11 @@
+ 
+ 	/* a user@host comment is informative */
+ 	username = "";
++#ifdef ENABLE_PS_LOGIN_SERVICE
++	pw = phoenix_getpwuid(getuid());
++#else
+ 	pw = getpwuid(getuid());
++#endif
+ 	if (pw) {
+ 		username = pw->pw_name;
+ 	}
+diff -Nuar dropbear-2018.76/loginrec.c dropbear-2018.76.phoenix/loginrec.c
+--- dropbear-2018.76/loginrec.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.phoenix/loginrec.c	2021-12-22 13:31:31.626250228 +0100
+@@ -275,7 +275,11 @@
+ 
+ 	if (username) {
+ 		strlcpy(li->username, username, sizeof(li->username));
++#ifdef ENABLE_PS_LOGIN_SERVICE
++		pw = phoenix_getpwnam(li->username);
++#else
+ 		pw = getpwnam(li->username);
++#endif
+ 		if (pw == NULL)
+ 			dropbear_exit("login_init_entry: Cannot find user \"%s\"",
+ 					li->username);
+diff -Nuar dropbear-2018.76/Makefile.in dropbear-2018.76.phoenix/Makefile.in
+--- dropbear-2018.76/Makefile.in	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76.phoenix/Makefile.in	2021-12-17 18:24:51.364479006 +0100
+@@ -36,7 +36,8 @@
  		queue.o \
  		atomicio.o compat.o fake-rfc2553.o \
  		ltc_prng.o ecc.o ecdsa.o crypto_desc.o \
@@ -27,18 +72,128 @@ index e7d52a2..96b5687 100644
  
  SVROBJS=svr-kex.o svr-auth.o sshpty.o \
  		svr-authpasswd.o svr-authpubkey.o svr-authpubkeyoptions.o svr-session.o svr-service.o \
-diff --git a/phoenix.c b/phoenix.c
-new file mode 100644
-index 0000000..23de01b
---- /dev/null
-+++ b/phoenix.c
-@@ -0,0 +1,65 @@
+diff -Nuar dropbear-2018.76/phoenix.c dropbear-2018.76.phoenix/phoenix.c
+--- dropbear-2018.76/phoenix.c	1970-01-01 01:00:00.000000000 +0100
++++ dropbear-2018.76.phoenix/phoenix.c	2021-12-22 14:59:32.293479372 +0100
+@@ -0,0 +1,177 @@
 +#include <stdio.h>
 +
 +#include "phoenix.h"
 +#include "dbutil.h"
 +
 +#ifdef ENABLE_PS_LOGIN_SERVICE
++
++#include <pwd.h>
++#include <sys/types.h>
++#include <stdio.h>
++#include <string.h>
++
++static struct passwd pw;
++static char linebuf[1024];
++
++static int password_db_read_next_user(FILE *fp, struct passwd *pwd_out)
++{
++	if (!fgets(linebuf, sizeof(linebuf), fp))
++		return 0;
++
++	char *buf = linebuf;
++
++	char *username = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++
++	//if (strcmp(username, user) != 0)
++	//    continue;
++
++	char *password = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++
++	char *uid_str = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++	int uid = strtol(uid_str, 0, 0);
++
++	char *gid_str = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++	int gid = strtol(gid_str, 0, 0);
++
++	char *gecos = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++
++	char *dir = buf;
++	buf = strchr(buf, ':');
++	if (!buf)
++		goto failed;
++	*buf++ = '\0';
++
++	char *shell = buf;
++	buf = strchr(buf, '\n');
++	if (buf)
++		*buf++ = '\0';
++
++	pwd_out->pw_name = username;
++	pwd_out->pw_passwd = password;
++	pwd_out->pw_uid = uid;
++	pwd_out->pw_gid = gid;
++	//pwd_out->pw_comment = "";
++	pwd_out->pw_gecos = gecos;
++	pwd_out->pw_dir = dir;
++	pwd_out->pw_shell = shell;
++	return 1;
++failed:
++	return -1;
++}
++
++struct passwd* phoenix_getpwnam(const char *name)
++{
++	FILE *fp;
++
++	if ((fp = fopen("/local/passwd", "r")) == NULL)
++		return NULL;
++
++	while (password_db_read_next_user(fp, &pw) > 0) {
++		if (strcmp(pw.pw_name, name) == 0) {
++			fclose(fp);
++			return &pw;
++		}
++	}
++
++	fclose(fp);
++	return NULL;
++}
++
++
++struct passwd* phoenix_getpwuid(uid_t uid)
++{
++	FILE *fp;
++
++	if ((fp = fopen("/local/passwd", "r")) == NULL)
++		return NULL;
++
++	while (password_db_read_next_user(fp, &pw) > 0) {
++		if (pw.pw_uid == uid) {
++			fclose(fp);
++			return &pw;
++		}
++	}
++
++	fclose(fp);
++	return NULL;
++}
++
 +
 +static int ps_login_service_connect(int port)
 +{
@@ -98,12 +253,9 @@ index 0000000..23de01b
 +}
 +
 +#endif /* ENABLE_PS_LOGIN_SERVICE */
-\ No newline at end of file
-diff --git a/phoenix.h b/phoenix.h
-new file mode 100644
-index 0000000..0326932
---- /dev/null
-+++ b/phoenix.h
+diff -Nuar dropbear-2018.76/phoenix.h dropbear-2018.76.phoenix/phoenix.h
+--- dropbear-2018.76/phoenix.h	1970-01-01 01:00:00.000000000 +0100
++++ dropbear-2018.76.phoenix/phoenix.h	2021-12-17 18:24:51.364479006 +0100
 @@ -0,0 +1,16 @@
 +#ifndef DROPBEAR_PHOENIX_H_
 +#define DROPBEAR_PHOENIX_H_
@@ -121,12 +273,11 @@ index 0000000..0326932
 +
 +#endif
 +#endif
-\ No newline at end of file
-diff --git a/svr-auth.c b/svr-auth.c
-index 64d97aa..b5eaa44 100644
---- a/svr-auth.c
-+++ b/svr-auth.c
-@@ -125,8 +125,11 @@ void recv_msg_userauth_request() {
+\ Brak znaku nowej linii na końcu pliku
+diff -Nuar dropbear-2018.76/svr-auth.c dropbear-2018.76.phoenix/svr-auth.c
+--- dropbear-2018.76/svr-auth.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.phoenix/svr-auth.c	2021-12-17 18:24:51.364479006 +0100
+@@ -125,8 +125,11 @@
  				&& svr_opts.allowblankpass
  				&& !svr_opts.noauthpass
  				&& !(svr_opts.norootpass && ses.authstate.pw_uid == 0) 
@@ -140,11 +291,10 @@ index 64d97aa..b5eaa44 100644
  			dropbear_log(LOG_NOTICE, 
  					"Auth succeeded with blank password for '%s' from %s",
  					ses.authstate.pw_name,
-diff --git a/svr-authpasswd.c b/svr-authpasswd.c
-index bdee2aa..74a6451 100644
---- a/svr-authpasswd.c
-+++ b/svr-authpasswd.c
-@@ -73,7 +73,9 @@ void svr_auth_password() {
+diff -Nuar dropbear-2018.76/svr-authpasswd.c dropbear-2018.76.phoenix/svr-authpasswd.c
+--- dropbear-2018.76/svr-authpasswd.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.phoenix/svr-authpasswd.c	2021-12-17 18:24:51.364479006 +0100
+@@ -73,7 +73,9 @@
  	}
  
  	password = buf_getstring(ses.payload, &passwordlen);
@@ -155,7 +305,7 @@ index bdee2aa..74a6451 100644
  	/* the first bytes of passwdcrypt are the salt */
  	testcrypt = crypt(password, passwdcrypt);
  	m_burn(password, passwordlen);
-@@ -96,6 +98,7 @@ void svr_auth_password() {
+@@ -96,6 +98,7 @@
  	}
  
  	if (constant_time_strcmp(testcrypt, passwdcrypt) == 0) {
@@ -163,6 +313,18 @@ index bdee2aa..74a6451 100644
  		/* successful authentication */
  		dropbear_log(LOG_NOTICE, 
  				"Password auth succeeded for '%s' from %s",
--- 
-2.22.0
-
+diff -Nuar dropbear-2018.76/svr-chansession.c dropbear-2018.76.phoenix/svr-chansession.c
+--- dropbear-2018.76/svr-chansession.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.phoenix/svr-chansession.c	2021-12-22 13:32:34.042241228 +0100
+@@ -593,7 +593,11 @@
+ 		dropbear_exit("Out of memory"); /* TODO disconnect */
+ 	}
+ 
++#ifdef ENABLE_PS_LOGIN_SERVICE
++	pw = phoenix_getpwnam(ses.authstate.pw_name);
++#else
+ 	pw = getpwnam(ses.authstate.pw_name);
++#endif
+ 	if (!pw)
+ 		dropbear_exit("getpwnam failed after succeeding previously");
+ 	pty_setowner(pw, chansess->tty);
