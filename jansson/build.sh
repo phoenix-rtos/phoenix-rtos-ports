@@ -20,8 +20,12 @@ mkdir -p "$PREFIX_JANSSON_BUILD"
 #
 # Configure
 #
+# hacks for incremental build:
+# - use "install -p" to preserve timestamps in headers
+# - use "echo" instead of "ranlib" to not overwrite static lib with every recompile (note: using ar -s while linking instead)
 if [ ! -f "$PREFIX_JANSSON_BUILD/config.status" ]; then
-	( cd "${PREFIX_JANSSON_BUILD}" && "${PREFIX_JANSSON_SRC}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
+	( cd "${PREFIX_JANSSON_BUILD}" && "${PREFIX_JANSSON_SRC}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="\"-r -s\"" RANLIB="echo" INSTALL="$(which install) -p" \
+		--enable-static --disable-shared --host="$HOST" \
 		--prefix="${PREFIX_JANSSON_BUILD}" --libdir="${PREFIX_BUILD}/lib" \
 		--includedir="${PREFIX_BUILD}/include" )
 
