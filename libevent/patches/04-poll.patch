@@ -1,0 +1,34 @@
+diff -ruN a/poll.c b/poll.c
+--- a/poll.c	2022-01-31 17:08:48.885829159 +0100
++++ b/poll.c	2022-01-31 17:54:20.009379167 +0100
+@@ -132,6 +132,21 @@
+ #define poll_check_ok(pop)
+ #endif
+ 
++/* Limits poll timeout to 1s to enable signal reception */
++static int phoenix_poll(struct pollfd *fds, nfds_t nfds, int timeout)
++{
++	int err, msec;
++
++	do {
++		msec = timeout >= 0 && timeout < 1000 ? timeout : 1000;
++		err = poll(fds, nfds, msec);
++		if (timeout > 0)
++			timeout -= msec;
++	} while (err == 0 && timeout != 0);
++
++	return err;
++}
++
+ static int
+ poll_dispatch(struct event_base *base, struct timeval *tv)
+ {
+@@ -179,7 +194,7 @@
+ 
+ 	EVBASE_RELEASE_LOCK(base, th_base_lock);
+ 
+-	res = poll(event_set, nfds, msec);
++	res = phoenix_poll(event_set, nfds, msec);
+ 
+ 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
+ 
