@@ -1,0 +1,15 @@
+diff -ruN c/compat/imsg-buffer.c d/compat/imsg-buffer.c
+--- c/compat/imsg-buffer.c	2022-02-03 12:51:53.260111511 +0100
++++ d/compat/imsg-buffer.c	2022-02-03 16:19:28.672247639 +0100
+@@ -41,7 +41,11 @@
+ 
+ 	if ((buf = calloc(1, sizeof(struct ibuf))) == NULL)
+ 		return (NULL);
++#ifdef __phoenix__
++	if ((buf->buf = malloc(len == 0 ? 16 : len)) == NULL) { /* libphoenix malloc(0) returns NULL */
++#else
+ 	if ((buf->buf = malloc(len)) == NULL) {
++#endif
+ 		free(buf);
+ 		return (NULL);
+ 	}

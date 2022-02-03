@@ -1,0 +1,16 @@
+diff -ruN c/compat/arc4random_linux.h d/compat/arc4random_linux.h
+--- c/compat/arc4random_linux.h	2022-02-03 11:08:54.681945699 +0100
++++ d/compat/arc4random_linux.h	2022-02-03 12:54:11.226144735 +0100
+@@ -37,8 +37,12 @@
+ extern int __register_atfork(void (*)(void), void(*)(void), void (*)(void), void *);
+ #define _ARC4_ATFORK(f) __register_atfork(NULL, NULL, (f), __dso_handle)
+ #else
++#ifdef __phoenix__
++#define _ARC4_ATFORK(f) /* pthread_atfork is not implemented in libphoenix */
++#else
+ #define _ARC4_ATFORK(f) pthread_atfork(NULL, NULL, (f))
+ #endif
++#endif
+ 
+ static inline void
+ _getentropy_fail(void)

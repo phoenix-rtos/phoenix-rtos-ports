@@ -1,0 +1,12 @@
+diff -ruN c/iked/parse.y d/iked/parse.y
+--- c/iked/parse.y	2022-02-03 12:51:53.280106516 +0100
++++ d/iked/parse.y	2022-02-03 13:13:44.649639415 +0100
+@@ -55,6 +55,8 @@
+ #include "ikev2.h"
+ #include "eap.h"
+ 
++#define YYINITDEPTH 10 /* avoid stack overflow */
++
+ TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+ static struct file {
+ 	TAILQ_ENTRY(file)	 entry;

@@ -1,0 +1,35 @@
+diff -ruN c/CMakeLists.txt d/CMakeLists.txt
+--- c/CMakeLists.txt	2022-02-03 16:01:20.678084083 +0100
++++ d/CMakeLists.txt	2022-02-03 16:01:26.618076661 +0100
+@@ -121,6 +121,11 @@
+ 	add_definitions(-DHAVE_LINUX_IPSEC_H)
+ endif()
+ 
++check_include_files("phoenix/ipsec.h" HAVE_PHOENIX_IPSEC_H)
++if(HAVE_PHOENIX_IPSEC_H)
++	add_definitions(-DHAVE_PHOENIX_IPSEC_H)
++endif()
++
+ check_include_files("sys/types.h;sys/queue.h;imsg.h" HAVE_IMSG_H)
+ if(HAVE_IMSG_H)
+ 	add_definitions(-DHAVE_IMSG_H)
+diff -ruN c/compat/netinet/ip_ipsp.h d/compat/netinet/ip_ipsp.h
+--- c/compat/netinet/ip_ipsp.h	2022-02-03 12:51:53.264110512 +0100
++++ d/compat/netinet/ip_ipsp.h	2022-02-03 15:58:13.286335677 +0100
+@@ -26,12 +26,15 @@
+ #ifdef HAVE_LINUX_IPSEC_H
+ #include <linux/ipsec.h>
+ #endif
++#ifdef HAVE_PHOENIX_IPSEC_H
++#include <phoenix/ipsec.h>
++#endif
+ #ifdef HAVE_NETINET6_IPSEC_H
+ #include <netinet6/ipsec.h>
+ #endif
+ 
+ #if !defined HAVE_IPSP_H && (defined HAVE_NET_IPSEC_H || \
+-    defined HAVE_LINUX_IPSEC_H || defined HAVE_NETINET6_IPSEC_H)
++    defined HAVE_LINUX_IPSEC_H || defined HAVE_PHOENIX_IPSEC_H || defined HAVE_NETINET6_IPSEC_H)
+ #if !defined(IPSP_DIRECTION_IN)
+ #define IPSP_DIRECTION_IN	IPSEC_DIR_INBOUND
+ #endif

@@ -1,0 +1,11 @@
+diff -ruN c/CMakeLists.txt d/CMakeLists.txt
+--- c/CMakeLists.txt	2022-02-03 15:49:01.519411308 +0100
++++ d/CMakeLists.txt	2022-02-03 15:53:50.682766037 +0100
+@@ -59,7 +59,6 @@
+ 	endif()
+ 	add_definitions(-D_GNU_SOURCE)
+ 	add_definitions(-D_DEFAULT_SOURCE)
+-	add_definitions(-DHAVE_UDPENCAP6)
+ 	add_definitions(-DSPT_TYPE=SPT_REUSEARGV)
+ 	set(HAVE_VROUTE_NETLINK ON)
+ endif()

@@ -1,0 +1,46 @@
+diff -ruN c/iked/iked.c d/iked/iked.c
+--- c/iked/iked.c	2022-02-04 15:36:34.332736073 +0100
++++ d/iked/iked.c	2022-02-04 15:36:48.388541117 +0100
+@@ -34,6 +34,7 @@
+ #include <pwd.h>
+ #include <event.h>
+ #include <fcntl.h>
++#include <ifaddrs.h>
+ 
+ #include "iked.h"
+ #include "ikev2.h"
+@@ -298,6 +299,14 @@
+ parent_configure(struct iked *env)
+ {
+ 	struct sockaddr_storage	 ss;
++#ifdef __phoenix__
++	struct ifaddrs *ifaddr, *ifa;
++
++	if (getifaddrs(&ifaddr) < 0) {
++		proc_kill(&env->sc_ps);
++		exit(1);
++	}
++#endif
+ 
+ 	if (parse_config(env->sc_conffile, env) == -1) {
+ 		proc_kill(&env->sc_ps);
+@@ -324,6 +333,19 @@
+ 	bzero(&ss, sizeof(ss));
+ 	ss.ss_family = AF_INET;
+ 
++#ifdef __phoenix__
++	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
++		if (strcmp("en1", ifa->ifa_name) == 0) {
++			struct sockaddr_in *sa_out = (struct sockaddr_in *)&ss;
++			struct sockaddr_in *sa_in = (struct sockaddr_in *)ifa->ifa_addr;
++			sa_out->sin_addr.s_addr = sa_in->sin_addr.s_addr;
++			break;
++		}
++	}
++
++	freeifaddrs(ifaddr);
++#endif
++
+ 	/* see comment on config_setsocket() */
+ 	if (env->sc_nattmode != NATT_FORCE)
+ 		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2, 0);

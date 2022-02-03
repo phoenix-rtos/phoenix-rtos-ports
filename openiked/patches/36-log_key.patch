@@ -1,0 +1,60 @@
+diff -ruN c/iked/iked.h d/iked/iked.h
+--- c/iked/iked.h	2022-02-03 17:54:45.547200957 +0100
++++ d/iked/iked.h	2022-02-04 15:17:22.414336418 +0100
+@@ -1262,6 +1262,7 @@
+ 	    __attribute__((__format__ (printf, 1, 2)));
+ __dead void fatalx(const char *, ...)
+ 	    __attribute__((__format__ (printf, 1, 2)));
++void	log_key(const char *keytype, uint8_t *buf, size_t length);
+ 
+ /* ocsp.c */
+ int	 ocsp_connect(struct iked *, struct imsg *);
+diff -ruN c/iked/ikev2_msg.c d/iked/ikev2_msg.c
+--- c/iked/ikev2_msg.c	2022-02-03 17:37:38.213176469 +0100
++++ d/iked/ikev2_msg.c	2022-02-04 15:17:22.414336418 +0100
+@@ -564,6 +564,11 @@
+ 		integr = sa->sa_key_rauth;
+ 	}
+ 
++	log_key("initiator ENCKEY", ibuf_data(sa->sa_key_iencr), ibuf_length(sa->sa_key_iencr));
++	log_key("initiator AUTHKEY", ibuf_data(sa->sa_key_iauth), ibuf_length(sa->sa_key_iauth));
++	log_key("responder ENCKEY", ibuf_data(sa->sa_key_rencr), ibuf_length(sa->sa_key_rencr));
++	log_key("responder AUTHKEY", ibuf_data(sa->sa_key_rauth), ibuf_length(sa->sa_key_rauth));
++
+ 	blocklen = cipher_length(sa->sa_encr);
+ 	ivlen = cipher_ivlength(sa->sa_encr);
+ 	ivoff = 0;
+diff -ruN c/iked/log.c d/iked/log.c
+--- c/iked/log.c	2022-02-03 13:09:44.858787336 +0100
++++ d/iked/log.c	2022-02-04 15:17:22.414336418 +0100
+@@ -48,6 +48,7 @@
+ 	    __attribute__((__format__ (printf, 1, 2)));
+ __dead void fatalx(const char *, ...)
+ 	    __attribute__((__format__ (printf, 1, 2)));
++void	log_key(const char *keytype, uint8_t *buf, size_t length);
+ 
+ void
+ log_init(int n_debug, int facility)
+@@ -180,6 +181,22 @@
+ 	}
+ }
+ 
++void
++log_key(const char *type, uint8_t *key, size_t len)
++{
++	char buf[256];
++	int p;
++
++	if (verbose <= 1 || !len)
++		return;
++
++	p = snprintf(buf, sizeof(buf), "%s [%zu]: ", type, len);
++	for (size_t i = 0; i < len; i++)
++		p += snprintf(buf + p, sizeof(buf) - p, "%02x", key[i]);
++
++	logit(LOG_DEBUG, "%s", buf);
++}
++
+ static void
+ vfatalc(int code, const char *emsg, va_list ap)
+ {

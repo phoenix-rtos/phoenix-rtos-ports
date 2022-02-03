@@ -1,6 +1,6 @@
-diff -ruN a/iked/iked.h b/iked/iked.h
---- a/iked/iked.h	2021-08-30 18:14:40.316135606 +0200
-+++ b/iked/iked.h	2021-08-30 21:56:41.435001459 +0200
+diff -ruN c/iked/iked.h d/iked/iked.h
+--- c/iked/iked.h	2022-02-03 17:37:38.209176404 +0100
++++ d/iked/iked.h	2022-02-03 17:53:52.557616454 +0100
 @@ -1106,7 +1106,7 @@
  int	 pfkey_sa_update_addresses(int, struct iked_childsa *);
  int	 pfkey_sa_delete(int, struct iked_childsa *);
@@ -10,10 +10,10 @@ diff -ruN a/iked/iked.h b/iked/iked.h
  int	 pfkey_socket(void);
  void	 pfkey_init(struct iked *, int fd);
  
-diff -ruN a/iked/pfkey.c b/iked/pfkey.c
---- a/iked/pfkey.c	2021-08-30 18:14:40.320135728 +0200
-+++ b/iked/pfkey.c	2021-08-30 21:58:56.901828983 +0200
-@@ -1939,7 +1939,7 @@
+diff -ruN c/iked/pfkey.c d/iked/pfkey.c
+--- c/iked/pfkey.c	2022-02-03 17:48:15.787914144 +0100
++++ d/iked/pfkey.c	2022-02-03 17:53:52.557616454 +0100
+@@ -1940,7 +1940,7 @@
  }
  
  int
@@ -22,7 +22,7 @@ diff -ruN a/iked/pfkey.c b/iked/pfkey.c
  {
  	struct sadb_msg smsg;
  	struct iovec	iov[IOV_CNT];
-@@ -1950,7 +1950,7 @@
+@@ -1951,7 +1951,7 @@
  	smsg.sadb_msg_seq = ++sadb_msg_seq;
  	smsg.sadb_msg_pid = getpid();
  	smsg.sadb_msg_len = sizeof(smsg) / 8;
@@ -31,7 +31,7 @@ diff -ruN a/iked/pfkey.c b/iked/pfkey.c
  	smsg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
  
  	iov_cnt = 0;
-@@ -2022,7 +2022,8 @@
+@@ -2023,7 +2023,8 @@
  	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)
  		fatal("pfkey_socket: failed to open PF_KEY socket");
  

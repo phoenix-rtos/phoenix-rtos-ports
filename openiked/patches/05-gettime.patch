@@ -1,0 +1,48 @@
+diff -ruN c/iked/ikev2.c d/iked/ikev2.c
+--- c/iked/ikev2.c	2022-02-03 12:37:38.120374669 +0100
++++ d/iked/ikev2.c	2022-02-03 12:39:58.677206869 +0100
+@@ -572,7 +572,7 @@
+ }
+ 
+ static time_t
+-gettime(void)
++ikev2_gettime(void) /* gettime is reserved in libphoenix */
+ {
+ 	struct timeval tv;
+ 	gettimeofday(&tv, NULL);
+@@ -621,7 +621,7 @@
+ 	if ((sa = msg->msg_sa) == NULL)
+ 		goto done;
+ 
+-	sa->sa_last_recvd = gettime();
++	sa->sa_last_recvd = ikev2_gettime();
+ 
+ 	if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
+ 		flag = IKED_REQ_CHILDSA;
+@@ -1564,7 +1564,7 @@
+ void
+ ikev2_enable_timer(struct iked *env, struct iked_sa *sa)
+ {
+-	sa->sa_last_recvd = gettime();
++	sa->sa_last_recvd = ikev2_gettime();
+ 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
+ 	if (env->sc_alive_timeout > 0)
+ 		timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
+@@ -4980,7 +4980,7 @@
+ 			continue;
+ 		if (ipsec_sa_last_used(env, csa, &last_used) != 0)
+ 			continue;
+-		diff = (uint32_t)(gettime() - last_used);
++		diff = (uint32_t)(ikev2_gettime() - last_used);
+ 		log_debug("%s: %s CHILD SA spi %s last used %llu second(s) ago",
+ 		    __func__,
+ 		    csa->csa_dir == IPSP_DIRECTION_IN ? "incoming" : "outgoing",
+@@ -4996,7 +4996,7 @@
+ 		}
+ 	}
+ 
+-	diff = (uint32_t)(gettime() - sa->sa_last_recvd);
++	diff = (uint32_t)(ikev2_gettime() - sa->sa_last_recvd);
+ 	if (diff >= IKED_IKE_SA_LAST_RECVD_TIMEOUT) {
+ 		ikeidle = 1;
+ 		log_debug("%s: IKE SA %p ispi %s rspi %s last received %llu"

@@ -1,0 +1,82 @@
+diff -ruN c/iked/pfkey.c d/iked/pfkey.c
+--- c/iked/pfkey.c	2022-02-03 17:58:34.506167285 +0100
++++ d/iked/pfkey.c	2022-02-04 15:16:11.104443951 +0100
+@@ -1663,6 +1663,65 @@
+ }
+ #endif
+ 
++static ssize_t
++iov_total_len(const struct iovec *iov, int iovcnt)
++{
++	ssize_t tot_len = 0;
++	ssize_t max_len = SSIZE_MAX;
++
++	if (iovcnt <= 0 || iovcnt > IOV_MAX)
++		return -EINVAL;
++
++	while (iovcnt--) {
++		if (iov->iov_len > max_len)
++			return -EINVAL;
++		tot_len += iov->iov_len;
++		max_len -= iov->iov_len;
++		++iov;
++	}
++
++	return tot_len;
++}
++
++static void
++copy_from_iov(char *buf, const struct iovec *iov, size_t iovcnt)
++{
++	while (iovcnt--) {
++		memcpy(buf, iov->iov_base, iov->iov_len);
++		buf += iov->iov_len;
++		++iov;
++	}
++}
++
++static ssize_t
++pfkey_writev(int fd, const struct iovec *iov, int iovcnt)
++{
++	ssize_t len = iov_total_len(iov, iovcnt);
++
++	if (len >= 0) {
++		if (iovcnt == 1) {
++			len = write(fd, iov->iov_base, len);
++		}
++		else if (len <= 64) {
++			char buf[64]; /* small buffer optimization */
++
++			copy_from_iov(buf, iov, iovcnt);
++			len = write(fd, buf, len);
++		}
++		else {
++			char *buf = malloc(len);
++			if (!buf)
++				return SET_ERRNO(-ENOMEM);
++
++			copy_from_iov(buf, iov, iovcnt);
++			len = write(fd, buf, len);
++			free(buf);
++		}
++	}
++
++	return SET_ERRNO(len);
++}
++
+ int
+ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
+     uint8_t **datap, ssize_t *lenp)
+@@ -1684,7 +1743,12 @@
+ 		}
+ 	}
+ 
++#ifdef __phoenix__
++	/* our ipsec implementation assumes that whole message is sent at once */
++	if ((n = pfkey_writev(sd, iov, iov_cnt)) == -1) {
++#else
+ 	if ((n = writev(sd, iov, iov_cnt)) == -1) {
++#endif
+ 		log_warn("%s: writev failed: type %u len %zd",
+ 		    __func__, smsg->sadb_msg_type, len);
+ 		return (-1);

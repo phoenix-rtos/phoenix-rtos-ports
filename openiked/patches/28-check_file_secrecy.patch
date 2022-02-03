@@ -1,6 +1,6 @@
-diff -ruN a/iked/parse.y b/iked/parse.y
---- a/iked/parse.y	2021-08-23 17:19:20.500780563 +0200
-+++ b/iked/parse.y	2021-08-23 17:37:34.722802204 +0200
+diff -ruN c/iked/parse.y d/iked/parse.y
+--- c/iked/parse.y	2022-02-03 14:44:53.862656928 +0100
++++ d/iked/parse.y	2022-02-03 17:32:44.389998108 +0100
 @@ -1690,10 +1690,12 @@
  		warnx("%s: owner not root or current user", fname);
  		return (-1);
@@ -14,4 +14,3 @@ diff -ruN a/iked/parse.y b/iked/parse.y
  	return (0);
  }
  
-

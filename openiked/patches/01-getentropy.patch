@@ -1,6 +1,6 @@
-diff -ruN a/compat/arc4random.c b/compat/arc4random.c
---- a/compat/arc4random.c	2021-08-18 22:06:04.191291517 +0200
-+++ b/compat/arc4random.c	2021-08-18 22:16:45.634625004 +0200
+diff -ruN c/compat/arc4random.c d/compat/arc4random.c
+--- c/compat/arc4random.c	2022-02-03 11:08:54.677945735 +0100
++++ d/compat/arc4random.c	2022-02-03 11:20:38.720633559 +0100
 @@ -32,6 +32,7 @@
  #include <unistd.h>
  #include <sys/types.h>
@@ -9,16 +9,19 @@ diff -ruN a/compat/arc4random.c b/compat/arc4random.c
  
  #define KEYSTREAM_ONLY
  #include "chacha_private.h"
-@@ -65,6 +66,21 @@
+@@ -65,6 +66,24 @@
  static inline void _rs_forkdetect(void);
  #include "arc4random.h"
  
 +#ifndef HAVE_GETENTROPY
++/* FIXME: use TRNG */
 +int getentropy(void *buffer, size_t length)
 +{
++	struct timeval tv;
 +	uint8_t *p = (uint8_t *)buffer;
 +
-+	srandom(clock());
++	gettimeofday(&tv, NULL);
++	srandom(tv.tv_usec);
 +
 +	for (size_t i = 0; i < length; ++i) {
 +		 p[i] = random() % 0x100;
@@ -31,4 +34,3 @@ diff -ruN a/compat/arc4random.c b/compat/arc4random.c
  static inline void _rs_rekey(u_char *dat, size_t datlen);
  
  static inline void
-

@@ -1,0 +1,42 @@
+diff -ruN c/iked/config.c d/iked/config.c
+--- c/iked/config.c	2022-02-03 11:09:21.361709218 +0100
++++ d/iked/config.c	2022-02-03 12:34:26.804916855 +0100
+@@ -584,6 +584,9 @@
+ 	if ((s = udp_bind((struct sockaddr *)ss, port)) == -1)
+ 		return (-1);
+ 
++#ifdef __phoenix__
++	/* UDP_ENCAP_ESPINUDP option is not needed/supported by lwip */
++#else
+ #if defined(UDP_ENCAP_ESPINUDP)
+ 	if (natt
+ #if !defined(HAVE_UDPENCAP6)
+@@ -600,6 +603,7 @@
+ 		}
+ 	}
+ #endif
++#endif
+ 
+ 	proc_compose_imsg(&env->sc_ps, id, -1,
+ 	    IMSG_UDP_SOCKET, -1, s, ss, sizeof(*ss));
+diff -ruN c/iked/ikev2.c d/iked/ikev2.c
+--- c/iked/ikev2.c	2022-02-03 11:09:21.369709148 +0100
++++ d/iked/ikev2.c	2022-02-03 12:34:36.161984732 +0100
+@@ -1607,6 +1607,9 @@
+ 	if (!sa_stateok(sa, IKEV2_STATE_VALID))
+ 		return (0);	/* ignored */
+ 
++#ifdef __phoenix__
++	/* UDP_ENCAP_ESPINUDP option is not needed/supported by lwip */
++#else
+ #if defined(UDP_ENCAP_ESPINUDP)
+ 	if (sa->sa_udpencap) {
+ 		int	 sopt;
+@@ -1619,6 +1622,7 @@
+ 		}
+ 	}
+ #endif
++#endif
+ 
+ 	ret = ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
+ 	    sa->sa_hdr.sh_initiator, 0);

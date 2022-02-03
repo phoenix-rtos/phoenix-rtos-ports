@@ -1,0 +1,20 @@
+diff -ruN c/compat/openbsd-compat.h d/compat/openbsd-compat.h
+--- c/compat/openbsd-compat.h	2022-02-03 12:51:53.264110512 +0100
++++ d/compat/openbsd-compat.h	2022-02-03 17:27:01.908657913 +0100
+@@ -238,9 +238,16 @@
+ #define CPI_PRIVATE_MAX		65535
+ #endif
+ 
++#ifdef __phoenix__
++/* SADB_X_SPDUPDATE is not supported */
++#if !defined(SADB_X_ADDFLOW) && defined(SADB_X_SPDADD)
++#define SADB_X_ADDFLOW	SADB_X_SPDADD
++#endif
++#else
+ #if !defined(SADB_X_ADDFLOW) && defined(SADB_X_SPDUPDATE)
+ #define SADB_X_ADDFLOW	SADB_X_SPDUPDATE
+ #endif
++#endif
+ #if !defined(SADB_X_DELFLOW) && defined(SADB_X_SPDDELETE)
+ #define SADB_X_DELFLOW	SADB_X_SPDDELETE
+ #endif

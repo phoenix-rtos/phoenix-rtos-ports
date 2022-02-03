@@ -1,101 +1,80 @@
-diff -ruN a/compat/setproctitle.c b/compat/setproctitle.c
---- a/compat/setproctitle.c	2021-08-18 22:06:04.199290361 +0200
-+++ b/compat/setproctitle.c	2021-08-09 08:49:35.379973445 +0200
-@@ -128,7 +128,7 @@
+diff -ruN c/compat/setproctitle.c d/compat/setproctitle.c
+--- c/compat/setproctitle.c	2022-02-03 11:08:54.693945591 +0100
++++ d/compat/setproctitle.c	2022-02-03 12:08:17.749924656 +0100
+@@ -128,7 +128,12 @@
  	char buf[1024], ptitle[1024];
  	size_t len = 0;
  	int r;
--	extern char *__progname;
-+	const char *progname = "iked";
++#ifdef __phoenix__
++	/* our toolchain doesn't provide __progname */
++	const char *__progname = "iked";
++#else
+ 	extern char *__progname;
++#endif
  #if SPT_TYPE == SPT_PSTAT
  	union pstun pst;
  #endif
-@@ -138,7 +138,7 @@
- 		return;
- #endif
- 
--	strlcpy(buf, __progname, sizeof(buf));
-+	strlcpy(buf, progname, sizeof(buf));
- 
- 	r = -1;
- 	va_start(ap, fmt);
-diff -ruN a/ikectl/ikectl.c b/ikectl/ikectl.c
---- a/ikectl/ikectl.c	2021-08-18 22:06:05.779062151 +0200
-+++ b/ikectl/ikectl.c	2021-08-09 08:49:35.379973445 +0200
-@@ -71,10 +71,10 @@
+diff -ruN c/ikectl/ikectl.c d/ikectl/ikectl.c
+--- c/ikectl/ikectl.c	2022-02-03 11:09:06.897836709 +0100
++++ d/ikectl/ikectl.c	2022-02-03 12:08:27.434766900 +0100
+@@ -71,7 +71,12 @@
  __dead void
  usage(void)
  {
--	extern char *__progname;
-+	const char *progname = "ikectl";
++#ifdef __phoenix__
++	/* our toolchain doesn't provide __progname */
++	const char *__progname = "ikectl";
++#else
+ 	extern char *__progname;
++#endif
  
  	fprintf(stderr, "usage: %s [-q] [-s socket] command [arg ...]\n",
--	    __progname);
-+	    progname);
- 	exit(1);
- }
- 
-diff -ruN a/iked/iked.c b/iked/iked.c
---- a/iked/iked.c	2021-06-11 10:54:25.744913258 +0200
-+++ b/iked/iked.c	2021-06-23 11:51:49.898253943 +0200
-@@ -60,10 +60,10 @@
+ 	    __progname);
+diff -ruN c/iked/iked.c d/iked/iked.c
+--- c/iked/iked.c	2022-02-03 11:09:21.369709148 +0100
++++ d/iked/iked.c	2022-02-03 12:06:23.650331230 +0100
+@@ -60,7 +60,12 @@
  __dead void
  usage(void)
  {
--	extern char	*__progname;
-+	const char *progname = "iked";
++#ifdef __phoenix__
++	/* our toolchain doesn't provide __progname */
++	const char	*__progname = "iked";
++#else
+ 	extern char	*__progname;
++#endif
  
  	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
--	    "[-f file] [-p udpencap_port] [-s socket]\n", __progname);
-+	    "[-f file] [-p udpencap_port] [-s socket]\n", progname);
- 	exit(1);
- }
- 
-diff -ruN a/iked/log.c b/iked/log.c
---- a/iked/log.c	2021-08-18 22:06:06.654935624 +0200
-+++ b/iked/log.c	2021-08-23 14:01:42.952012928 +0200
-@@ -52,14 +52,14 @@
+ 	    "[-f file] [-p udpencap_port] [-s socket]\n", __progname);
+diff -ruN c/iked/log.c d/iked/log.c
+--- c/iked/log.c	2022-02-03 11:09:21.373709113 +0100
++++ d/iked/log.c	2022-02-03 12:06:56.580576874 +0100
+@@ -52,7 +52,12 @@
  void
  log_init(int n_debug, int facility)
  {
--	extern char	*__progname;
-+	const char *progname = "iked";
++#ifdef __phoenix__
++	/* our toolchain doesn't provide __progname */
++	const char	*__progname = "iked";
++#else
+ 	extern char	*__progname;
++#endif
  
  	debug = n_debug;
  	verbose = n_debug;
--	log_procinit(__progname);
-+	log_procinit(progname);
- 
- 	if (!debug)
--		openlog(__progname, LOG_PID | LOG_NDELAY, facility);
-+		openlog(progname, LOG_PID | LOG_NDELAY, facility);
- 
- 	tzset();
- }
-diff -ruN a/regress/test_helper/test_helper.c b/regress/test_helper/test_helper.c
---- a/regress/test_helper/test_helper.c	2021-06-11 10:55:18.790954990 +0200
-+++ b/regress/test_helper/test_helper.c	2021-06-11 17:46:31.576973750 +0200
-@@ -96,7 +100,7 @@
+diff -ruN c/regress/test_helper/test_helper.c d/regress/test_helper/test_helper.c
+--- c/regress/test_helper/test_helper.c	2022-02-03 11:09:30.097632995 +0100
++++ d/regress/test_helper/test_helper.c	2022-02-03 12:01:59.578412799 +0100
+@@ -96,7 +96,12 @@
  		}				\
  	} while (0)
  
--extern char *__progname;
-+static char *progname = "test_helper";
++#ifdef __phoenix__
++/* our toolchain doesn't provide __progname */
++static const char *__progname = "test_helper";
++#else
+ extern char *__progname;
++#endif
  
  static int verbose_mode = 0;
  static int quiet_mode = 0;
-@@ -126,13 +130,13 @@
- 			break;
- 		default:
- 			fprintf(stderr, "Unrecognised command line option\n");
--			fprintf(stderr, "Usage: %s [-v]\n", __progname);
-+			fprintf(stderr, "Usage: %s [-v]\n", progname);
- 			exit(1);
- 		}
- 	}
- 	setvbuf(stdout, NULL, _IONBF, 0);
- 	if (!quiet_mode)
--		printf("%s: ", __progname);
-+		printf("%s: ", progname);
- 	if (verbose_mode)
- 		printf("\n");

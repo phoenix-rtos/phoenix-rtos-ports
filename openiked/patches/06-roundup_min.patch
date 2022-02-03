@@ -1,0 +1,25 @@
+diff -ruN c/iked/iked.h d/iked/iked.h
+--- c/iked/iked.h	2022-02-03 11:09:21.369709148 +0100
++++ d/iked/iked.h	2022-02-03 12:44:11.386326185 +0100
+@@ -815,6 +815,9 @@
+ 	unsigned int		  nxfs;
+ };
+ 
++#define roundup(x, y) ((((x) + ((y) -1)) / (y)) * (y))
++#define MIN(a, b) (((a) < (b)) ? (a) : (b))
++
+ /* iked.c */
+ void	 parent_reload(struct iked *, int, const char *);
+ 
+diff -ruN c/regress/test_helper/test_helper.c d/regress/test_helper/test_helper.c
+--- c/regress/test_helper/test_helper.c	2022-02-03 12:09:36.125099276 +0100
++++ d/regress/test_helper/test_helper.c	2022-02-03 12:44:11.386326185 +0100
+@@ -34,6 +34,8 @@
+ 
+ #include "test_helper.h"
+ 
++#define MIN(a,b) (((a)<(b))?(a):(b))
++
+ #define TEST_CHECK_INT(r, pred) do {		\
+ 		switch (pred) {			\
+ 		case TEST_EQ:			\

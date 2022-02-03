@@ -1,0 +1,20 @@
+diff -ruN c/iked/proc.c d/iked/proc.c
+--- c/iked/proc.c	2022-02-03 14:56:05.101940726 +0100
++++ d/iked/proc.c	2022-02-04 15:21:22.874690702 +0100
+@@ -393,10 +393,16 @@
+ 	else
+ 		root = pw->pw_dir;
+ 
++#ifdef __phoenix__
++	/* chroot is not supported in libphoenix (non-POSIX) */
++	if (chdir(root) == -1)
++		fatal("proc_run: chdir(\"%s\")", root);
++#else
+ 	if (chroot(root) == -1)
+ 		fatal("proc_run: chroot");
+ 	if (chdir("/") == -1)
+ 		fatal("proc_run: chdir(\"/\")");
++#endif
+ 
+ 	privsep_process = p->p_id;
+ 

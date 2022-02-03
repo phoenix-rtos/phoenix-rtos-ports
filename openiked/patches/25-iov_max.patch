@@ -1,0 +1,15 @@
+diff -ruN c/compat/imsg-buffer.c d/compat/imsg-buffer.c
+--- c/compat/imsg-buffer.c	2022-02-03 16:20:02.079442570 +0100
++++ d/compat/imsg-buffer.c	2022-02-03 16:20:40.950555529 +0100
+@@ -183,7 +183,11 @@
+ int
+ ibuf_write(struct msgbuf *msgbuf)
+ {
++#ifdef __phoenix__
++	struct iovec	 iov[32]; /* avoid stack overflow */
++#else
+ 	struct iovec	 iov[IOV_MAX];
++#endif
+ 	struct ibuf	*buf;
+ 	unsigned int	 i = 0;
+ 	ssize_t	n;
