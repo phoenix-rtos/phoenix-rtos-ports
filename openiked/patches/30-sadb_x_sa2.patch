@@ -1,0 +1,37 @@
+diff -ruN c/iked/pfkey.c d/iked/pfkey.c
+--- c/iked/pfkey.c	2022-02-03 12:51:53.280106516 +0100
++++ d/iked/pfkey.c	2022-02-03 17:46:55.793736457 +0100
+@@ -1369,6 +1369,7 @@
+ 	uint8_t			*data;
+ 	ssize_t			 n;
+ 	int			 iov_cnt, ret = -1;
++	struct sadb_x_sa2	 sa_2;
+ 
+ 	bzero(&ssrc, sizeof(ssrc));
+ 	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
+@@ -1410,6 +1411,12 @@
+ 	    (sizeof(sa_dst) + ROUNDUP(SS_LEN(sdst))) / 8;
+ 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+ 
++	bzero(&sa_2, sizeof(sa_2));
++	sa_2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
++	sa_2.sadb_x_sa2_len = sizeof(sa_2) / 8;
++	sa_2.sadb_x_sa2_mode = (sa->csa_transport) ? IPSEC_MODE_TRANSPORT :
++	    IPSEC_MODE_TUNNEL;
++
+ #define PAD(len)					\
+ 	padlen = ROUNDUP((len)) - (len);		\
+ 	if (padlen) {					\
+@@ -1451,6 +1458,12 @@
+ 	iov_cnt++;
+ 	PAD(SS_LEN(sdst));
+ 
++	/* extended SA header - expected by our ipsec */
++	iov[iov_cnt].iov_base = &sa_2;
++	iov[iov_cnt].iov_len = sizeof(sa_2);
++	smsg.sadb_msg_len += sa_2.sadb_x_sa2_len;
++	iov_cnt++;
++
+ 	*spip = 0;
+ 
+ 	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)

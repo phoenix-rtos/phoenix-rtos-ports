@@ -1,0 +1,57 @@
+diff -ruN c/iked/iked.c d/iked/iked.c
+--- c/iked/iked.c	2022-02-04 15:15:44.619349881 +0100
++++ d/iked/iked.c	2022-02-04 15:35:30.846009935 +0100
+@@ -119,7 +119,7 @@
+ 	extern char	*__progname;
+ #endif
+ 
+-	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
++	fprintf(stderr, "usage: %s [-dnSTtvr] [-D macro=value] "
+ 	    "[-f file] [-p udpencap_port] [-s socket]\n", __progname);
+ 	exit(1);
+ }
+@@ -128,7 +128,7 @@
+ main(int argc, char *argv[])
+ {
+ 	int		 c;
+-	int		 debug = 0, verbose = 0;
++	int		 debug = 0, verbose = 0, direct = 0;
+ 	int		 opts = 0;
+ 	enum natt_mode	 natt_mode = NATT_DEFAULT;
+ 	in_port_t	 port = IKED_NATT_PORT;
+@@ -155,7 +155,7 @@
+ 	argv = saved_av;
+ #endif
+ 
+-	while ((c = getopt(argc, argv, "6D:df:np:Ss:Ttv")) != -1) {
++	while ((c = getopt(argc, argv, "6D:df:np:Ss:Ttvr")) != -1) {
+ 		switch (c) {
+ 		case '6':
+ 			log_warnx("the -6 option is ignored and will be "
+@@ -204,6 +204,10 @@
+ 			verbose++;
+ 			opts |= IKED_OPT_VERBOSE;
+ 			break;
++		case 'r':
++			/* do not daemonize, log to syslog */
++			direct = 1;
++			break;
+ 		default:
+ 			usage();
+ 		}
+@@ -241,13 +245,13 @@
+ 	/* Configure the control socket */
+ 	ps->ps_csock.cs_name = sock;
+ 
+-	log_init(debug, LOG_DAEMON);
++	log_init(debug && !direct, LOG_DAEMON);
+ 	log_setverbose(verbose);
+ 
+ 	if (opts & IKED_OPT_NOACTION)
+ 		ps->ps_noaction = 1;
+ 
+-	if (!debug && daemon(0, 0) == -1)
++	if (!debug && !direct && daemon(0, 0) == -1)
+ 		err(1, "failed to daemonize");
+ 
+ 	group_init();

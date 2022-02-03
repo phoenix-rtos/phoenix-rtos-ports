@@ -1,0 +1,11 @@
+diff -ruN c/CMakeLists.txt d/CMakeLists.txt
+--- c/CMakeLists.txt	2022-02-03 15:56:18.318510623 +0100
++++ d/CMakeLists.txt	2022-02-03 15:54:42.422672028 +0100
+@@ -60,7 +60,6 @@
+ 	add_definitions(-D_GNU_SOURCE)
+ 	add_definitions(-D_DEFAULT_SOURCE)
+ 	add_definitions(-DSPT_TYPE=SPT_REUSEARGV)
+-	set(HAVE_VROUTE_NETLINK ON)
+ endif()
+ if (NOT DEFINED CMAKE_INSTALL_MANDIR)
+ 	set (CMAKE_INSTALL_MANDIR ${CMAKE_INSTALL_PREFIX}/man)

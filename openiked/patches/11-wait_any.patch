@@ -1,0 +1,15 @@
+diff -ruN c/iked/proc.c d/iked/proc.c
+--- c/iked/proc.c	2022-02-03 12:51:53.280106516 +0100
++++ d/iked/proc.c	2022-02-03 14:53:19.140618304 +0100
+@@ -142,7 +142,11 @@
+ 	}
+ 
+ 	do {
++#ifdef __phoenix__
++		pid = waitpid(-1, NULL, 0); /* WAIT_ANY is not defined in libphoenix */
++#else
+ 		pid = waitpid(WAIT_ANY, NULL, 0);
++#endif
+ 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+ 
+ 	proc_close(ps);

@@ -1,0 +1,19 @@
+diff -ruN c/iked/util.c d/iked/util.c
+--- c/iked/util.c	2022-02-03 16:16:27.025160211 +0100
++++ d/iked/util.c	2022-02-03 16:18:25.009901302 +0100
+@@ -232,11 +232,15 @@
+ 		goto bad;
+ 	}
+ 
++#ifdef __phoenix__
++	/* SO_REUSEPORT is not supported in libphoenix */
++#else
+ 	val = 1;
+ 	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(int)) == -1) {
+ 		log_warn("%s: failed to set reuseport", __func__);
+ 		goto bad;
+ 	}
++#endif /* __phoenix__ */
+ 	val = 1;
+ 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
+ 		log_warn("%s: failed to set reuseaddr", __func__);

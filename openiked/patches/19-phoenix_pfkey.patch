@@ -1,0 +1,25 @@
+diff -ruN c/CMakeLists.txt d/CMakeLists.txt
+--- c/CMakeLists.txt	2022-02-03 15:57:40.382383908 +0100
++++ d/CMakeLists.txt	2022-02-03 15:59:15.294248338 +0100
+@@ -75,6 +75,11 @@
+ 	add_definitions(-DHAVE_LINUX_PFKEY_H)
+ endif()
+ 
++check_include_files("phoenix/pfkeyv2.h" HAVE_PHOENIX_PFKEY_H)
++if(HAVE_PHOENIX_PFKEY_H)
++	add_definitions(-DHAVE_PHOENIX_PFKEY_H)
++endif()
++
+ if(CMAKE_BUILD_TYPE STREQUAL DEBUG)
+ 	message("Debug build.")
+ elseif(CMAKE_BUILD_TYPE STREQUAL RELEASE)
+diff -ruN c/compat/net/pfkeyv2.h d/compat/net/pfkeyv2.h
+--- c/compat/net/pfkeyv2.h	2022-02-03 12:51:53.264110512 +0100
++++ d/compat/net/pfkeyv2.h	2022-02-03 15:58:13.282335682 +0100
+@@ -18,4 +18,6 @@
+ #include_next <net/pfkeyv2.h>
+ #elif defined(HAVE_LINUX_PFKEY_H)
+ #include <linux/pfkeyv2.h>
++#elif defined(HAVE_PHOENIX_PFKEY_H)
++#include <phoenix/pfkeyv2.h>
+ #endif

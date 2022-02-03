@@ -1,0 +1,20 @@
+diff -ruN c/iked/parse.y d/iked/parse.y
+--- c/iked/parse.y	2022-02-03 17:33:18.998172488 +0100
++++ d/iked/parse.y	2022-02-04 15:29:22.565325491 +0100
+@@ -1026,7 +1026,16 @@
+ 		;
+ 
+ ikeauth		: /* empty */			{
++#ifdef __phoenix__
++			/*
++			 * Force default auth method to IKEV2_AUTH_RSA_SIG.
++			 * Energa VPN server ignores IKE_AUTH message when
++			 * we send IKEV2_AUTH_SIG_ANY.
++			 */
++			$$.auth_method = IKEV2_AUTH_RSA_SIG;	/* default */
++#else
+ 			$$.auth_method = IKEV2_AUTH_SIG_ANY;	/* default */
++#endif
+ 			$$.auth_eap = 0;
+ 			$$.auth_length = 0;
+ 		}

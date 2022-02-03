@@ -1,0 +1,36 @@
+diff -ruN c/iked/ikev2.c d/iked/ikev2.c
+--- c/iked/ikev2.c	2022-02-03 13:09:52.517176321 +0100
++++ d/iked/ikev2.c	2022-02-03 16:10:29.337490039 +0100
+@@ -605,7 +605,7 @@
+ 
+ 	logit(hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL ?
+ 	    LOG_DEBUG : LOG_INFO,
+-	    "%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
++	    "%srecv %s %s %u peer %s local %s, %zu bytes, policy '%s'",
+ 	    SPI_IH(hdr),
+ 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+ 	    msg->msg_response ? "res" : "req",
+diff -ruN c/iked/ikev2_msg.c d/iked/ikev2_msg.c
+--- c/iked/ikev2_msg.c	2022-02-03 12:51:53.276107515 +0100
++++ d/iked/ikev2_msg.c	2022-02-03 16:10:29.337490039 +0100
+@@ -271,7 +271,7 @@
+ 	exchange = hdr->ike_exchange;
+ 	flags = hdr->ike_flags;
+ 	logit(exchange == IKEV2_EXCHANGE_INFORMATIONAL ?  LOG_DEBUG : LOG_INFO,
+-	    "%ssend %s %s %u peer %s local %s, %ld bytes%s",
++	    "%ssend %s %s %u peer %s local %s, %zu bytes%s",
+ 	    SPI_IH(hdr),
+ 	    print_map(exchange, ikev2_exchange_map),
+ 	    (flags & IKEV2_FLAG_RESPONSE) ? "res" : "req",
+diff -ruN c/iked/ikev2_pld.c d/iked/ikev2_pld.c
+--- c/iked/ikev2_pld.c	2022-02-03 12:51:53.276107515 +0100
++++ d/iked/ikev2_pld.c	2022-02-03 16:10:29.341490035 +0100
+@@ -319,7 +319,7 @@
+ 	 */
+ 	if (!sap->sap_more && left != sap_length) {
+ 		log_debug("%s: malformed payload: SA payload length mismatches "
+-		    "single proposal substructure length (%lu != %zu)",
++		    "single proposal substructure length (%zu != %zu)",
+ 		    __func__, left, sap_length);
+ 		return (-1);
+ 	}
