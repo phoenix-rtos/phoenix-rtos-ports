@@ -1,0 +1,64 @@
+diff -ruN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2022-02-23 11:09:19.006444416 +0100
++++ b/CMakeLists.txt	2022-02-24 16:34:16.105576955 +0100
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.4.4)
++cmake_minimum_required(VERSION 3.4)
+ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
+ 
+ project(zlib C)
+@@ -7,12 +7,14 @@
+ 
+ option(ASM686 "Enable building i686 assembly implementation")
+ option(AMD64 "Enable building amd64 assembly implementation")
++option(SKIP_BUILD_EXAMPLES "Skip build of the examples" OFF)
++option(SKIP_INSTALL_MAN "Skip installation of manual pages" OFF)
+ 
+ set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
+ set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
+ set(INSTALL_INC_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "Installation directory for headers")
+ set(INSTALL_MAN_DIR "${CMAKE_INSTALL_PREFIX}/share/man" CACHE PATH "Installation directory for manual pages")
+-set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
++set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
+ 
+ include(CheckTypeSize)
+ include(CheckFunctionExists)
+@@ -211,7 +213,15 @@
+ endif()
+ 
+ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+-    install(TARGETS zlib zlibstatic
++    if (BUILD_SHARED_LIBS)
++        set(ZLIB_TARGETS zlib)
++        set_target_properties(zlibstatic PROPERTIES EXCLUDE_FROM_ALL ON)
++    else()
++        set(ZLIB_TARGETS zlibstatic)
++        set_target_properties(zlib PROPERTIES EXCLUDE_FROM_ALL ON)
++    endif()
++
++    install(TARGETS ${ZLIB_TARGETS}
+         RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
+@@ -219,7 +229,7 @@
+ if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
+     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
+ endif()
+-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
++if(NOT SKIP_INSTALL_MAN AND NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+     install(FILES zlib.3 DESTINATION "${INSTALL_MAN_DIR}/man3")
+ endif()
+ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+@@ -230,6 +240,7 @@
+ # Example binaries
+ #============================================================================
+ 
++if (NOT SKIP_BUILD_EXAMPLES)
+ add_executable(example test/example.c)
+ target_link_libraries(example zlib)
+ add_test(example example)
+@@ -247,3 +258,4 @@
+     target_link_libraries(minigzip64 zlib)
+     set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+ endif()
++endif()

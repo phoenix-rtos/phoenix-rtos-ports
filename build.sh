@@ -41,6 +41,8 @@ fi
 
 [ "${PORTS_OPENSSL}" = "y" ] && ./phoenix-rtos-ports/openssl/build.sh
 
+[ "${PORTS_ZLIB}" = "y" ] && ./phoenix-rtos-ports/zlib/build.sh
+
 [ "${PORTS_LIGHTTPD}" = "y" ] && ./phoenix-rtos-ports/lighttpd/build.sh
 
 [ "${PORTS_DROPBEAR}" = "y" ] && ./phoenix-rtos-ports/dropbear/build.sh
