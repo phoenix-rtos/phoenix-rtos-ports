@@ -40,10 +40,11 @@ if [ ! -f "$PREFIX_LIGHTTPD_BUILD/config.h" ]; then
 	grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_LIGHTTPD_SRC"/src/plugin-static.h
 
 	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
+	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
 	( cd "$PREFIX_LIGHTTPD_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 		-C --disable-ipv6 --disable-mmap --with-bzip2=no \
-		--with-zlib=no --enable-shared=no --enable-static=yes --disable-shared  --host="$HOST" --with-openssl="${PREFIX_OPENSSL}" --with-pcre="${PREFIX_PCRE}" \
+		--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared  --host="$HOST" --with-openssl="${PREFIX_OPENSSL}" --with-pcre="${PREFIX_PCRE}" \
 		--prefix="$PREFIX_LIGHTTPD_BUILD" --sbindir="$PREFIX_PROG")
 
 	set +e
