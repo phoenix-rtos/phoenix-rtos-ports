@@ -1,0 +1,21 @@
+diff -ur azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt
+--- azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt	2022-03-22 12:22:40.554779839 +0100
++++ azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt	2022-03-22 12:20:46.333376244 +0100
+@@ -14,11 +14,12 @@
+                FOLDER "IoTHub_Samples")
+ endfunction()
+ 
+-add_sample_directory(iothub_convenience_sample)
+-add_sample_directory(iothub_ll_c2d_sample)
+-add_sample_directory(iothub_ll_client_x509_sample)
+-add_sample_directory(iothub_ll_telemetry_sample)
+-add_sample_directory(iotedge_downstream_device_sample)
++# temporarily disabled samples
++# add_sample_directory(iothub_convenience_sample)
++# add_sample_directory(iothub_ll_c2d_sample)
++# add_sample_directory(iothub_ll_client_x509_sample)
++# add_sample_directory(iothub_ll_telemetry_sample)
++# add_sample_directory(iotedge_downstream_device_sample)
+ 
+ if(${use_http})
+     if(NOT ${dont_use_uploadtoblob})

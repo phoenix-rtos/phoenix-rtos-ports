@@ -1,0 +1,189 @@
+diff -ur azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c
+--- azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c	2022-03-22 12:22:50.146898929 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c	2022-03-21 16:01:26.113091226 +0100
+@@ -6,28 +6,18 @@
+ #include "azure_c_shared_utility/condition.h"
+ #include "azure_c_shared_utility/xlogging.h"
+ #include <errno.h>
+-#include <pthread.h>
++#include <sys/threads.h>
+ #include "azure_c_shared_utility/gballoc.h"
+ #include "time.h"
+ #include "linux_time.h"
+ 
+ MU_DEFINE_ENUM_STRINGS(COND_RESULT, COND_RESULT_VALUES);
+ 
+-pthread_cond_t* create_cond(void)
++handle_t* create_cond(void)
+ {
+-    pthread_cond_t * cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
++    handle_t *cond = (handle_t*)malloc(sizeof(handle_t));
+     if (cond != NULL)
+-    {
+-#ifdef __MACH__
+-        pthread_cond_init(cond, NULL);
+-#else
+-        pthread_condattr_t cattr;
+-        pthread_condattr_init(&cattr);
+-        pthread_condattr_setclock(&cattr, time_basis);
+-        pthread_cond_init(cond, &cattr);
+-        pthread_condattr_destroy(&cattr);
+-#endif
+-    }
++        condCreate(cond);
+ 
+     return cond;
+ }
+@@ -52,7 +42,7 @@
+     else
+     {
+         // Codes_SRS_CONDITION_18_003: [ Condition_Post shall return COND_OK if it succcessfully posts the condition ]
+-        if (pthread_cond_signal((pthread_cond_t*)handle) == 0)
++        if (condSignal((handle_t)handle) == 0)
+         {
+             result = COND_OK;
+         }
+@@ -79,19 +69,8 @@
+         if (timeout_milliseconds > 0)
+         {
+             // Codes_SRS_CONDITION_18_013: [ Condition_Wait shall accept relative timeouts ]
+-            struct timespec tm;
+-            if (get_time_ns(&tm) != 0)
+-            {
+-                LogError("Failed to get the current time");
+-                return COND_ERROR;
+-            }
+ 
+-            tm.tv_nsec += (timeout_milliseconds % MILLISECONDS_IN_1_SECOND) * NANOSECONDS_IN_1_MILLISECOND;
+-            tm.tv_sec += timeout_milliseconds / MILLISECONDS_IN_1_SECOND;
+-            // handle overflow in tv_nsec
+-            tm.tv_sec+= tm.tv_nsec / NANOSECONDS_IN_1_SECOND;
+-            tm.tv_nsec %= NANOSECONDS_IN_1_SECOND;
+-            int wait_result = pthread_cond_timedwait((pthread_cond_t *)handle, (pthread_mutex_t *)lock, &tm);
++            int wait_result = condWait((handle_t)handle, (handle_t)lock, timeout_milliseconds);
+             if (wait_result == ETIMEDOUT)
+             {
+                 // Codes_SRS_CONDITION_18_011: [ Condition_Wait shall return COND_TIMEOUT if the condition is NOT triggered and timeout_milliseconds is not 0 ]
+@@ -110,7 +89,7 @@
+         }
+         else
+         {
+-            if (pthread_cond_wait((pthread_cond_t*)handle, (pthread_mutex_t *)lock) != 0)
++            if (condWait((handle_t)handle, (handle_t)lock, 0) != 0)
+             {
+                 LogError("Failed to pthread_cond_wait");
+                 return COND_ERROR;
+@@ -131,9 +110,8 @@
+     if (handle != NULL)
+     {
+         // Codes_SRS_CONDITION_18_009: [ Condition_Deinit will deallocate handle if it is not NULL
+-        pthread_cond_t* cond = (pthread_cond_t*)handle;
+-        pthread_cond_destroy(cond);
+-        free(cond);
++        resourceDestroy((handle_t)handle);
++        free(handle);
+     }
+ }
+ 
+diff -ur azure-iot-sdk-c/c-utility/adapters/linux_time.c azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c
+--- azure-iot-sdk-c/c-utility/adapters/linux_time.c	2022-03-22 12:22:50.150898978 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c	2022-03-21 16:02:14.229411083 +0100
+@@ -28,10 +28,9 @@
+ #elif defined(CLOCK_REALTIME)
+     time_basis = CLOCK_REALTIME;
+ #else
+-    pthread_condattr_t cattr;
+-    pthread_condattr_init(&cattr);
+-    pthread_condattr_getclock(&cattr, &time_basis);
+-    pthread_condattr_destroy(&cattr);
++    handle_t *cond = (handle_t*)malloc(sizeof(handle_t));
++    if (cond != NULL)
++        condCreate(cond);
+ #endif
+ #endif
+ }
+diff -ur azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c
+--- azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c	2022-03-22 12:22:50.150898978 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c	2022-03-21 14:43:27.630332222 +0100
+@@ -7,6 +7,7 @@
+ #endif
+ 
+ #define _DEFAULT_SOURCE
++#include <sys/socket.h>
+ #include <net/if.h>
+ #undef _DEFAULT_SOURCE
+ 
+diff -ur azure-iot-sdk-c/c-utility/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/CMakeLists.txt	2022-03-22 12:22:50.146898929 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt	2022-03-22 12:19:42.052599658 +0100
+@@ -560,6 +560,9 @@
+     endif()
+ endif()
+ 
++# when calling find_package dl is linked automatically, to avoid that OPENSSL is set second time without it
++set(OPENSSL_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
++
+ if(${use_openssl})
+     set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} ${OPENSSL_LIBRARIES})
+     if (WIN32)
+@@ -591,7 +594,8 @@
+ endif()
+ 
+ if(LINUX)
+-    set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
++    # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
++    # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
+     if (NOT ${use_default_uuid})
+         if(APPLE)
+             find_package(PkgConfig REQUIRED)
+@@ -599,7 +603,7 @@
+             link_directories(${UUID_LIBRARY_DIRS})
+             set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} -L${UUID_LIBRARY_DIRS} ${UUID_LIBRARIES})
+         else()
+-            set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} uuid)
++            # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} uuid)
+         endif()
+     endif()
+     if(${use_c_ares})
+diff -ur azure-iot-sdk-c/c-utility/src/gballoc.c azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c
+--- azure-iot-sdk-c/c-utility/src/gballoc.c	2022-03-22 12:22:50.162899128 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c	2022-03-21 13:11:56.084784186 +0100
+@@ -424,7 +424,7 @@
+     return result;
+ }
+ 
+-void gballoc_resetMetrics()
++void gballoc_resetMetrics(void)
+ {
+     /* Codes_SRS_GBALLOC_07_005: [ If gballoc was not initialized gballoc_reset Metrics shall do nothing.] */
+     if (gballocState != GBALLOC_STATE_INIT)
+diff -ur azure-iot-sdk-c/c-utility/src/gbnetwork.c azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c
+--- azure-iot-sdk-c/c-utility/src/gbnetwork.c	2022-03-22 12:22:50.162899128 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c	2022-03-21 13:11:56.084784186 +0100
+@@ -68,7 +68,7 @@
+     gbnetworkState = GBNETWORK_STATE_NOT_INIT;
+ }
+ 
+-void gbnetwork_resetMetrics()
++void gbnetwork_resetMetrics(void)
+ {
+     if (gbnetworkState != GBNETWORK_STATE_INIT)
+     {
+@@ -189,7 +189,7 @@
+     return result;
+ }
+ 
+-uint64_t gbnetwork_getBytesRecv()
++uint64_t gbnetwork_getBytesRecv(void)
+ {
+     uint64_t result;
+ 
+@@ -211,7 +211,7 @@
+     return result;
+ }
+ 
+-uint64_t gbnetwork_getNumRecv()
++uint64_t gbnetwork_getNumRecv(void)
+ {
+     uint64_t result;
+ 
