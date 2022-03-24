@@ -1,0 +1,264 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c/CMakeLists.txt azure-iot-sdk-c-phoenix/CMakeLists.txt
+--- azure-iot-sdk-c/CMakeLists.txt	2022-03-25 10:07:50.479819142 +0100
++++ azure-iot-sdk-c-phoenix/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -293,7 +293,8 @@
+ if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
+     # Used for serializer
+     add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/sal)
+-    add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
++    # micromock not supported on Phoenix-RTOS
++    # add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
+ endif()
+ 
+ set_platform_files(${SHARED_UTIL_FOLDER})
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/httpapi_compact.c azure-iot-sdk-c-phoenix/c-utility/adapters/httpapi_compact.c
+--- azure-iot-sdk-c/c-utility/adapters/httpapi_compact.c	2022-03-25 10:04:20.422265839 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/httpapi_compact.c	2022-03-24 16:16:48.029723006 +0100
+@@ -66,7 +66,8 @@
+     int result;
+     char* next;
+     long num = strtol(src, &next, 0);
+-    if (src == next || num < INT_MIN || num > INT_MAX)
++    /* Phoenix-RTOS specific - long and int have the same size on ia32-generic target */
++    if (src == next) /* || num < INT_MIN || num > INT_MAX) */
+     {
+         result = EOF;
+     }
+@@ -74,8 +75,10 @@
+     {
+         result = 1;
+     }
++    /*
+     if (num < INT_MIN) num = INT_MIN;
+     if (num > INT_MAX) num = INT_MAX;
++    */
+     *dst = (int)num;
+     return result;
+ }
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/CMakeLists.txt	2022-03-25 10:07:50.487819464 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -593,6 +593,8 @@
+     endif()
+ endif()
+ 
++# c-utility unit tests have to be enabled manually here
++set(run_unittests ON)
+ if(LINUX)
+     # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
+     # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/condition_ut/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/tests/condition_ut/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-25 10:04:20.446267076 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -26,7 +26,8 @@
+ 
+ if(WIN32)
+ else()
+-    target_link_libraries(${theseTestsName}_exe pthread)
++    # pthread is present in libphoenix library, so there is no need to link it separately
++    # target_link_libraries(${theseTestsName}_exe pthread)
+ endif()
+ 
+ compile_c_test_artifacts_as(${theseTestsName} C99)
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c
+--- azure-iot-sdk-c/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c	2022-03-25 10:04:20.446267076 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c	2022-03-24 15:57:39.552679848 +0100
+@@ -577,7 +577,7 @@
+ }
+ 
+ #define TEST_RECEIVED_ANSWER (const unsigned char*)"HTTP/111.222 433 555\r\ncontent-length:10\r\ntransfer-encoding:\r\n\r\n0123456789\r\n\r\n"
+-static void setupAllCallBeforeReceiveHTTPsequenceWithSuccess()
++static void setupAllCallBeforeReceiveHTTPsequenceWithSuccess(void)
+ {
+     STRICT_EXPECTED_CALL(xio_dowork(IGNORED_NUM_ARG))
+         .IgnoreArgument(1);
+@@ -634,7 +634,7 @@
+ }
+ 
+ #define TEST_HEAD_RECEIVED_ANSWER (const unsigned char*)"HTTP/111.222 433 555\r\ncontent-length:10\r\ntransfer-encoding:\r\n\r\n"
+-static void setupAllCallBeforeReceiveHTTPHeadsequenceWithSuccess()
++static void setupAllCallBeforeReceiveHTTPHeadsequenceWithSuccess(void)
+ {
+     STRICT_EXPECTED_CALL(xio_dowork(IGNORED_NUM_ARG));
+ 
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/string_token_ut/string_token_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/string_token_ut/string_token_ut.c
+--- azure-iot-sdk-c/c-utility/tests/string_token_ut/string_token_ut.c	2022-03-25 10:04:20.450267282 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/string_token_ut/string_token_ut.c	2022-03-24 16:17:50.354479846 +0100
+@@ -71,7 +71,7 @@
+     real_free(ptr);
+ }
+ 
+-static void register_global_mock_hooks()
++static void register_global_mock_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(malloc, TEST_malloc);
+     REGISTER_GLOBAL_MOCK_HOOK(realloc, TEST_realloc);
+@@ -79,19 +79,19 @@
+ }
+ 
+ // Set Expected Call Helpers
+-static void set_expected_calls_for_get_delimiters_lengths()
++static void set_expected_calls_for_get_delimiters_lengths(void)
+ {
+     STRICT_EXPECTED_CALL(malloc(IGNORED_NUM_ARG));
+ }
+ 
+-static void set_expected_calls_for_StringToken_GetFirst()
++static void set_expected_calls_for_StringToken_GetFirst(void)
+ {
+     STRICT_EXPECTED_CALL(malloc(IGNORED_NUM_ARG));
+     set_expected_calls_for_get_delimiters_lengths();
+     STRICT_EXPECTED_CALL(free(IGNORED_PTR_ARG));
+ }
+ 
+-static void set_expected_calls_for_StringToken_GetNext()
++static void set_expected_calls_for_StringToken_GetNext(void)
+ {
+     set_expected_calls_for_get_delimiters_lengths();
+     STRICT_EXPECTED_CALL(free(IGNORED_PTR_ARG)); // delimiters lengths
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h azure-iot-sdk-c-phoenix/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h
+--- azure-iot-sdk-c/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h	2022-03-24 17:12:47.865283160 +0100
+@@ -22,7 +22,7 @@
+ static uint32_t memory_block_count;
+ 
+ 
+-static void init_gballoc_checks()
++static void init_gballoc_checks(void)
+ {
+     uint32_t i;
+     memory_block_count = 0;
+@@ -70,7 +70,7 @@
+     }
+ }
+ 
+-static void assert_gballoc_checks()
++static void assert_gballoc_checks(void)
+ {
+     uint32_t i;
+     for (i = 0; i < memory_block_count; i++)
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c
+--- azure-iot-sdk-c/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c	2022-03-24 17:13:06.329329473 +0100
+@@ -57,7 +57,7 @@
+     ASSERT_FAIL("umock_c reported error :%" PRI_MU_ENUM "", MU_ENUM_VALUE(UMOCK_C_ERROR_CODE, error_code));
+ }
+ 
+-static void use_negative_mocks()
++static void use_negative_mocks(void)
+ {
+     int negativeTestsInitResult = umock_c_negative_tests_init();
+     ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/uniqueid_ut/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/tests/uniqueid_ut/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/tests/uniqueid_ut/CMakeLists.txt	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/uniqueid_ut/CMakeLists.txt	2022-03-24 17:16:45.756554887 +0100
+@@ -32,6 +32,7 @@
+     if(APPLE)
+         build_c_test_artifacts(${uniqueid_ut_test_file} ON "tests/azure_c_shared_utility_tests" ADDITIONAL_LIBS -L${UUID_LIBRARY_DIRS} ${UUID_LIBRARIES})
+     else()
+-        build_c_test_artifacts(${uniqueid_ut_test_file} ON "tests/azure_c_shared_utility_tests" ADDITIONAL_LIBS uuid)
++         # uuid is present in libphoenix library, so there is no need to link it separately
++        build_c_test_artifacts(${uniqueid_ut_test_file} ON "tests/azure_c_shared_utility_tests" ADDITIONAL_LIBS)
+     endif()
+ endif()
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/uuid_ut/uuid_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/uuid_ut/uuid_ut.c
+--- azure-iot-sdk-c/c-utility/tests/uuid_ut/uuid_ut.c	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/uuid_ut/uuid_ut.c	2022-03-24 16:31:35.909645039 +0100
+@@ -45,23 +45,23 @@
+     return mock_UniqueId_Generate_result;
+ }
+ 
+-static void initialize_variables()
++static void initialize_variables(void)
+ {
+     mock_UniqueId_Generate_result = UNIQUEID_OK;
+ }
+ 
+-static void register_global_mock_returns()
++static void register_global_mock_returns(void)
+ {
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(malloc, NULL);
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(UniqueId_Generate, UNIQUEID_ERROR);
+ }
+ 
+-static void register_global_function_hooks()
++static void register_global_function_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(UniqueId_Generate, mock_UniqueId_Generate);
+ }
+ 
+-static void register_mock_aliases()
++static void register_mock_aliases(void)
+ {
+     REGISTER_UMOCK_ALIAS_TYPE(UNIQUEID_RESULT, int);
+ }
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/ws_url_ut/ws_url_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/ws_url_ut/ws_url_ut.c
+--- azure-iot-sdk-c/c-utility/tests/ws_url_ut/ws_url_ut.c	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/ws_url_ut/ws_url_ut.c	2022-03-24 17:18:34.539300691 +0100
+@@ -106,12 +106,12 @@
+     return 0;
+ }
+ 
+-static void register_umock_alias_types()
++static void register_umock_alias_types(void)
+ {
+     REGISTER_UMOCK_ALIAS_TYPE(STRING_TOKEN_HANDLE, void*);
+ }
+ 
+-static void register_global_mock_hooks()
++static void register_global_mock_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(malloc, TEST_malloc);
+     REGISTER_GLOBAL_MOCK_HOOK(free, TEST_free);
+@@ -124,7 +124,7 @@
+     REGISTER_GLOBAL_MOCK_HOOK(mallocAndStrcpy_s, TEST_mallocAndStrcpy_s);
+ }
+ 
+-static void register_global_mock_returns()
++static void register_global_mock_returns(void)
+ {
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(StringToken_GetFirst, NULL);
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(StringToken_GetNext, false);
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c azure-iot-sdk-c-phoenix/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c
+--- azure-iot-sdk-c/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c	2022-03-24 17:11:10.385056534 +0100
+@@ -343,7 +343,7 @@
+         }
+     }
+ 
+-    static void setup_load_certificate_chain_mocks()
++    static void setup_load_certificate_chain_mocks(void)
+     {
+         STRICT_EXPECTED_CALL(BIO_new_mem_buf((void*)TEST_PUBLIC_CERTIFICATE, -1));
+         STRICT_EXPECTED_CALL(PEM_read_bio_X509_AUX(IGNORED_PTR_ARG, NULL, NULL, NULL));
+@@ -376,7 +376,7 @@
+         setup_load_certificate_chain_mocks();
+     }
+ 
+-    static void setup_add_credentials_engine()
++    static void setup_add_credentials_engine(void)
+     {
+         // x509_openssl_add_pem_file_key
+         STRICT_EXPECTED_CALL(ENGINE_init(TEST_ENGINE));
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/testtools/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/testtools/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/testtools/CMakeLists.txt	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/testtools/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -17,4 +17,5 @@
+ endif()
+ 
+ add_subdirectory(sal)
+-add_subdirectory(micromock)
++# micromock not supported on Phoenix-RTOS
++# add_subdirectory(micromock)
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/testtools/testrunner/src/testmutex.c azure-iot-sdk-c-phoenix/c-utility/testtools/testrunner/src/testmutex.c
+--- azure-iot-sdk-c/c-utility/testtools/testrunner/src/testmutex.c	2022-03-25 10:04:27.910650133 +0100
++++ azure-iot-sdk-c-phoenix/c-utility/testtools/testrunner/src/testmutex.c	2022-03-24 15:57:39.552679848 +0100
+@@ -29,7 +29,7 @@
+ #else
+ 
+ // XCode complains about a library with no exported functions
+-extern void dummy_function_to_silence_compiler_is_never_called()
++extern void dummy_function_to_silence_compiler_is_never_called(void)
+ {
+ }
+ 

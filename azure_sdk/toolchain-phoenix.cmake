@@ -1,18 +1,12 @@
 INCLUDE(CMakeForceCompiler)
 
-# message(status "sysroot: $ENV{PHOENIX_COMPILER_CMD} --- $ENV{PHOENIX_SYSROOT}")
 SET(CMAKE_SYSTEM_NAME Linux)
 SET(CMAKE_SYSTEM_VERSION 1)
-
-# SET(LANGUAGES C) ???
-
 
 # this is the location of the Phoenix-RTOS toolchain for a specific target architecture
 SET(CMAKE_C_COMPILER $ENV{PHOENIX_SYSROOT}/../bin/$ENV{PHOENIX_COMPILER_CMD})
 # disable CXX compiler checks
 SET(CMAKE_CXX_COMPILER_WORKS 1)
-
-# SET(UUID_LIBRARY_DIRS "")
 
 SET(CURL_INCLUDE_DIR "${PREFIX_BUILD}/curl/include/")
 SET(CURL_LIBRARY "$ENV{PREFIX_BUILD}/lib/libcurl.a")
