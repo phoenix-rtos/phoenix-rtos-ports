@@ -5,7 +5,7 @@ set -e
 BUSYBOX=busybox-1.27.2
 
 b_log "Building busybox"
-PREFIX_BUSYBOX="${TOPDIR}/phoenix-rtos-ports/busybox"
+PREFIX_BUSYBOX="${PREFIX_PROJECT}/phoenix-rtos-ports/busybox"
 PREFIX_BUSYBOX_BUILD="$PREFIX_BUILD/busybox/"
 PREFIX_BUSYBOX_SRC="$PREFIX_BUSYBOX_BUILD/${BUSYBOX}/"
 PREFIX_BUSYBOX_MARKERS="$PREFIX_BUSYBOX_BUILD/markers/"

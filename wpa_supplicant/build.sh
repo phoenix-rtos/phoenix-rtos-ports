@@ -5,7 +5,7 @@ set -e
 WPA_SUPPLICANT=wpa_supplicant-2.9
 
 b_log "Building wpa_supplicant"
-PREFIX_WPA_SUPPLICANT="${TOPDIR}/phoenix-rtos-ports/wpa_supplicant"
+PREFIX_WPA_SUPPLICANT="${PREFIX_PROJECT}/phoenix-rtos-ports/wpa_supplicant"
 PREFIX_WPA_SUPPLICANT_BUILD="${PREFIX_BUILD}/wpa_supplicant"
 PREFIX_WPA_SUPPLICANT_SRC="${PREFIX_BUILD}/wpa_supplicant/${WPA_SUPPLICANT}"
 PREFIX_WPA_SUPPLICANT_MARKERS="${PREFIX_WPA_SUPPLICANT_BUILD}/markers"

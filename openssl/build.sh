@@ -5,7 +5,7 @@ set -e
 OPENSSL=openssl-1.1.1a
 
 b_log "Building openssl"
-PREFIX_OPENSSL="${TOPDIR}/phoenix-rtos-ports/openssl"
+PREFIX_OPENSSL="${PREFIX_PROJECT}/phoenix-rtos-ports/openssl"
 PREFIX_OPENSSL_BUILD="${PREFIX_BUILD}/openssl"
 PREFIX_OPENSSL_SRC="${PREFIX_OPENSSL_BUILD}/${OPENSSL}"
 PREFIX_OPENSSL_INSTALL="$PREFIX_OPENSSL_BUILD/install"

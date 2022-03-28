@@ -5,7 +5,7 @@ set -e
 CURL=curl-7.64.1
 
 b_log "Building curl"
-PREFIX_CURL="${TOPDIR}/phoenix-rtos-ports/curl"
+PREFIX_CURL="${PREFIX_PROJECT}/phoenix-rtos-ports/curl"
 PREFIX_CURL_BUILD="${PREFIX_BUILD}/curl"
 PREFIX_CURL_SRC="${PREFIX_CURL_BUILD}/${CURL}"
 PREFIX_CURL_INSTALL="$PREFIX_CURL_BUILD/install"

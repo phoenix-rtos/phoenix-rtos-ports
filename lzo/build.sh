@@ -5,7 +5,7 @@ set -e
 LZO=lzo-2.10
 
 b_log "Building lzo"
-PREFIX_LZO="${TOPDIR}/phoenix-rtos-ports/lzo"
+PREFIX_LZO="${PREFIX_PROJECT}/phoenix-rtos-ports/lzo"
 PREFIX_LZO_BUILD="${PREFIX_BUILD}/lzo"
 PREFIX_LZO_SRC="${PREFIX_LZO_BUILD}/${LZO}"
 

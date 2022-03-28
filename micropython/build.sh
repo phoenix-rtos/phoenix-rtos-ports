@@ -5,7 +5,7 @@ set -e
 UPYTH_VER="1.15"
 UPYTH="micropython-${UPYTH_VER}"
 
-PREFIX_UPYTH="${TOPDIR}/phoenix-rtos-ports/micropython"
+PREFIX_UPYTH="${PREFIX_PROJECT}/phoenix-rtos-ports/micropython"
 PREFIX_UPYTH_BUILD="${PREFIX_BUILD}/micropython"
 PREFIX_UPYTH_SRC=${PREFIX_UPYTH_BUILD}/${UPYTH}
 PREFIX_UPYTH_CONFIG="${PREFIX_UPYTH}/${UPYTH}-config/"

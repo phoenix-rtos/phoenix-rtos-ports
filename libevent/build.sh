@@ -5,7 +5,7 @@ set -e
 LIBEVENT=libevent-2.1.12-stable
 
 b_log "Building libevent"
-PREFIX_LIBEVENT="${TOPDIR}/phoenix-rtos-ports/libevent"
+PREFIX_LIBEVENT="${PREFIX_PROJECT}/phoenix-rtos-ports/libevent"
 PREFIX_LIBEVENT_BUILD="${PREFIX_BUILD}/libevent"
 PREFIX_LIBEVENT_SRC="${PREFIX_LIBEVENT_BUILD}/${LIBEVENT}"
 PREFIX_LIBEVENT_MARKERS="${PREFIX_LIBEVENT_BUILD}/markers"

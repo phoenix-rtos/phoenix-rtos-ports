@@ -5,7 +5,7 @@ set -e
 LUA=lua-5.3.5
 
 b_log "Building lua"
-PREFIX_LUA="${TOPDIR}/phoenix-rtos-ports/lua"
+PREFIX_LUA="${PREFIX_PROJECT}/phoenix-rtos-ports/lua"
 PREFIX_LUA_BUILD="${PREFIX_BUILD}/lua"
 PREFIX_LUA_SRC="${PREFIX_LUA_BUILD}/${LUA}"
 
