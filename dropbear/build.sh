@@ -5,7 +5,7 @@ set -e
 DROPBEAR=dropbear-2018.76
 
 b_log "Building dropbear"
-PREFIX_DROPBEAR="${TOPDIR}/phoenix-rtos-ports/dropbear"
+PREFIX_DROPBEAR="${PREFIX_PROJECT}/phoenix-rtos-ports/dropbear"
 PREFIX_DROPBEAR_BUILD="${PREFIX_BUILD}/dropbear"
 PREFIX_DROPBEAR_SRC="${PREFIX_DROPBEAR_BUILD}/${DROPBEAR}"
 PREFIX_DROPBEAR_MARKERS="${PREFIX_DROPBEAR_BUILD}/markers"

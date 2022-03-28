@@ -5,7 +5,7 @@ set -e
 ZLIB=zlib-1.2.11
 
 b_log "Building zlib"
-PREFIX_ZLIB="${TOPDIR}/phoenix-rtos-ports/zlib"
+PREFIX_ZLIB="${PREFIX_PROJECT}/phoenix-rtos-ports/zlib"
 PREFIX_ZLIB_BUILD="${PREFIX_BUILD}/zlib"
 PREFIX_ZLIB_SRC="${PREFIX_ZLIB_BUILD}/${ZLIB}"
 PREFIX_ZLIB_MARKERS="${PREFIX_ZLIB_BUILD}/markers"

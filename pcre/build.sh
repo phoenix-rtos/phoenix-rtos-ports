@@ -5,7 +5,7 @@ set -e
 PCRE=pcre-8.42
 
 b_log "Building pcre"
-PREFIX_PCRE="${TOPDIR}/phoenix-rtos-ports/pcre"
+PREFIX_PCRE="${PREFIX_PROJECT}/phoenix-rtos-ports/pcre"
 PREFIX_PCRE_BUILD="${PREFIX_BUILD}/pcre"
 PREFIX_PCRE_SRC="${PREFIX_PCRE_BUILD}/${PCRE}"
 

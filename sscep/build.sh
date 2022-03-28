@@ -5,7 +5,7 @@ set -e
 SSCEP=sscep-0.9.0
 
 b_log "Building sscep"
-PREFIX_SSCEP=${TOPDIR}/phoenix-rtos-ports/sscep
+PREFIX_SSCEP=${PREFIX_PROJECT}/phoenix-rtos-ports/sscep
 PREFIX_SSCEP_BUILD=${PREFIX_BUILD}/sscep
 PREFIX_SSCEP_SRC="${PREFIX_SSCEP_BUILD}/${SSCEP}"
 PREFIX_SSCEP_MARKERS="${PREFIX_SSCEP_BUILD}/markers"

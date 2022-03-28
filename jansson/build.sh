@@ -5,7 +5,7 @@ set -e
 JANSSON=jansson-2.12
 
 b_log "Building jansson"
-PREFIX_JANSSON="${TOPDIR}/phoenix-rtos-ports/jansson"
+PREFIX_JANSSON="${PREFIX_PROJECT}/phoenix-rtos-ports/jansson"
 PREFIX_JANSSON_BUILD="${PREFIX_BUILD}/jansson"
 PREFIX_JANSSON_SRC="${PREFIX_JANSSON_BUILD}/${JANSSON}"
 

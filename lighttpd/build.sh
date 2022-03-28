@@ -5,7 +5,7 @@ set -e
 LIGHTTPD="lighttpd-1.4.53"
 
 b_log "Building lighttpd"
-PREFIX_LIGHTTPD="${TOPDIR}/phoenix-rtos-ports/lighttpd"
+PREFIX_LIGHTTPD="${PREFIX_PROJECT}/phoenix-rtos-ports/lighttpd"
 PREFIX_LIGHTTPD_BUILD="${PREFIX_BUILD}/lighttpd"
 PREFIX_LIGHTTPD_SRC="${PREFIX_LIGHTTPD_BUILD}/${LIGHTTPD}"
 PREFIX_LIGHTTPD_MARKERS="$PREFIX_LIGHTTPD_BUILD/markers/"
