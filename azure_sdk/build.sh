@@ -38,11 +38,13 @@ for patchfile in "${PREFIX_AZURE_PATCHES}"/*.patch; do
 	[[ "${B_TEST}" = "y" ]] && rm -rf "${PREFIX_AZURE_REPO}/c-utility/testtools/micromock"
 done
 
-# rm -rf "$PREFIX_AZURE_BUILD"
+rm -rf "$PREFIX_AZURE_BUILD"
 
 # Set phoenix c compiler and system root
 export PHOENIX_COMPILER_CMD=${CC}
 export PHOENIX_SYSROOT=$(${CC} --print-sysroot)
+# convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
+LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 
 # Copy files, generate Makefile and build azure sdk iot
 if ! [ -d "${PREFIX_AZURE_BUILD}" ]; then

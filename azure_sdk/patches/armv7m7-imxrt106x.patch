@@ -1,0 +1,12 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h azure-iot-sdk-c-phoenix/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h
+--- azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-03-28 14:46:16.868768753 +0200
++++ azure-iot-sdk-c-phoenix/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-03-28 14:42:01.354327251 +0200
+@@ -94,7 +94,7 @@
+ #define MU_DEFINE_ENUM_STRINGS_WITHOUT_INVALID(enumName, ...) const char* MU_C2(enumName, StringStorage)[MU_COUNT_ARG(__VA_ARGS__)] = {MU_FOR_EACH_1(MU_DEFINE_ENUMERATION_CONSTANT_AS_STRING, __VA_ARGS__)}; \
+ const char* MU_C2(enumName,Strings)(enumName value)                \
+ {                                                                  \
+-    if((int)value<0 || (int)value>=MU_COUNT_ARG(__VA_ARGS__))      \
++    if((int)value>=MU_COUNT_ARG(__VA_ARGS__))      \
+     {                                                              \
+         /*this is an error case*/                                  \
+         return "NULL";                                             \
