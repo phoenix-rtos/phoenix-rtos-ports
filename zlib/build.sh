@@ -15,7 +15,7 @@ PREFIX_ZLIB_MARKERS="${PREFIX_ZLIB_BUILD}/markers"
 #
 mkdir -p "$PREFIX_ZLIB_BUILD"
 
-[ -f "${PREFIX_ZLIB}/${ZLIB}.tar.gz" ] || wget https://zlib.net/${ZLIB}.tar.gz -P "$PREFIX_ZLIB" --no-check-certificate
+[ -f "${PREFIX_ZLIB}/${ZLIB}.tar.gz" ] || wget https://zlib.net/fossils/${ZLIB}.tar.gz -P "$PREFIX_ZLIB" --no-check-certificate
 [ -d "$PREFIX_ZLIB_SRC" ] || tar zxf "${PREFIX_ZLIB}/${ZLIB}.tar.gz" -C "$PREFIX_ZLIB_BUILD"
 
 #
