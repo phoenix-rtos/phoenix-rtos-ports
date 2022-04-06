@@ -1,21 +1,18 @@
-diff -ur azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt
---- azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt	2022-03-22 12:22:40.554779839 +0100
-+++ azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt	2022-03-22 12:20:46.333376244 +0100
-@@ -14,11 +14,12 @@
-                FOLDER "IoTHub_Samples")
- endfunction()
+diff -ur '--exclude=*.git' azure-iot-sdk-c/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt azure-iot-sdk-c-phoenix/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt
+--- azure-iot-sdk-c/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt	2022-04-06 10:45:38.219356482 +0200
++++ azure-iot-sdk-c-phoenix/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt	2022-04-06 10:48:48.898536998 +0200
+@@ -39,13 +39,13 @@
  
--add_sample_directory(iothub_convenience_sample)
--add_sample_directory(iothub_ll_c2d_sample)
--add_sample_directory(iothub_ll_client_x509_sample)
--add_sample_directory(iothub_ll_telemetry_sample)
--add_sample_directory(iotedge_downstream_device_sample)
-+# temporarily disabled samples
-+# add_sample_directory(iothub_convenience_sample)
-+# add_sample_directory(iothub_ll_c2d_sample)
-+# add_sample_directory(iothub_ll_client_x509_sample)
-+# add_sample_directory(iothub_ll_telemetry_sample)
-+# add_sample_directory(iotedge_downstream_device_sample)
+     add_executable(iothub_client_sample_mqtt_dm ${iothub_client_sample_mqtt_dm_c_files} ${iothub_client_sample_mqtt_dm_h_files})
  
- if(${use_http})
-     if(NOT ${dont_use_uploadtoblob})
++    # pthread is present in libphoenix library, so there is no need to link it separately
+     target_link_libraries(iothub_client_sample_mqtt_dm
+         iothub_client
+         iothub_client_mqtt_transport
+         serializer
+         aziotsharedutil
+         umqtt
+-        pthread
+         curl
+         m
+     )

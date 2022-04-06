@@ -16,11 +16,8 @@ b_log "Building azure iot sdk"
 
 if [ "${B_TEST}" = "y" ];then
 	recursive=" --recursive"
-	run_unittests=""
-	# run_unittests=" --run-unittests"
 else
 	recursive=""
-	run_unittests=""
 fi
 
 # Download and unpack
@@ -32,18 +29,17 @@ fi
 # Apply patches
 for patchfile in "${PREFIX_AZURE_PATCHES}"/*.patch; do
 	if ! [ -f "${PREFIX_AZURE_PATCHES}/$(basename "$patchfile").applied" ]; then
-		[[ "${B_TEST}" != "y" ]] && [[ $(basename "$patchfile") == "c-utility_utests.patch" ]] && continue
+		[[ "${B_TEST}" != "y" ]] && [[ $(basename "$patchfile") == "c-utility_building_utests.patch" ]] && continue
+		[[ "${B_TEST}" != "y" ]] && [[ $(basename "$patchfile") == "c-utility_runnng_utests.patch" ]] && continue
 		patch -d "${PREFIX_AZURE}" -p0 -i "$patchfile" && touch "${PREFIX_AZURE_PATCHES}/$(basename "$patchfile").applied"
 	fi
 	[[ "${B_TEST}" = "y" ]] && rm -rf "${PREFIX_AZURE_REPO}/c-utility/testtools/micromock"
 done
 
-rm -rf "$PREFIX_AZURE_BUILD"
-
 # Set phoenix c compiler and system root
 export PHOENIX_COMPILER_CMD=${CC}
 export PHOENIX_SYSROOT=$(${CC} --print-sysroot)
-# convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
+# Convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
 LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 
 # Copy files, generate Makefile and build azure sdk iot
@@ -52,10 +48,11 @@ if ! [ -d "${PREFIX_AZURE_BUILD}" ]; then
 	cp -r "${PREFIX_AZURE_REPO}" "$PREFIX_AZURE_BUILD"
 	(cd "${PREFIX_AZURE_BUILD}/${AZURE}/build_all/linux" && ./build.sh \
 	--toolchain-file ${TOOLCHAIN_FILE_PATH} -cl --sysroot=${PHOENIX_SYSROOT} \
-	--no-amqp --no-mqtt$run_unittests)
+	--no-amqp$run_unittests)
 fi
 
-# Copy c-utility tests to file system
+# Install iothub client sample and c-utility tests (if built) in file system
+b_install "${PREFIX_AZURE_BUILD}/azure-iot-sdk-c/cmake/iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample" /
 for dir in $C_UTILITY_TESTS/*
 do
 	if [[ $dir == *_ut* ]]; then
@@ -66,9 +63,6 @@ do
 		else
 			test_executable=""$(basename "$dir")"_exe"
 		fi
-
 		b_install "$dir/$test_executable" /az/
 	fi
 done
-
-b_install "${PREFIX_AZURE_BUILD}/azure-iot-sdk-c/cmake/iothub_client/samples/iothub_client_sample_upload_to_blob/iothub_client_sample_upload_to_blob" /az/

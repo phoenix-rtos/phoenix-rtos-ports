@@ -1,0 +1,13 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c/deps/umock-c/src/umockcallrecorder.c azure-iot-sdk-c-phoenix/deps/umock-c/src/umockcallrecorder.c
+--- azure-iot-sdk-c/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:22:58.109094803 +0200
++++ azure-iot-sdk-c-phoenix/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:18:34.237404916 +0200
+@@ -529,7 +529,8 @@
+                     result->expected_call_count = umock_call_recorder->expected_call_count;
+ 
+                     result->actual_calls = (UMOCKCALL_HANDLE*)umockalloc_malloc(sizeof(UMOCKCALL_HANDLE) * umock_call_recorder->actual_call_count);
+-                    if (result->actual_calls == NULL)
++                    /* Linux incompatibility -> malloc(0) returns NULL on Phoenix-RTOS */
++                    if (result->actual_calls == NULL && umock_call_recorder->actual_call_count != 0 )
+                     {
+                         /* Codes_SRS_UMOCKCALLRECORDER_01_053: [ If allocating memory for the actual calls fails, umockcallrecorder_clone shall fail and return NULL. ]*/
+                         umockcallrecorder_destroy(result);
