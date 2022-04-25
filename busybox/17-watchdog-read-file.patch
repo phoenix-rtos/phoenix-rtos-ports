@@ -1,0 +1,54 @@
+diff -Naur a/miscutils/watchdog.c b/miscutils/watchdog.c
+--- a/miscutils/watchdog.c	2022-04-25 12:20:42.369134033 +0200
++++ b/miscutils/watchdog.c	2022-04-25 15:13:01.578106560 +0200
+@@ -25,12 +25,13 @@
+ //kbuild:lib-$(CONFIG_WATCHDOG) += watchdog.o
+ 
+ //usage:#define watchdog_trivial_usage
+-//usage:       "[-t N[ms]] [-T N[ms]] [-F] DEV"
++//usage:       "[-t N[ms]] [-T N[ms]] [-F] [-r FILE] DEV"
+ //usage:#define watchdog_full_usage "\n\n"
+ //usage:       "Periodically write to watchdog device DEV\n"
+ //usage:     "\n	-T N	Reboot after N seconds if not reset (default 60)"
+ //usage:     "\n	-t N	Reset every N seconds (default 30)"
+ //usage:     "\n	-F	Run in foreground"
++//usage:     "\n	-r FILE	Don't reset if FILE cannot be read"
+ //usage:     "\n"
+ //usage:     "\nUse 500ms to specify period in milliseconds"
+ 
+@@ -40,6 +41,7 @@
+ #define OPT_FOREGROUND  (1 << 0)
+ #define OPT_STIMER      (1 << 1)
+ #define OPT_HTIMER      (1 << 2)
++#define OPT_READ        (1 << 3)
+ 
+ static void watchdog_shutdown(int sig UNUSED_PARAM)
+ {
+@@ -66,9 +68,10 @@
+ 	unsigned htimer_duration = 60000; /* reboots after N ms if not restarted */
+ 	char *st_arg;
+ 	char *ht_arg;
++	char *read_arg;
+ 
+ 	opt_complementary = "=1"; /* must have exactly 1 argument */
+-	opts = getopt32(argv, "Ft:T:", &st_arg, &ht_arg);
++	opts = getopt32(argv, "Ft:T:r:", &st_arg, &ht_arg, &read_arg);
+ 
+ 	/* We need to daemonize *before* opening the watchdog as many drivers
+ 	 * will only allow one process at a time to do so.  Since daemonizing
+@@ -113,6 +116,15 @@
+ 	write_pidfile(CONFIG_PID_FILE_PATH "/watchdog.pid");
+ 
+ 	while (1) {
++		char buf[1024];
++
++		if (opts & OPT_READ) {
++			if (open_read_close(read_arg, buf, sizeof(buf)) <= 0) {
++				printf("watchdog: cannot read %s\n", read_arg);
++				usleep(stimer_duration * 1000L);
++				continue;
++			}
++		}
+ 		/*
+ 		 * Make sure we clear the counter before sleeping,
+ 		 * as the counter value is undefined at this point -- PFM
