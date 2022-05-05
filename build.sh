@@ -67,6 +67,8 @@ fi
 
 [ "${PORTS_OPENIKED}" = "y" ] && ./phoenix-rtos-ports/openiked/build.sh
 
+[ "${PORTS_MBEDTLS}" = "y" ] && ./phoenix-rtos-ports/mbedtls/build.sh
+
 [ "${PORTS_AZURE_SDK}" = "y" ] && ./phoenix-rtos-ports/azure_sdk/build.sh
 
 exit 0
