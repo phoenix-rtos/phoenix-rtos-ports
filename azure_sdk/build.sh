@@ -43,13 +43,25 @@ export PHOENIX_SYSROOT=$(${CC} --print-sysroot)
 LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 
 # Copy files, generate Makefile and build azure sdk iot
+# http and amqp protocols are not supported
 if ! [ -d "${PREFIX_AZURE_BUILD}" ]; then
 	mkdir -p "${PREFIX_AZURE_BUILD}"
 	cp -r "${PREFIX_AZURE_REPO}" "$PREFIX_AZURE_BUILD"
 	(cd "${PREFIX_AZURE_BUILD}/${AZURE}/build_all/linux" && ./build.sh \
 	--toolchain-file ${TOOLCHAIN_FILE_PATH} -cl --sysroot=${PHOENIX_SYSROOT} \
-	--no-amqp$run_unittests)
+	--no-http --no-amqp$run_unittests)
 fi
+
+# Copy azure sdk libraries to libs directory
+(cd "${PREFIX_AZURE_BUILD}/azure-iot-sdk-c/cmake/" && \
+cp "iothub_client/"*.a "deps/umock-c/libumock_c.a" "deps/umock-c/libumock_c.a" "umqtt/libumqtt.a" "c-utility/libaziotsharedutil.a" \
+"${PREFIX_BUILD}/lib")
+
+# Copy azure sdk headers to inc directory
+(cd "${PREFIX_AZURE_BUILD}/azure-iot-sdk-c/" && \
+cp -r "iothub_client/inc/." "deps/umock-c/inc/." "deps/azure-macro-utils-c/inc/." "c-utility/inc/." \
+"${TOPDIR}/besmart-energy-gw/gw/mbedtls/include/." \
+"${PREFIX_BUILD}/include")
 
 # Install iothub client sample and c-utility tests (if built) in file system
 b_install "${PREFIX_AZURE_BUILD}/azure-iot-sdk-c/cmake/iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample" /

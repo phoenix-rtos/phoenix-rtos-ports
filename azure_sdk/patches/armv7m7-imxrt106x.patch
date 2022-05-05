@@ -1,6 +1,34 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c/CMakeLists.txt azure-iot-sdk-c-phoenix/CMakeLists.txt
+--- azure-iot-sdk-c/CMakeLists.txt	2022-05-05 12:48:45.621956149 +0200
++++ azure-iot-sdk-c-phoenix/CMakeLists.txt	2022-05-04 15:44:38.654603870 +0200
+@@ -92,6 +92,10 @@
+     option(use_openssl "set use_openssl to ON to use OpenSSL." ON)
+ endif()
+ 
++# Set mbedtls as default for armv7m7-imxrt106x Phoenix-RTOS architecture
++set(use_openssl OFF)
++set(use_mbedtls ON)
++
+ # OpenSSL samples on Windows need to have a trusted cert set
+ if ((WIN32 AND ${use_openssl}) OR ${use_wolfssl} OR ${use_mbedtls} OR ${use_bearssl})
+     option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" ON)
+Only in azure-iot-sdk-c/c-utility/adapters: platform_linux.c.orig
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/tlsio_mbedtls.c azure-iot-sdk-c-phoenix/c-utility/adapters/tlsio_mbedtls.c
+--- azure-iot-sdk-c/c-utility/adapters/tlsio_mbedtls.c	2022-05-05 12:48:45.233951302 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/tlsio_mbedtls.c	2022-05-05 12:47:31.389040170 +0200
+@@ -27,7 +27,8 @@
+ 
+ static const char *const OPTION_UNDERLYING_IO_OPTIONS = "underlying_io_options";
+ 
+-#define HANDSHAKE_TIMEOUT_MS 5000
++/* 500ms timeout can be unsufficient for armv7m7imxrt106x Phoenix-RTOS architecture */
++#define HANDSHAKE_TIMEOUT_MS 50000
+ #define HANDSHAKE_WAIT_INTERVAL_MS 10
+ 
+ typedef enum TLSIO_STATE_ENUM_TAG
 diff -ur '--exclude=*.git' azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h azure-iot-sdk-c-phoenix/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h
---- azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-03-28 14:46:16.868768753 +0200
-+++ azure-iot-sdk-c-phoenix/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-03-28 14:42:01.354327251 +0200
+--- azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-05-05 12:48:45.357952851 +0200
++++ azure-iot-sdk-c-phoenix/deps/azure-macro-utils-c/inc/azure_macro_utils/macro_utils.h	2022-05-04 15:40:37.583927158 +0200
 @@ -94,7 +94,7 @@
  #define MU_DEFINE_ENUM_STRINGS_WITHOUT_INVALID(enumName, ...) const char* MU_C2(enumName, StringStorage)[MU_COUNT_ARG(__VA_ARGS__)] = {MU_FOR_EACH_1(MU_DEFINE_ENUMERATION_CONSTANT_AS_STRING, __VA_ARGS__)}; \
  const char* MU_C2(enumName,Strings)(enumName value)                \
@@ -10,3 +38,16 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c/deps/azure-macro-utils-c/inc/azure_ma
      {                                                              \
          /*this is an error case*/                                  \
          return "NULL";                                             \
+diff -ur '--exclude=*.git' azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt
+--- azure-iot-sdk-c/iothub_client/samples/CMakeLists.txt	2022-05-05 12:48:32.929797893 +0200
++++ azure-iot-sdk-c-phoenix/iothub_client/samples/CMakeLists.txt	2022-05-05 12:43:39.606362359 +0200
+@@ -32,7 +32,8 @@
+ 
+ if(${use_mqtt})
+     if(LINUX)
+-        add_sample_directory(iothub_client_sample_mqtt_dm)
++        # curl is not supported on armv7m7-imxrt106x target
++        # add_sample_directory(iothub_client_sample_mqtt_dm)
+     endif()
+     if(${use_edge_modules})
+         add_sample_directory(iothub_client_sample_module_sender)

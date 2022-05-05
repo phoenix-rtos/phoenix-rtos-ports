@@ -1,6 +1,6 @@
-diff -ur azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c
---- azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c	2022-03-22 12:22:50.146898929 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c	2022-03-21 16:01:26.113091226 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c
+--- azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c	2022-05-05 12:54:43.710634820 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/condition_pthreads.c	2022-05-04 15:40:37.603926510 +0200
 @@ -6,28 +6,18 @@
  #include "azure_c_shared_utility/condition.h"
  #include "azure_c_shared_utility/xlogging.h"
@@ -85,9 +85,9 @@ diff -ur azure-iot-sdk-c/c-utility/adapters/condition_pthreads.c azure-iot-sdk-c
      }
  }
  
-diff -ur azure-iot-sdk-c/c-utility/adapters/linux_time.c azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c
---- azure-iot-sdk-c/c-utility/adapters/linux_time.c	2022-03-22 12:22:50.150898978 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c	2022-03-21 16:02:14.229411083 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/linux_time.c azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c
+--- azure-iot-sdk-c/c-utility/adapters/linux_time.c	2022-05-05 12:54:43.710634820 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/linux_time.c	2022-05-04 15:40:37.603926510 +0200
 @@ -28,10 +28,9 @@
  #elif defined(CLOCK_REALTIME)
      time_basis = CLOCK_REALTIME;
@@ -102,9 +102,21 @@ diff -ur azure-iot-sdk-c/c-utility/adapters/linux_time.c azure-iot-sdk-c-phoenix
  #endif
  #endif
  }
-diff -ur azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c
---- azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c	2022-03-22 12:22:50.150898978 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c	2022-03-21 14:43:27.630332222 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/platform_linux.c azure-iot-sdk-c-phoenix/c-utility/adapters/platform_linux.c
+--- azure-iot-sdk-c/c-utility/adapters/platform_linux.c	2022-05-05 12:54:43.710634820 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/platform_linux.c	2022-05-04 17:46:06.188392388 +0200
+@@ -8,7 +8,7 @@
+ #ifdef USE_OPENSSL
+ #include "azure_c_shared_utility/tlsio_openssl.h"
+ #else
+-const IO_INTERFACE_DESCRIPTION* tlsio_openssl_get_interface_description();
++const IO_INTERFACE_DESCRIPTION* tlsio_openssl_get_interface_description(void);
+ #endif
+ #if USE_CYCLONESSL
+ #include "azure_c_shared_utility/tlsio_cyclonessl.h"
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c
+--- azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c	2022-05-05 12:54:43.714634874 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/socketio_berkeley.c	2022-05-04 15:40:37.603926510 +0200
 @@ -7,6 +7,7 @@
  #endif
  
@@ -113,9 +125,27 @@ diff -ur azure-iot-sdk-c/c-utility/adapters/socketio_berkeley.c azure-iot-sdk-c-
  #include <net/if.h>
  #undef _DEFAULT_SOURCE
  
-diff -ur azure-iot-sdk-c/c-utility/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt
---- azure-iot-sdk-c/c-utility/CMakeLists.txt	2022-03-22 12:22:50.146898929 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt	2022-03-22 12:19:42.052599658 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/adapters/threadapi_pthreads.c azure-iot-sdk-c-phoenix/c-utility/adapters/threadapi_pthreads.c
+--- azure-iot-sdk-c/c-utility/adapters/threadapi_pthreads.c	2022-05-05 12:54:43.714634874 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/adapters/threadapi_pthreads.c	2022-05-05 12:56:18.443923812 +0200
+@@ -127,12 +127,6 @@
+ 
+ void ThreadAPI_Sleep(unsigned int milliseconds)
+ {
+-#ifdef TI_RTOS
+-    Task_sleep(milliseconds);
+-#else
+-    time_t seconds = milliseconds / 1000;
+-    long nsRemainder = (milliseconds % 1000) * 1000000;
+-    struct timespec timeToSleep = { seconds, nsRemainder };
+-    (void)nanosleep(&timeToSleep, NULL);
+-#endif
++    /* nanosleep() is not implemented in Phoenix-RTOS */
++    usleep(milliseconds);
+ }
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/CMakeLists.txt azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt
+--- azure-iot-sdk-c/c-utility/CMakeLists.txt	2022-05-05 12:54:43.710634820 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/CMakeLists.txt	2022-05-04 15:40:37.603926510 +0200
 @@ -560,6 +560,9 @@
      endif()
  endif()
@@ -145,9 +175,9 @@ diff -ur azure-iot-sdk-c/c-utility/CMakeLists.txt azure-iot-sdk-c-phoenix/c-util
          endif()
      endif()
      if(${use_c_ares})
-diff -ur azure-iot-sdk-c/c-utility/src/gballoc.c azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c
---- azure-iot-sdk-c/c-utility/src/gballoc.c	2022-03-22 12:22:50.162899128 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c	2022-03-21 13:11:56.084784186 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/src/gballoc.c azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c
+--- azure-iot-sdk-c/c-utility/src/gballoc.c	2022-05-05 12:54:43.726635036 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/src/gballoc.c	2022-05-04 15:40:37.603926510 +0200
 @@ -424,7 +424,7 @@
      return result;
  }
@@ -157,9 +187,9 @@ diff -ur azure-iot-sdk-c/c-utility/src/gballoc.c azure-iot-sdk-c-phoenix/c-utili
  {
      /* Codes_SRS_GBALLOC_07_005: [ If gballoc was not initialized gballoc_reset Metrics shall do nothing.] */
      if (gballocState != GBALLOC_STATE_INIT)
-diff -ur azure-iot-sdk-c/c-utility/src/gbnetwork.c azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c
---- azure-iot-sdk-c/c-utility/src/gbnetwork.c	2022-03-22 12:22:50.162899128 +0100
-+++ azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c	2022-03-21 13:11:56.084784186 +0100
+diff -ur '--exclude=*.git' azure-iot-sdk-c/c-utility/src/gbnetwork.c azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c
+--- azure-iot-sdk-c/c-utility/src/gbnetwork.c	2022-05-05 12:54:43.726635036 +0200
++++ azure-iot-sdk-c-phoenix/c-utility/src/gbnetwork.c	2022-05-04 15:40:37.603926510 +0200
 @@ -68,7 +68,7 @@
      gbnetworkState = GBNETWORK_STATE_NOT_INIT;
  }
