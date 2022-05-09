@@ -67,4 +67,6 @@ fi
 
 [ "${PORTS_OPENIKED}" = "y" ] && ./phoenix-rtos-ports/openiked/build.sh
 
+[ "${PORTS_MBEDTLS}" = "y" ] && ./phoenix-rtos-ports/mbedtls/build.sh
+
 exit 0

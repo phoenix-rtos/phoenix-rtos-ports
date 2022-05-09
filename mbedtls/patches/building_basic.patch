@@ -1,0 +1,79 @@
+diff -ur '--exclude=*.git' mbedtls-3.1.0/Makefile mbedtls-3.1.0-phoenix/Makefile
+--- mbedtls-3.1.0/Makefile	2022-05-09 13:05:16.040967966 +0200
++++ mbedtls-3.1.0-phoenix/Makefile	2022-05-09 12:20:31.201783417 +0200
+@@ -1,4 +1,4 @@
+-DESTDIR=/usr/local
++DESTDIR=$(PREFIX_BUILD)
+ PREFIX=mbedtls_
+ PERL ?= perl
+ 
+diff -ur '--exclude=*.git' mbedtls-3.1.0/programs/Makefile mbedtls-3.1.0-phoenix/programs/Makefile
+--- mbedtls-3.1.0/programs/Makefile	2022-05-09 13:05:16.076968719 +0200
++++ mbedtls-3.1.0-phoenix/programs/Makefile	2022-05-09 10:41:03.360052897 +0200
+@@ -152,11 +152,13 @@
+ 
+ all: $(EXES)
+ ifndef WINDOWS
++ifndef phoenix
+ # APPS doesn't include the fuzzing programs, which aren't "normal"
+ # sample or test programs, and don't build with MSVC which is
+ # warning about fopen
+ all: fuzz
+ endif
++endif
+ 
+ fuzz: ${MBEDTLS_TEST_OBJS}
+ 	$(MAKE) -C fuzz THIRDPARTY_INCLUDES=$(THIRDPARTY_INCLUDES)
+diff -ur '--exclude=*.git' mbedtls-3.1.0/programs/ssl/ssl_context_info.c mbedtls-3.1.0-phoenix/programs/ssl/ssl_context_info.c
+--- mbedtls-3.1.0/programs/ssl/ssl_context_info.c	2022-05-09 13:05:16.080968802 +0200
++++ mbedtls-3.1.0-phoenix/programs/ssl/ssl_context_info.c	2022-05-09 11:15:41.982562743 +0200
+@@ -115,7 +115,8 @@
+ FILE *b64_file = NULL;                  /* file with base64 codes to deserialize */
+ char conf_keep_peer_certificate = 1;    /* MBEDTLS_SSL_KEEP_PEER_CERTIFICATE from mbedTLS configuration */
+ char conf_dtls_proto = 1;               /* MBEDTLS_SSL_PROTO_DTLS from mbedTLS configuration */
+-char debug = 0;                         /* flag for debug messages */
++/* 'debug' has been already defined as global variable in Phoenix-RTOS */
++char mbedtls_debug = 0;                         /* flag for debug messages */
+ const char alloc_err[] = "Cannot allocate memory\n";
+ const char buf_ln_err[] = "Buffer does not have enough data to complete the parsing\n";
+ 
+@@ -151,7 +152,7 @@
+ 
+ void printf_dbg( const char *str, ... )
+ {
+-    if( debug )
++    if( mbedtls_debug )
+     {
+         va_list args;
+         va_start( args, str );
+@@ -203,7 +204,7 @@
+     {
+         if( strcmp( argv[i], "-d" ) == 0 )
+         {
+-            debug = 1;
++            mbedtls_debug = 1;
+         }
+         else if( strcmp( argv[i], "-h" ) == 0 )
+         {
+@@ -1080,7 +1081,7 @@
+                 continue;
+             }
+ 
+-            if( debug )
++            if( mbedtls_debug )
+             {
+                 printf( "\nDecoded data in hex:\n\t");
+                 print_hex( ssl_buf, ssl_len, 25, "\t" );
+diff -ur '--exclude=*.git' mbedtls-3.1.0/programs/ssl/ssl_server2.c mbedtls-3.1.0-phoenix/programs/ssl/ssl_server2.c
+--- mbedtls-3.1.0/programs/ssl/ssl_server2.c	2022-05-09 13:05:16.080968802 +0200
++++ mbedtls-3.1.0-phoenix/programs/ssl/ssl_server2.c	2022-05-09 10:56:24.019540535 +0200
+@@ -1757,7 +1757,8 @@
+ #if defined(_MSC_VER)
+             opt.renego_period = _strtoui64( q, NULL, 10 );
+ #else
+-            if( sscanf( q, "%" SCNu64, &opt.renego_period ) != 1 )
++            /* no SCNu64 define in Phoenix-RTOS */
++            if( sscanf( q, "%u", &opt.renego_period ) != 1 )
+                 goto usage;
+ #endif /* _MSC_VER */
+             if( opt.renego_period < 2 )
