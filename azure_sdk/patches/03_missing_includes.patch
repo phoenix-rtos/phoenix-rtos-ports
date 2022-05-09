@@ -1,0 +1,12 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/adapters/socketio_berkeley.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/adapters/socketio_berkeley.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/adapters/socketio_berkeley.c	2022-06-29 14:12:04.364923641 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/adapters/socketio_berkeley.c	2022-06-29 14:17:03.679322382 +0200
+@@ -7,6 +7,8 @@
+ #endif
+ 
+ #define _DEFAULT_SOURCE
++/* struct sockaddr is provided by socket.h, there were an assumption that if.h includes it */
++#include <sys/socket.h>
+ #include <net/if.h>
+ #undef _DEFAULT_SOURCE
+ 
