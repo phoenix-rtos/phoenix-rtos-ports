@@ -1,0 +1,16 @@
+diff -ur '--exclude=*.git' mbedtls-2.28.0/Makefile mbedtls-2.28.0-phoenix/Makefile
+--- mbedtls-2.28.0/Makefile	2022-06-06 13:30:25.889607491 +0200
++++ mbedtls-2.28.0-phoenix/Makefile	2022-06-06 13:29:44.478798560 +0200
+@@ -30,9 +30,9 @@
+ 	cp -rp include/psa $(DESTDIR)/include
+ 
+ 	mkdir -p $(DESTDIR)/lib
+-	cp -RP library/libmbedtls.*    $(DESTDIR)/lib
+-	cp -RP library/libmbedx509.*   $(DESTDIR)/lib
+-	cp -RP library/libmbedcrypto.* $(DESTDIR)/lib
++	cp -a library/libmbedtls.*    $(DESTDIR)/lib
++	cp -a library/libmbedx509.*   $(DESTDIR)/lib
++	cp -a library/libmbedcrypto.* $(DESTDIR)/lib
+ 
+ 	mkdir -p $(DESTDIR)/bin
+ 	for p in programs/*/* ; do              \

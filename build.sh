@@ -35,6 +35,8 @@ else
 	export PREFIX_PORTS_INSTALL="$PREFIX_PROG_STRIPPED"
 fi
 
+[ "${PORTS_MBEDTLS}" = "y" ] && ./phoenix-rtos-ports/mbedtls/build.sh
+
 [ "${PORTS_BUSYBOX}" = "y" ] && ./phoenix-rtos-ports/busybox/build.sh
 
 [ "${PORTS_PCRE}" = "y" ] && ./phoenix-rtos-ports/pcre/build.sh

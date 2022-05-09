@@ -1,0 +1,18 @@
+# problem with mfloat_abi settings during compilation: _startc.o uses VFP register arguments, fuzz_pivkey does not
+diff -ur '--exclude=*.git' mbedtls-2.28.0/programs/Makefile mbedtls-2.28.0-phoenix/programs/Makefile
+--- mbedtls-2.28.0/programs/Makefile	2022-05-12 15:49:04.323065436 +0200
++++ mbedtls-2.28.0-phoenix/programs/Makefile	2022-05-12 15:42:00.290993638 +0200
+@@ -146,11 +146,13 @@
+ 
+ all: $(APPS)
+ ifndef WINDOWS
++ifndef phoenix
+ # APPS doesn't include the fuzzing programs, which aren't "normal"
+ # sample or test programs, and don't build with MSVC which is
+ # warning about fopen
+ all: fuzz
+ endif
++endif
+ 
+ fuzz: ${MBEDTLS_TEST_OBJS}
+ 	$(MAKE) -C fuzz THIRDPARTY_INCLUDES=$(THIRDPARTY_INCLUDES)
