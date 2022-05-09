@@ -1,0 +1,105 @@
+diff -ur '--exclude=*.git' mbedtls-2.28.0/include/mbedtls/config.h mbedtls-2.28.0-phoenix/include/mbedtls/config.h
+--- mbedtls-2.28.0/include/mbedtls/config.h	2022-06-03 16:51:07.159240599 +0200
++++ mbedtls-2.28.0-phoenix/include/mbedtls/config.h	2022-06-03 16:14:49.552991553 +0200
+@@ -566,6 +566,16 @@
+ //#define MBEDTLS_ENTROPY_HARDWARE_ALT
+ 
+ /**
++ * \def MBEDTLS_ENTROPY_DEV_RANDOM
++ * 
++ * Uncomment this macro to let mbed TLS use /dev/random as entropy source.
++ * 
++ * If /dev/random is not present in file system it will not be used.
++ * 
++ */
++#define MBEDTLS_ENTROPY_DEV_RANDOM
++
++/**
+  * \def MBEDTLS_AES_ROM_TABLES
+  *
+  * Use precomputed AES tables stored in ROM.
+diff -ur '--exclude=*.git' mbedtls-2.28.0/include/mbedtls/entropy_poll.h mbedtls-2.28.0-phoenix/include/mbedtls/entropy_poll.h
+--- mbedtls-2.28.0/include/mbedtls/entropy_poll.h	2022-06-03 16:51:07.167240769 +0200
++++ mbedtls-2.28.0-phoenix/include/mbedtls/entropy_poll.h	2022-06-03 16:14:49.556991637 +0200
+@@ -91,6 +91,13 @@
+                            unsigned char *output, size_t len, size_t *olen );
+ #endif
+ 
++#if defined(phoenix)
++#if defined(MBEDTLS_ENTROPY_DEV_RANDOM)
++int mbedtls_devrandom_poll( void *data, unsigned char *output,
++                             size_t len, size_t *olen );
++#endif
++#endif
++
+ #if defined(MBEDTLS_ENTROPY_NV_SEED)
+ /**
+  * \brief           Entropy poll callback for a non-volatile seed file
+diff -ur '--exclude=*.git' mbedtls-2.28.0/library/entropy.c mbedtls-2.28.0-phoenix/library/entropy.c
+--- mbedtls-2.28.0/library/entropy.c	2022-06-03 16:51:07.223241958 +0200
++++ mbedtls-2.28.0-phoenix/library/entropy.c	2022-06-03 16:14:49.600992572 +0200
+@@ -111,6 +110,17 @@
+                                 MBEDTLS_ENTROPY_SOURCE_STRONG );
+     ctx->initial_entropy_run = 0;
+ #endif
++#if defined(MBEDTLS_ENTROPY_DEV_RANDOM)
++    /* make sure that there is a /dev/random file */
++    FILE *file;
++    file = fopen( "/dev/random", "rb" );
++    if(file) {
++        fclose(file);
++        mbedtls_entropy_add_source( ctx, mbedtls_devrandom_poll, NULL,
++                                    MBEDTLS_ENTROPY_MIN_HARDWARE,
++                                    MBEDTLS_ENTROPY_SOURCE_STRONG );
++    }
++#endif
+ #endif /* MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES */
+ }
+ 
+Binary files mbedtls-2.28.0/library/entropy.o and mbedtls-2.28.0-phoenix/library/entropy.o differ
+diff -ur '--exclude=*.git' mbedtls-2.28.0/library/entropy_poll.c mbedtls-2.28.0-phoenix/library/entropy_poll.c
+--- mbedtls-2.28.0/library/entropy_poll.c	2022-06-03 16:51:07.227242043 +0200
++++ mbedtls-2.28.0-phoenix/library/entropy_poll.c	2022-06-03 16:48:32.243950552 +0200
+@@ -50,6 +50,42 @@
+ #error "Platform entropy sources only work on Unix and Windows, see MBEDTLS_NO_PLATFORM_ENTROPY in config.h"
+ #endif
+ 
++#if defined(phoenix)
++#if defined(MBEDTLS_ENTROPY_DEV_RANDOM)
++
++#include <stdio.h>
++
++/* Use /dev/random as entropy source by default on Phoenix-RTOS */
++int mbedtls_devrandom_poll( void *data, unsigned char *output,
++                             size_t len, size_t *olen )
++{
++    FILE *file;
++    size_t ret;
++    unsigned char *p = output;
++    ((void) data);
++
++    *olen = 0;
++
++    file = fopen( "/dev/random", "rb" );
++    if( file == NULL )
++        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
++
++    ret = fread( p, 1, len, file );
++    if( ret == 0 && ferror( file ) ) 
++    {
++        fclose( file );
++        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
++    }
++
++    fclose( file );
++    *olen = ret;
++
++    return( 0 );
++}
++
++#endif
++#endif
++
+ #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+ 
+ #if !defined(_WIN32_WINNT)
