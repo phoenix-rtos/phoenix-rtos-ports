@@ -1,0 +1,42 @@
+--- azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt	2022-06-29 14:30:52.229910542 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt	2022-06-29 14:32:31.222695411 +0200
+@@ -560,6 +560,9 @@
+     endif()
+ endif()
+ 
++# when calling find_package dl is linked automatically, to avoid that openssl libraries are set second time without it
++set(OPENSSL_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
++
+ if(${use_openssl})
+     set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} ${OPENSSL_LIBRARIES})
+     if (WIN32)
+@@ -591,7 +594,8 @@
+ endif()
+ 
+ if(LINUX)
+-    set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
++    # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
++    # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
+     if (NOT ${use_default_uuid})
+         if(APPLE)
+             find_package(PkgConfig REQUIRED)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt	2022-06-29 14:51:23.531663593 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/iothub_client/samples/iothub_client_sample_mqtt_dm/CMakeLists.txt	2022-06-29 14:48:51.438459471 +0200
+@@ -39,15 +39,14 @@
+ 
+     add_executable(iothub_client_sample_mqtt_dm ${iothub_client_sample_mqtt_dm_c_files} ${iothub_client_sample_mqtt_dm_h_files})
+ 
++    # pthread is present in libphoenix library, so there is no need to link it separately
+     target_link_libraries(iothub_client_sample_mqtt_dm
+         iothub_client
+         iothub_client_mqtt_transport
+         serializer
+         aziotsharedutil
+         umqtt
+-        pthread
+         curl
+-        m
+     )
+ 
+ endif()

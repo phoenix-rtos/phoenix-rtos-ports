@@ -1,0 +1,73 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/CMakeLists.txt	2022-03-25 10:07:50.479819142 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -293,7 +293,8 @@
+ if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
+     # Used for serializer
+     add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/sal)
+-    add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
++    # micromock not supported on Phoenix-RTOS because of cpp sources
++    # add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
+ endif()
+ 
+ set_platform_files(${SHARED_UTIL_FOLDER})
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt	2022-03-25 10:07:50.487819464 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -593,6 +593,8 @@
+     endif()
+ endif()
+ 
++# c-utility unit tests have to be enabled manually here
++set(run_unittests ON)
+ if(LINUX)
+     # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
+     # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition_ut/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/condition_ut/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-25 10:04:20.446267076 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -26,7 +26,8 @@
+ 
+ if(WIN32)
+ else()
+-    target_link_libraries(${theseTestsName}_exe pthread)
++    # pthread is present in libphoenix library, so there is no need to link it separately
++    # target_link_libraries(${theseTestsName}_exe pthread)
+ endif()
+ 
+ compile_c_test_artifacts_as(${theseTestsName} C99)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMakeLists.txt	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+@@ -17,4 +17,5 @@
+ endif()
+ 
+ add_subdirectory(sal)
+-add_subdirectory(micromock)
++# micromock not supported on Phoenix-RTOS because of cpp sources
++# add_subdirectory(micromock)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/deps/umock-c/src/umockcallrecorder.c azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/src/umockcallrecorder.c
+--- azure-iot-sdk-c-lts_01_2022/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:22:58.109094803 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:18:34.237404916 +0200
+@@ -529,7 +529,8 @@
+                     result->expected_call_count = umock_call_recorder->expected_call_count;
+ 
+                     result->actual_calls = (UMOCKCALL_HANDLE*)umockalloc_malloc(sizeof(UMOCKCALL_HANDLE) * umock_call_recorder->actual_call_count);
+-                    if (result->actual_calls == NULL)
++                    /* Linux incompatibility -> malloc(0) returns NULL on Phoenix-RTOS */
++                    if (result->actual_calls == NULL && umock_call_recorder->actual_call_count != 0 )
+                     {
+                         /* Codes_SRS_UMOCKCALLRECORDER_01_053: [ If allocating memory for the actual calls fails, umockcallrecorder_clone shall fail and return NULL. ]*/
+                         umockcallrecorder_destroy(result);
+# This file will only be downloaded if tests are built, that's why this isn't placed in add_void.patch 
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c	2022-03-25 10:04:27.910650133 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c	2022-03-24 15:57:39.552679848 +0100
+@@ -29,7 +29,7 @@
+ #else
+ 
+ // XCode complains about a library with no exported functions
+-extern void dummy_function_to_silence_compiler_is_never_called()
++extern void dummy_function_to_silence_compiler_is_never_called(void)
+ {
+ }

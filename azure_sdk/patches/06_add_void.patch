@@ -1,0 +1,222 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/adapters/platform_linux.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/adapters/platform_linux.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/adapters/platform_linux.c	2022-05-05 12:54:43.710634820 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/adapters/platform_linux.c	2022-05-04 17:46:06.188392388 +0200
+@@ -8,7 +8,7 @@
+ #ifdef USE_OPENSSL
+ #include "azure_c_shared_utility/tlsio_openssl.h"
+ #else
+-const IO_INTERFACE_DESCRIPTION* tlsio_openssl_get_interface_description();
++const IO_INTERFACE_DESCRIPTION* tlsio_openssl_get_interface_description(void);
+ #endif
+ #if USE_CYCLONESSL
+ #include "azure_c_shared_utility/tlsio_cyclonessl.h"
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/src/gballoc.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/src/gballoc.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/src/gballoc.c	2022-05-05 12:54:43.726635036 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/src/gballoc.c	2022-05-04 15:40:37.603926510 +0200
+@@ -424,7 +424,7 @@
+     return result;
+ }
+ 
+-void gballoc_resetMetrics()
++void gballoc_resetMetrics(void)
+ {
+     /* Codes_SRS_GBALLOC_07_005: [ If gballoc was not initialized gballoc_reset Metrics shall do nothing.] */
+     if (gballocState != GBALLOC_STATE_INIT)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/src/gbnetwork.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/src/gbnetwork.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/src/gbnetwork.c	2022-05-05 12:54:43.726635036 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/src/gbnetwork.c	2022-05-04 15:40:37.603926510 +0200
+@@ -68,7 +68,7 @@
+     gbnetworkState = GBNETWORK_STATE_NOT_INIT;
+ }
+ 
+-void gbnetwork_resetMetrics()
++void gbnetwork_resetMetrics(void)
+ {
+     if (gbnetworkState != GBNETWORK_STATE_INIT)
+     {
+@@ -189,7 +189,7 @@
+     return result;
+ }
+ 
+-uint64_t gbnetwork_getBytesRecv()
++uint64_t gbnetwork_getBytesRecv(void)
+ {
+     uint64_t result;
+ 
+@@ -211,7 +211,7 @@
+     return result;
+ }
+ 
+-uint64_t gbnetwork_getNumRecv()
++uint64_t gbnetwork_getNumRecv(void)
+ {
+     uint64_t result;
+ 
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c	2022-03-25 10:04:20.446267076 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/httpapicompact_ut/httpapi_compact_ut.c	2022-03-24 15:57:39.552679848 +0100
+@@ -577,7 +577,7 @@
+ }
+ 
+ #define TEST_RECEIVED_ANSWER (const unsigned char*)"HTTP/111.222 433 555\r\ncontent-length:10\r\ntransfer-encoding:\r\n\r\n0123456789\r\n\r\n"
+-static void setupAllCallBeforeReceiveHTTPsequenceWithSuccess()
++static void setupAllCallBeforeReceiveHTTPsequenceWithSuccess(void)
+ {
+     STRICT_EXPECTED_CALL(xio_dowork(IGNORED_NUM_ARG))
+         .IgnoreArgument(1);
+@@ -634,7 +634,7 @@
+ }
+ 
+ #define TEST_HEAD_RECEIVED_ANSWER (const unsigned char*)"HTTP/111.222 433 555\r\ncontent-length:10\r\ntransfer-encoding:\r\n\r\n"
+-static void setupAllCallBeforeReceiveHTTPHeadsequenceWithSuccess()
++static void setupAllCallBeforeReceiveHTTPHeadsequenceWithSuccess(void)
+ {
+     STRICT_EXPECTED_CALL(xio_dowork(IGNORED_NUM_ARG));
+ 
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/string_token_ut/string_token_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/string_token_ut/string_token_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/string_token_ut/string_token_ut.c	2022-03-25 10:04:20.450267282 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/string_token_ut/string_token_ut.c	2022-03-24 16:17:50.354479846 +0100
+@@ -71,7 +71,7 @@
+     real_free(ptr);
+ }
+ 
+-static void register_global_mock_hooks()
++static void register_global_mock_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(malloc, TEST_malloc);
+     REGISTER_GLOBAL_MOCK_HOOK(realloc, TEST_realloc);
+@@ -79,19 +79,19 @@
+ }
+ 
+ // Set Expected Call Helpers
+-static void set_expected_calls_for_get_delimiters_lengths()
++static void set_expected_calls_for_get_delimiters_lengths(void)
+ {
+     STRICT_EXPECTED_CALL(malloc(IGNORED_NUM_ARG));
+ }
+ 
+-static void set_expected_calls_for_StringToken_GetFirst()
++static void set_expected_calls_for_StringToken_GetFirst(void)
+ {
+     STRICT_EXPECTED_CALL(malloc(IGNORED_NUM_ARG));
+     set_expected_calls_for_get_delimiters_lengths();
+     STRICT_EXPECTED_CALL(free(IGNORED_PTR_ARG));
+ }
+ 
+-static void set_expected_calls_for_StringToken_GetNext()
++static void set_expected_calls_for_StringToken_GetNext(void)
+ {
+     set_expected_calls_for_get_delimiters_lengths();
+     STRICT_EXPECTED_CALL(free(IGNORED_PTR_ARG)); // delimiters lengths
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/tlsio_options_ut/gballoc_ut_impl_2.h	2022-03-24 17:12:47.865283160 +0100
+@@ -22,7 +22,7 @@
+ static uint32_t memory_block_count;
+ 
+ 
+-static void init_gballoc_checks()
++static void init_gballoc_checks(void)
+ {
+     uint32_t i;
+     memory_block_count = 0;
+@@ -70,7 +70,7 @@
+     }
+ }
+ 
+-static void assert_gballoc_checks()
++static void assert_gballoc_checks(void)
+ {
+     uint32_t i;
+     for (i = 0; i < memory_block_count; i++)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/tlsio_options_ut/tlsio_options_ut.c	2022-03-24 17:13:06.329329473 +0100
+@@ -57,7 +57,7 @@
+     ASSERT_FAIL("umock_c reported error :%" PRI_MU_ENUM "", MU_ENUM_VALUE(UMOCK_C_ERROR_CODE, error_code));
+ }
+ 
+-static void use_negative_mocks()
++static void use_negative_mocks(void)
+ {
+     int negativeTestsInitResult = umock_c_negative_tests_init();
+     ASSERT_ARE_EQUAL(int, 0, negativeTestsInitResult);
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/uuid_ut/uuid_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/uuid_ut/uuid_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/uuid_ut/uuid_ut.c	2022-03-25 10:04:20.454267489 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/uuid_ut/uuid_ut.c	2022-03-24 16:31:35.909645039 +0100
+@@ -45,23 +45,23 @@
+     return mock_UniqueId_Generate_result;
+ }
+ 
+-static void initialize_variables()
++static void initialize_variables(void)
+ {
+     mock_UniqueId_Generate_result = UNIQUEID_OK;
+ }
+ 
+-static void register_global_mock_returns()
++static void register_global_mock_returns(void)
+ {
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(malloc, NULL);
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(UniqueId_Generate, UNIQUEID_ERROR);
+ }
+ 
+-static void register_global_function_hooks()
++static void register_global_function_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(UniqueId_Generate, mock_UniqueId_Generate);
+ }
+ 
+-static void register_mock_aliases()
++static void register_mock_aliases(void)
+ {
+     REGISTER_UMOCK_ALIAS_TYPE(UNIQUEID_RESULT, int);
+ }
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/ws_url_ut/ws_url_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/ws_url_ut/ws_url_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/ws_url_ut/ws_url_ut.c	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/ws_url_ut/ws_url_ut.c	2022-03-24 17:18:34.539300691 +0100
+@@ -106,12 +106,12 @@
+     return 0;
+ }
+ 
+-static void register_umock_alias_types()
++static void register_umock_alias_types(void)
+ {
+     REGISTER_UMOCK_ALIAS_TYPE(STRING_TOKEN_HANDLE, void*);
+ }
+ 
+-static void register_global_mock_hooks()
++static void register_global_mock_hooks(void)
+ {
+     REGISTER_GLOBAL_MOCK_HOOK(malloc, TEST_malloc);
+     REGISTER_GLOBAL_MOCK_HOOK(free, TEST_free);
+@@ -124,7 +124,7 @@
+     REGISTER_GLOBAL_MOCK_HOOK(mallocAndStrcpy_s, TEST_mallocAndStrcpy_s);
+ }
+ 
+-static void register_global_mock_returns()
++static void register_global_mock_returns(void)
+ {
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(StringToken_GetFirst, NULL);
+     REGISTER_GLOBAL_MOCK_FAIL_RETURN(StringToken_GetNext, false);
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c	2022-03-25 10:04:20.458267695 +0100
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/x509_openssl_ut/x509_openssl_ut.c	2022-03-24 17:11:10.385056534 +0100
+@@ -343,7 +343,7 @@
+         }
+     }
+ 
+-    static void setup_load_certificate_chain_mocks()
++    static void setup_load_certificate_chain_mocks(void)
+     {
+         STRICT_EXPECTED_CALL(BIO_new_mem_buf((void*)TEST_PUBLIC_CERTIFICATE, -1));
+         STRICT_EXPECTED_CALL(PEM_read_bio_X509_AUX(IGNORED_PTR_ARG, NULL, NULL, NULL));
+@@ -376,7 +376,7 @@
+         setup_load_certificate_chain_mocks();
+     }
+ 
+-    static void setup_add_credentials_engine()
++    static void setup_add_credentials_engine(void)
+     {
+         // x509_openssl_add_pem_file_key
+         STRICT_EXPECTED_CALL(ENGINE_init(TEST_ENGINE));

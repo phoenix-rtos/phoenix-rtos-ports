@@ -1,0 +1,25 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/inc/azure_c_shared_utility/crt_abstractions.h azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/inc/azure_c_shared_utility/crt_abstractions.h
+--- azure-iot-sdk-c-lts_01_2022/c-utility/inc/azure_c_shared_utility/crt_abstractions.h	2022-06-02 13:45:02.794922605 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/inc/azure_c_shared_utility/crt_abstractions.h	2022-06-02 13:43:54.651900158 +0200
+@@ -19,6 +19,21 @@
+ 
+ #include "umock_c/umock_c_prod.h"
+ 
++/* No HUGE macros on Phoenix-RTOS */
++#if defined (phoenix)
++
++#ifndef _HUGE_ENUF
++#define _HUGE_ENUF  1e+300  // _HUGE_ENUF*_HUGE_ENUF must overflow
++#endif
++#ifndef HUGE_VALF
++#define HUGE_VALF  ((float)INFINITY)
++#endif
++#ifndef HUGE_VALL
++#define HUGE_VALL  ((long double)INFINITY)
++#endif
++
++#endif
++
+ #ifdef _MSC_VER
+ 
+ #ifdef QUARKGALILEO
