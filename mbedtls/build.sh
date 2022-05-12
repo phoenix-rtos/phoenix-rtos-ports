@@ -25,6 +25,7 @@ fi
 # Apply patches
 for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
 	if ! [ -f "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied" ]; then
+		[[ "${TARGET}" != "armv7m7-imxrt106x" ]] &&  [[ $(basename "$patchfile") == "armv7m7-imxrt106x.patch" ]] && continue
 		echo "applying patch: $patchfile"
 		patch -d "${PREFIX_MBEDTLS_BUILD}" -p0 -i "$patchfile" && touch "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied"
 	fi

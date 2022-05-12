@@ -1,0 +1,58 @@
+diff -ur '--exclude=*.git' mbedtls-2.28.0/include/mbedtls/config.h mbedtls-2.28.0-phoenix/include/mbedtls/config.h
+--- mbedtls-2.28.0/include/mbedtls/config.h	2022-05-12 18:34:14.902248483 +0200
++++ mbedtls-2.28.0-phoenix/include/mbedtls/config.h	2022-05-12 18:30:38.348326936 +0200
+@@ -563,7 +563,7 @@
+  *
+  * Uncomment to use your own hardware entropy collector.
+  */
+-//#define MBEDTLS_ENTROPY_HARDWARE_ALT
++#define MBEDTLS_ENTROPY_HARDWARE_ALT
+ 
+ /**
+  * \def MBEDTLS_AES_ROM_TABLES
+diff -ur '--exclude=*.git' mbedtls-2.28.0/library/entropy_poll.c mbedtls-2.28.0-phoenix/library/entropy_poll.c
+--- mbedtls-2.28.0/library/entropy_poll.c	2022-05-12 18:34:14.914248414 +0200
++++ mbedtls-2.28.0-phoenix/library/entropy_poll.c	2022-05-12 18:31:36.887582186 +0200
+@@ -50,6 +50,42 @@
+ #error "Platform entropy sources only work on Unix and Windows, see MBEDTLS_NO_PLATFORM_ENTROPY in config.h"
+ #endif
+ 
++#if defined(phoenix)
++
++#include <stdio.h>
++#include <sys/msg.h>
++#include <imxrt-multi.h>
++
++/* Implementation of hardware entropy source function for Phoenix-RTOS imxrt1064 platform*/
++int mbedtls_hardware_poll(void *data, unsigned char *output, size_t len, size_t *olen)
++{
++    msg_t msg = { 0 };
++    oid_t oid;
++    multi_i_t *imsg;
++    int ret;
++
++    if (lookup("/dev/trng", NULL, &oid) < 0) {
++        fprintf(stderr, "mbedtls: Fail to open entropy source\n");
++        return -1;
++    }
++
++    imsg = (multi_i_t *)msg.i.raw;
++    imsg->id = oid.id;
++    msg.type = mtRead;
++    msg.o.size = len;
++    msg.o.data = output;
++
++    if ((ret = msgSend(oid.port, &msg)) < 0) {
++        fprintf(stderr, "mbedtls: Fail to retrieve entropy source\n");
++        return -1;
++    }
++
++    *olen = len;
++
++    return 0;
++}
++#endif
++
+ #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+ 
+ #if !defined(_WIN32_WINNT)
