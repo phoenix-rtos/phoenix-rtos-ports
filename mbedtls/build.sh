@@ -2,7 +2,7 @@
 
 set -e
 
-MBEDTLS_VER="3.1.0"
+MBEDTLS_VER="2.28.0"
 MBEDTLS="mbedtls-${MBEDTLS_VER}"
 
 PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"
