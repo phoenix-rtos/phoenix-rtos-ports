@@ -12,24 +12,31 @@ PREFIX_MBEDTLS_PATCHES="${PREFIX_MBEDTLS}/patches"
 PREFIX_MBEDTLS_MARKERS="$PREFIX_MBEDTLS_BUILD/markers/"
 b_log "Building mbedtls"
 
+#temp: place repo in ports
+PREFIX_MBEDTLS_REPO="${PREFIX_MBEDTLS}/${MBEDTLS}"
+
+b_log "Building mbedtls"
+
 # Download and unpack
-mkdir -p "$PREFIX_MBEDTLS_BUILD" "$PREFIX_MBEDTLS_MARKERS"
-if ! [ -f "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" ]; then
-	wget https://github.com/Mbed-TLS/mbedtls/archive/v${MBEDTLS_VER}.tar.gz -O "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz"
+if ! [ -d "${PREFIX_MBEDTLS_REPO}" ]; then
+	git clone -b "v${MBEDTLS_VER}" https://github.com/Mbed-TLS/mbedtls.git "${PREFIX_MBEDTLS_REPO}"
 fi
 
-if ! [ -d "${PREFIX_MBEDTLS_SRC}" ]; then
-	tar xf "$PREFIX_MBEDTLS/${MBEDTLS}.tar.gz" -C "${PREFIX_MBEDTLS_BUILD}"
-fi
+rm -rf "${PREFIX_MBEDTLS_BUILD}"
 
 # Apply patches
 for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
-	if ! [ -f "${PREFIX_MBEDTLS_MARKERS}/$(basename "$patchfile").applied" ]; then
-		[[ "${TARGET}" != "armv7m7-imxrt106x" ]] &&  [[ $(basename "$patchfile") == "armv7m7-imxrt106x.patch" ]] && continue
+	if ! [ -f "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied" ]; then
 		echo "applying patch: $patchfile"
-		patch -d "${PREFIX_MBEDTLS_BUILD}" -p0 -i "$patchfile" && touch "${PREFIX_MBEDTLS_MARKERS}/$(basename "$patchfile").applied"
+		patch -d "${PREFIX_MBEDTLS}" -p0 -i "$patchfile" && touch "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied"
 	fi
 done
+
+# Copy files to _build directory
+if ! [ -d "${PREFIX_MBEDTLS_BUILD}" ]; then
+	mkdir -p "${PREFIX_MBEDTLS_BUILD}"
+	cp -r "${PREFIX_MBEDTLS_REPO}" "${PREFIX_MBEDTLS_BUILD}"
+fi
 
 # Convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
 LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
@@ -38,3 +45,36 @@ LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 export phoenix=1
 # Build
 (cd "${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}" && make install no_test)
+
+
+
+
+
+#####################
+# PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"
+# PREFIX_MBEDTLS_REPO="${PREFIX_MBEDTLS}/${MBEDTLS}"
+# PREFIX_MBEDTLS_BUILD="${PREFIX_BUILD}/mbedtls"
+# PREFIX_MBEDTLS_PATCHES="${PREFIX_MBEDTLS}/patches"
+
+# b_log "Building mbedtls"
+
+# # Download and unpack
+# if ! [ -d "${PREFIX_MBEDTLS_REPO}" ]; then
+# 	git clone -b "v${MBEDTLS_VER}" https://github.com/Mbed-TLS/mbedtls.git "${PREFIX_MBEDTLS_REPO}"
+# fi
+
+# rm -rf "${PREFIX_MBEDTLS_BUILD}"
+
+# # Apply patches
+# for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
+# 	if ! [ -f "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied" ]; then
+# 		echo "applying patch: $patchfile"
+# 		patch -d "${PREFIX_MBEDTLS}" -p0 -i "$patchfile" && touch "${PREFIX_MBEDTLS_PATCHES}/$(basename "$patchfile").applied"
+# 	fi
+# done
+
+# # Copy files to _build directory
+# if ! [ -d "${PREFIX_MBEDTLS_BUILD}" ]; then
+# 	mkdir -p "${PREFIX_MBEDTLS_BUILD}"
+# 	cp -r "${PREFIX_MBEDTLS_REPO}" "${PREFIX_MBEDTLS_BUILD}"
+# fi
