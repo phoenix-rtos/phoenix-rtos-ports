@@ -10,6 +10,7 @@ PREFIX_MBEDTLS_BUILD="${PREFIX_BUILD}/mbedtls"
 PREFIX_MBEDTLS_SRC="${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}"
 PREFIX_MBEDTLS_PATCHES="${PREFIX_MBEDTLS}/patches"
 PREFIX_MBEDTLS_MARKERS="$PREFIX_MBEDTLS_BUILD/markers/"
+PREFIX_MBEDTLS_TESTS="${PREFIX_MBEDTLS_SRC}/tests"
 b_log "Building mbedtls"
 
 #temp: place repo in ports
@@ -22,7 +23,7 @@ if ! [ -d "${PREFIX_MBEDTLS_REPO}" ]; then
 	git clone -b "v${MBEDTLS_VER}" https://github.com/Mbed-TLS/mbedtls.git "${PREFIX_MBEDTLS_REPO}"
 fi
 
-rm -rf "${PREFIX_MBEDTLS_BUILD}"
+# rm -rf "${PREFIX_MBEDTLS_BUILD}"
 
 # Apply patches
 for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
@@ -44,11 +45,22 @@ LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 # Flag that can be checked in makefiles
 export phoenix=1
 # Build
-(cd "${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}" && make install no_test)
+(cd "${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}" && make install all)
 
+# cp $PREFIX_MBEDTLS_SRC/tests/* "${TOPDIR}/_fs/ia32-generic/root/"
+# b_install "$PREFIX_MBEDTLS_SRC/tests" /
 
+mkdir -p "${PREFIX_FS}/root/mbedtls_test_configs/"
 
-
+for file in $PREFIX_MBEDTLS_TESTS/*
+do
+	if [[ $file == *\.datax ]]; then
+		cp $file "${PREFIX_FS}/root/mbedtls_test_configs/"
+		config_filename="$(basename "$file")"
+		test_executable=${config_filename::-6}
+		b_install "$PREFIX_MBEDTLS_TESTS/$test_executable" /bin
+	fi
+done
 
 #####################
 # PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"

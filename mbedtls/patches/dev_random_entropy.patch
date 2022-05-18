@@ -1,0 +1,63 @@
+diff -ur '--exclude=*.git' mbedtls-2.28.0/include/mbedtls/config.h mbedtls-2.28.0-phoenix/include/mbedtls/config.h
+--- mbedtls-2.28.0/include/mbedtls/config.h	2022-05-18 16:47:31.684718064 +0200
++++ mbedtls-2.28.0-phoenix/include/mbedtls/config.h	2022-05-17 18:53:56.467489789 +0200
+@@ -563,7 +563,7 @@
+  *
+  * Uncomment to use your own hardware entropy collector.
+  */
+-//#define MBEDTLS_ENTROPY_HARDWARE_ALT
++#define MBEDTLS_ENTROPY_HARDWARE_ALT
+ 
+ /**
+  * \def MBEDTLS_AES_ROM_TABLES
+diff -ur '--exclude=*.git' mbedtls-2.28.0/library/entropy_poll.c mbedtls-2.28.0-phoenix/library/entropy_poll.c
+--- mbedtls-2.28.0/library/entropy_poll.c	2022-05-18 16:47:31.700718320 +0200
++++ mbedtls-2.28.0-phoenix/library/entropy_poll.c	2022-05-18 16:45:55.015150316 +0200
+@@ -50,6 +50,47 @@
+ #error "Platform entropy sources only work on Unix and Windows, see MBEDTLS_NO_PLATFORM_ENTROPY in config.h"
+ #endif
+ 
++#if defined(phoenix)
++
++#include <stdio.h>
++
++/* Use /dev/random as entropy source by default on Phoenix-RTOS */
++int mbedtls_hardware_poll( void *data, unsigned char *output,
++                             size_t len, size_t *olen )
++{
++    FILE *file;
++    size_t ret, left = len;
++    unsigned char *p = output;
++    ((void) data);
++
++    *olen = 0;
++
++    file = fopen( "/dev/random", "rb" );
++    if( file == NULL )
++        return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
++
++    while( left > 0 )
++    {
++        /* /dev/random can return much less than requested. If so, try again */
++        ret = fread( p, 1, left, file );
++        if( ret == 0 && ferror( file ) )
++        {
++            fclose( file );
++            return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
++        }
++
++        p += ret;
++        left -= ret;
++        sleep( 1 );
++    }
++    fclose( file );
++    *olen = len;
++
++    return( 0 );
++}
++
++#endif
++
+ #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+ 
+ #if !defined(_WIN32_WINNT)
