@@ -23,7 +23,7 @@ if ! [ -d "${PREFIX_MBEDTLS_REPO}" ]; then
 	git clone -b "v${MBEDTLS_VER}" https://github.com/Mbed-TLS/mbedtls.git "${PREFIX_MBEDTLS_REPO}"
 fi
 
-# rm -rf "${PREFIX_MBEDTLS_BUILD}"
+rm -rf "${PREFIX_MBEDTLS_BUILD}"
 
 # Apply patches
 for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
@@ -61,6 +61,9 @@ do
 		b_install "$PREFIX_MBEDTLS_TESTS/$test_executable" /bin
 	fi
 done
+
+cp -r "${PREFIX_MBEDTLS_SRC}/tests/include/test" "${PREFIX_BUILD}/include"
+cp -r "${PREFIX_MBEDTLS_SRC}/library/"*.h "${PREFIX_BUILD}/include"
 
 #####################
 # PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"
