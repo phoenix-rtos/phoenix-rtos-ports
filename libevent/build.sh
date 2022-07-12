@@ -38,7 +38,7 @@ done
 mkdir -p "$PREFIX_LIBEVENT_INSTALL"
 
 pushd "$PREFIX_LIBEVENT_SRC"
-[ -f Makefile ] || ./configure CPPFLAGS="$CFLAGS" --host="$HOST" --disable-thread-support --disable-openssl --disable-debug-mode --disable-libevent-regress --disable-samples --enable-function-sections \
+[ -f Makefile ] || ./configure INSTALL="/usr/bin/install -p" CPPFLAGS="$CFLAGS" --host="$HOST" --disable-thread-support --disable-openssl --disable-debug-mode --disable-libevent-regress --disable-samples --enable-function-sections \
 	--disable-clock-gettime --disable-shared --prefix="$PREFIX_LIBEVENT_INSTALL" --includedir="${PREFIX_BUILD}/include" --libdir="${PREFIX_BUILD}/lib"
 make install
 popd
