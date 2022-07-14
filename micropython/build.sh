@@ -11,6 +11,13 @@ PREFIX_UPYTH_SRC=${PREFIX_UPYTH_BUILD}/${UPYTH}
 PREFIX_UPYTH_CONFIG="${PREFIX_UPYTH}/${UPYTH}-config/"
 PREFIX_UPYTH_MARKERS="$PREFIX_UPYTH_BUILD/markers/"
 
+# Prefixes for micropython tests
+PREFIX_UPYTH_TESTS_SRC="${PREFIX_UPYTH_SRC}/tests"
+PREFIX_UPYTH_TESTS_DES="${PREFIX_ROOTFS}/usr/test/micropython"
+
+# Directories in micropython test/ directory from which tests are sourced
+UPYTH_TESTS_DIRS="basics micropython float import io misc unicode extmod unix cmdline"
+
 b_log "Building micropython"
 
 #
@@ -41,6 +48,11 @@ cp -a "${PREFIX_UPYTH_CONFIG}/files/001_mpconfigport.mk" "${PREFIX_UPYTH_SRC}/po
 : "${UPYTH_STACKSZ=4096}"
 : "${UPYTH_HEAPSZ=16384}"
 
+# Some micropython tests needs more memory
+if [ "$LONG_TEST" = "y" ]; then
+	UPYTH_STACKSZ=16384
+	UPYTH_HEAPSZ=80000
+fi
 
 #
 # Architecture specific flags/values set
@@ -74,3 +86,20 @@ export CFLAGS=""
 
 cp -a "${PREFIX_UPYTH_SRC}/ports/unix/micropython" "$PREFIX_PROG_STRIPPED"
 b_install "$PREFIX_PORTS_INSTALL/micropython" /bin/
+
+#
+# Copy tests for micropython
+#
+if [ "$LONG_TEST" = "y" ]; then
+	echo "Copying micropython tests"
+
+	# Creating expected outputs for tests
+	(cd "${PREFIX_UPYTH_TESTS_SRC}" && ./run-tests.py --write-exp)
+
+	mkdir -p "$PREFIX_UPYTH_TESTS_DES"
+
+	for dir in $UPYTH_TESTS_DIRS
+	do
+		cp -r "$PREFIX_UPYTH_TESTS_SRC/$dir" "$PREFIX_UPYTH_TESTS_DES"
+	done
+fi
