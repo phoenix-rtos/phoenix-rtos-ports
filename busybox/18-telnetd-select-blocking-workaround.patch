@@ -1,0 +1,46 @@
+diff -ruN a/networking/telnetd.c b/networking/telnetd.c
+--- a/networking/telnetd.c	2022-07-14 13:42:23.083820837 +0200
++++ b/networking/telnetd.c	2022-07-18 13:31:44.071832653 +0200
+@@ -649,6 +649,8 @@
+ #define IS_INETD (opt & OPT_INETD)
+ 	int master_fd = master_fd; /* for compiler */
+ 	int sec_linger = sec_linger;
++	int sec_waited = 0;
++	struct timeval tv = { .tv_sec = 1 };
+ 	char *opt_bindaddr = NULL;
+ 	char *opt_portnbr;
+ #else
+@@ -768,22 +770,19 @@
+ 			G.maxfd = master_fd;
+ 	}
+ 
+-	{
+-		struct timeval *tv_ptr = NULL;
++	count = select(G.maxfd + 1, &rdfdset, &wrfdset, NULL, &tv);
+ #if ENABLE_FEATURE_TELNETD_INETD_WAIT
+-		struct timeval tv;
+-		if ((opt & OPT_WAIT) && !G.sessions) {
+-			tv.tv_sec = sec_linger;
+-			tv.tv_usec = 0;
+-			tv_ptr = &tv;
+-		}
+-#endif
+-		count = select(G.maxfd + 1, &rdfdset, &wrfdset, NULL, tv_ptr);
++	if ((opt & OPT_WAIT) && !G.sessions) {
++		if (count == 0)
++			++sec_waited;
++		else
++			sec_waited = 0;
++		if (sec_waited > sec_linger) /* "telnetd -w SEC" timed out */
++			return 0;
+ 	}
+-	if (count == 0) /* "telnetd -w SEC" timed out */
+-		return 0;
+-	if (count < 0)
+-		goto again; /* EINTR or ENOMEM */
++#endif
++	if (count <= 0)
++		goto again; /* EINTR or ENOMEM or timeout */
+ 
+ #if ENABLE_FEATURE_TELNETD_STANDALONE
+ 	/* Check for and accept new sessions */
