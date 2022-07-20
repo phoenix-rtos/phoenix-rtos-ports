@@ -1,0 +1,22 @@
+diff -ruN a/svr-main.c b/svr-main.c
+--- a/svr-main.c	2022-02-25 13:33:15.212265510 +0100
++++ b/svr-main.c	2022-07-14 13:36:47.200473962 +0200
+@@ -113,6 +113,7 @@
+ #if NON_INETD_MODE
+ static void main_noinetd() {
+ 	fd_set fds;
++	struct timeval timeout;
+ 	unsigned int i, j;
+ 	int val;
+ 	int maxsock = -1;
+@@ -193,7 +194,9 @@
+ 			}
+ 		}
+ 
+-		val = select(maxsock+1, &fds, NULL, NULL, NULL);
++		timeout.tv_sec = 1;
++		timeout.tv_usec = 0;
++		val = select(maxsock+1, &fds, NULL, NULL, &timeout);
+ 
+ 		if (ses.exitflag) {
+ 			unlink(svr_opts.pidfile);
