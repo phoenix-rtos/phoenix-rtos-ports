@@ -28,4 +28,4 @@ For building micropython we are using `unix` port provided by Micropython that i
      * `07_os_Makefile.patch`- disabling `Werror` compilation flag and addition of arithmetic functions absent in `libphoenix`
      * `08_os_varia.patch` - missing defines corrections 
      * `09_py_ifdefs.patch` - math related functions missing in `libphoenix` substitution in MicroPython code
-
+  * `exp_prefabs` - prefabricated files with expected output to some MicroPython tests. For most tests such files are generated using Python 3.10 or are provided by authors of MicroPython. Unfortunately there are some cases in which MicroPython 1.15 is incompatible with newer versions of CPython. For these tests expected outputs were generated manually using MicroPython 1.15 installed on standard Unix system
