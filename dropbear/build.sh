@@ -42,11 +42,12 @@ if [ ! -f "$PREFIX_DROPBEAR_BUILD/config.h" ]; then
 
 	DROPBEAR_CFLAGS="-DENDIAN_LITTLE -DUSE_DEV_PTMX ${DROPBEAR_CUSTOM_CFLAGS}"
 	DROPBEAR_LDFLAGS=""
+	ENABLE_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && ENABLE_ZLIB="yes"
 
 	( cd "${PREFIX_DROPBEAR_BUILD}" && "${PREFIX_DROPBEAR_SRC}/configure" CPPFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" \
 		LDFLAGS="${CFLAGS} ${LDFLAGS} ${DROPBEAR_LDFLAGS}" ARFLAGS="-r" \
 		--host="$HOST_TARGET" --includedir="${PREFIX_H}"  \
-		--prefix="${PREFIX_PROG}" --program-prefix="${PREFIX_PROG}" --libdir="${PREFIX_A}" --bindir="${PREFIX_PROG}" --disable-zlib --enable-static \
+		--prefix="${PREFIX_PROG}" --program-prefix="${PREFIX_PROG}" --libdir="${PREFIX_A}" --bindir="${PREFIX_PROG}" --enable-zlib="$ENABLE_ZLIB" --enable-static \
 		--disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-harden )
 fi
 
