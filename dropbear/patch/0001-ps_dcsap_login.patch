@@ -256,12 +256,11 @@ diff -Nuar dropbear-2018.76/phoenix.c dropbear-2018.76.phoenix/phoenix.c
 diff -Nuar dropbear-2018.76/phoenix.h dropbear-2018.76.phoenix/phoenix.h
 --- dropbear-2018.76/phoenix.h	1970-01-01 01:00:00.000000000 +0100
 +++ dropbear-2018.76.phoenix/phoenix.h	2021-12-17 18:24:51.364479006 +0100
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,15 @@
 +#ifndef DROPBEAR_PHOENIX_H_
 +#define DROPBEAR_PHOENIX_H_
 +
 +#ifdef ENABLE_PS_LOGIN_SERVICE
-+#include "includes.h"
 +#include <pwd.h>
 +#include <sys/types.h>
 +
