@@ -54,7 +54,7 @@ fi
 # Make
 #
 # create multi-binary and hardlinks
-make PROGRAMS="dropbear dbclient dropbearkey scp" -C "${PREFIX_DROPBEAR_BUILD}" CROSS_COMPILE="$CROSS" MULTI=1
+make PROGRAMS="dropbear dbclient dropbearkey scp" -C "${PREFIX_DROPBEAR_BUILD}" CROSS_COMPILE="$CROSS" MULTI=1 NO_ADDTL_WARNINGS=1
 
 "${CROSS}strip" -s "$PREFIX_DROPBEAR_BUILD/dropbearmulti" -o "$PREFIX_PROG_STRIPPED/dropbearmulti"
 cp -a "$PREFIX_DROPBEAR_BUILD/dropbearmulti" "$PREFIX_PROG/dropbearmulti"
