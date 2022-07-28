@@ -3,6 +3,8 @@
 set -e
 
 DROPBEAR=dropbear-2018.76
+PKG_URL="https://matt.ucc.asn.au/dropbear/releases/${DROPBEAR}.tar.bz2"
+PKG_MIRROR_URL="https://dropbear.nl/mirror/releases/${DROPBEAR}.tar.bz2"
 
 b_log "Building dropbear"
 PREFIX_DROPBEAR="${PREFIX_PROJECT}/phoenix-rtos-ports/dropbear"
@@ -14,7 +16,11 @@ PREFIX_DROPBEAR_MARKERS="${PREFIX_DROPBEAR_BUILD}/markers"
 # Download and unpack
 #
 mkdir -p "$PREFIX_DROPBEAR_BUILD" "$PREFIX_DROPBEAR_MARKERS"
-[ -f "$PREFIX_DROPBEAR/${DROPBEAR}.tar.bz2" ] || wget http://matt.ucc.asn.au/dropbear/releases/${DROPBEAR}.tar.bz2 -P "${PREFIX_DROPBEAR}" --no-check-certificate
+if [ ! -f "$PREFIX_DROPBEAR/${DROPBEAR}.tar.bz2" ]; then
+    if ! wget "$PKG_URL" -P "${PREFIX_DROPBEAR}" --no-check-certificate; then
+        wget "$PKG_MIRROR_URL" -P "${PREFIX_DROPBEAR}" --no-check-certificate
+    fi
+fi
 [ -d "$PREFIX_DROPBEAR_SRC" ] || ( tar jxf "$PREFIX_DROPBEAR/${DROPBEAR}.tar.bz2" -C "${PREFIX_DROPBEAR_BUILD}" && rm -rf "${PREFIX_DROPBEAR_MARKERS:?}/*" )
 
 #
