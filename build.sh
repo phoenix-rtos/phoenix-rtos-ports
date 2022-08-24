@@ -63,6 +63,7 @@ ports=(
 	"picocom"
 	"fs_mark"
 	"coremark"
+	"lsb_vsx"
 )
 
 
