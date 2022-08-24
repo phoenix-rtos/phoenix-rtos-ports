@@ -1,0 +1,147 @@
+diff -Naur lsb_vsx-2.0-1/LSB.tools/userintf.c lsb_vsx-2.0-1-phoenix/LSB.tools/userintf.c
+--- lsb_vsx-2.0-1/LSB.tools/userintf.c	2022-07-18 12:39:27.902041162 +0200
++++ lsb_vsx-2.0-1-phoenix/LSB.tools/userintf.c	2022-08-23 11:00:14.366929585 +0200
+@@ -17,13 +17,13 @@
+  *
+  */
+ 
+-#ifdef __linux__
++/*Deletion of __linux__ ifdef checks in order to use posix like mount func */
++
+ 
+ /* modify the following for different mountable filesystem types */
+ 
+ #define __USERINTF_FSTYPE "ext2"
+ 
+-#endif
+ 
+ /*
+ *      SCCS:   @(#)common/vport(userintf.top)	4.2 (04/22/97)  VSXgen release 1.4
+@@ -430,9 +430,26 @@
+  *	It returns 0 for success, -1 for failure.
+  */
+ 
+-#ifdef __linux__
++
+ #include <sys/mount.h>
+-#endif
++
++
++/*
++ *      Unmnt() unmounts the file system specified by "spec" from the
++ *      directory "dir" where it has previously been mounted.
++ *      It returns 0 for success, -1 for failure.
++ */
++
++/* ARGSUSED */
++public int
++unmnt(spec, dir)
++char *spec;
++char *dir;
++{
++        umount(dir);
++        return 0;
++}
++
+ 
+ public int
+ mnt_rw(spec, dir)
+@@ -441,22 +458,17 @@
+ {
+ 	int ret;
+ 
+-#ifdef __linux__
+         /* file system independent mount for filesystem */
+         ret = mount(spec, dir, (char *) __USERINTF_FSTYPE, MS_MGC_VAL, 0);
+-#else
+-	ret = mount(spec, dir, 0);
+-#endif
++
+ 	if (ret == -1 && errno == EBUSY)
+ 	{
+ 		(void) unmnt(spec, dir);
+ 		errno = 0;
+-#ifdef __linux__
++
+         /* file system independent mount for filesystem */
+         ret = mount(spec, dir, __USERINTF_FSTYPE, MS_MGC_VAL, 0);
+-#else
+-		ret = mount(spec, dir, 0);
+-#endif
++
+ 	}
+ 
+ 	return ret;
+@@ -468,6 +480,7 @@
+  *	It returns 0 for success, -1 for failure.
+  */
+ 
++
+ public int
+ mnt_ro(spec, dir)
+ char *spec;
+@@ -475,43 +488,23 @@
+ {
+ 	int ret;
+ 
+-#ifdef __linux__
++
+         /* file system independent mount for filesystem */
+         ret = mount(spec, dir, __USERINTF_FSTYPE, MS_MGC_VAL|MS_RDONLY, 0);
+-#else
+-	ret = mount(spec, dir, 1);
+-#endif
++
+ 	if (ret == -1 && errno == EBUSY)
+ 	{
+ 		(void) unmnt(spec, dir);
+ 		errno = 0;
+-#ifdef __linux__
++
+         ret = mount(spec, dir, __USERINTF_FSTYPE, MS_MGC_VAL|MS_RDONLY, 0);
+-#else
+-		ret = mount(spec, dir, 1);
+-#endif
++
+ 	}
+ 
+ 	return ret;
+ }
+ 
+ /*
+- *	Unmnt() unmounts the file system specified by "spec" from the
+- *	directory "dir" where it has previously been mounted.
+- *	It returns 0 for success, -1 for failure.
+- */
+-
+-/* ARGSUSED */
+-public int
+-unmnt(spec, dir)
+-char *spec;
+-char *dir;
+-{
+-	umount(dir);
+-	return 0;
+-}
+-
+-/*
+ *      SCCS:   @(#)install/userintf/gen_termios	1.1 (01/21/97)  VSXgen release 1.4
+ *
+ *	UniSoft Ltd., London, England
+@@ -718,11 +711,14 @@
+  *	It returns 0 for success, -1 for failure.
+  */
+ 
++/*We don't want to use root */
+ public int
+ newroot(path)
+ char *path;
+ {
+-	return chroot(path);
++/*	return chroot(path); */
++	fprintf(stderr, "In newroot func, which should never happen");
++	exit(-1);
+ }
+ 
+ /*
+ 

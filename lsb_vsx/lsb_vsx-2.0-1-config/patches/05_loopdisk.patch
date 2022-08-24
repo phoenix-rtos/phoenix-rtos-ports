@@ -1,0 +1,21 @@
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/targets/filldisc lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/targets/filldisc
+--- lsb_vsx-2.0-1/test_sets/SRC/install/targets/filldisc	2022-07-18 12:39:27.962039842 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/targets/filldisc	2022-08-01 12:58:33.902184161 +0200
+@@ -3,11 +3,11 @@
+ # Initialise file system for ENOSPC tests
+ 
+ MOUNT_DIR = /tmp/vsxmnt
+-
++#don't mount loopback disk for now
+ filldisc:
+-	test -d $(MOUNT_DIR) || mkdir $(MOUNT_DIR)
+-	mount $(NOSPC_DEV) $(MOUNT_DIR)
+-	cd $(MOUNT_DIR) && $(SCRIPTS)/filldisc.sh
+-	sync; sleep 2; df $(MOUNT_DIR)
+-	-umount $(MOUNT_DIR)
++	#test -d $(MOUNT_DIR) || mkdir $(MOUNT_DIR)
++	#mount $(NOSPC_DEV) $(MOUNT_DIR)
++	#cd $(MOUNT_DIR) && $(SCRIPTS)/filldisc.sh
++	#sync; sleep 2; df $(MOUNT_DIR)
++	#-umount $(MOUNT_DIR)
+ 

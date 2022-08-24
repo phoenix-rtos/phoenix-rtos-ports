@@ -1,0 +1,35 @@
+diff -Naur lsb_vsx-2.0-1/src/defines.mk lsb_vsx-2.0-1-phoenix/src/defines.mk
+--- lsb_vsx-2.0-1/src/defines.mk	2022-07-18 12:39:27.910040986 +0200
++++ lsb_vsx-2.0-1-phoenix/src/defines.mk	2022-08-23 15:13:25.173403924 +0200
+@@ -88,10 +88,10 @@
+ DTET_CDEFS = -DINETD
+ 
+ # CC - the name of the C compiler
+-CC = gcc
++CC = $(CC_BUF)
+ #
+ # LD_R - the program that performs partial linking
+-LD_R = ld -r
++LD_R = i386-pc-phoenix-ld -r
+ #
+ # CDEFS and COPTS - options that are always passed to cc when compiling
+ # program and "ordinary" library files
+@@ -153,7 +153,7 @@
+ # Set SHLIB_COPTS to SHLIB_NOT_SUPPORTED if shared libraries are not supported
+ # on your system or if you don't want to build the shared versions of the
+ # API libraries.
+-SHLIB_COPTS = -fPIC
++SHLIB_COPTS = SHLIB_NOT_SUPPORTED
+ #
+ # SHLIB_CC names the compiler that is used when generating the object files
+ # that are to be put in a shared library.
+@@ -179,7 +179,7 @@
+ #
+ # C_PLUS - the name of the C++ compiler
+ # To disable C++ support, set C_PLUS = CPLUSPLUS_NOT_SUPPORTED.
+-C_PLUS = g++
++C_PLUS = CPLUSPLUS_NOT_SUPPORTED
+ # C_SUFFIX - suffix for C++ source files
+ # (without an initial dot; e.g: C, cpp etc.)
+ C_SUFFIX = C
+ 

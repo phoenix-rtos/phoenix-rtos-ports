@@ -1,0 +1,247 @@
+diff -Naur lsb_vsx-2.0-1/src/defines.mk lsb_vsx-2.0-1-host/src/defines.mk
+--- lsb_vsx-2.0-1/src/defines.mk	2022-07-18 12:39:27.910040986 +0200
++++ lsb_vsx-2.0-1-host/src/defines.mk	2022-08-03 17:05:08.933685765 +0200
+@@ -153,7 +153,7 @@
+ # Set SHLIB_COPTS to SHLIB_NOT_SUPPORTED if shared libraries are not supported
+ # on your system or if you don't want to build the shared versions of the
+ # API libraries.
+-SHLIB_COPTS = -fPIC
++SHLIB_COPTS = SHLIB_NOT_SUPPORTED
+ #
+ # SHLIB_CC names the compiler that is used when generating the object files
+ # that are to be put in a shared library.
+@@ -179,7 +179,7 @@
+ #
+ # C_PLUS - the name of the C++ compiler
+ # To disable C++ support, set C_PLUS = CPLUSPLUS_NOT_SUPPORTED.
+-C_PLUS = g++
++C_PLUS = CPLUSPLUS_NOT_SUPPORTED
+ # C_SUFFIX - suffix for C++ source files
+ # (without an initial dot; e.g: C, cpp etc.)
+ C_SUFFIX = C
+diff -Naur lsb_vsx-2.0-1/test_sets/scripts/common/psl_setup.sh lsb_vsx-2.0-1-host/test_sets/scripts/common/psl_setup.sh
+--- lsb_vsx-2.0-1/test_sets/scripts/common/psl_setup.sh	2022-07-18 12:39:27.962039842 +0200
++++ lsb_vsx-2.0-1-host/test_sets/scripts/common/psl_setup.sh	2022-08-08 15:46:47.327527660 +0200
+@@ -27,12 +27,12 @@
+ then
+   touch scripts/locks/psl_setup
+ 
+-  printf "Install pseudolanguages ..? [y] "
+-  read cmd
+-  if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-          PSLDEFS_DIR="psldefs"
+-	  printf "Enter the root password:\n"
+-	  su root -c "cd $TOOLDIR/$PSLDEFS_DIR && make"
+-  fi
++#  printf "Install pseudolanguages ..? [y] "
++#  read cmd
++#  if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++#          PSLDEFS_DIR="psldefs"
++#	  printf "Enter the root password:\n"
++#	  su root -c "cd $TOOLDIR/$PSLDEFS_DIR && make"
++#  fi
+ fi
+   
+diff -Naur lsb_vsx-2.0-1/test_sets/scripts/vsx-pcts/post-build.sh lsb_vsx-2.0-1-host/test_sets/scripts/vsx-pcts/post-build.sh
+--- lsb_vsx-2.0-1/test_sets/scripts/vsx-pcts/post-build.sh	2022-07-18 12:39:27.962039842 +0200
++++ lsb_vsx-2.0-1-host/test_sets/scripts/vsx-pcts/post-build.sh	2022-08-08 17:00:52.001383703 +0200
+@@ -1,7 +1,8 @@
+ #!/bin/sh
+ 
+-printf "Install scripts into TESTROOT/BIN..? [y] "
+-read cmd
++#printf "Install scripts into TESTROOT/BIN..? [y] "
++#read cmd
++cmd=y
+ if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+         echo
+ 	echo "The test suites requires the generation of certain files."
+@@ -10,8 +11,9 @@
+ 	echo "by default on your system. If you do not use pax you can expect"
+ 	echo "to see more test failures."
+ 	echo 
+-	printf "Use pax..? [y] "
+-	read cmd
++	#printf "Use pax..? [y] "
++	#read cmd
++	cmd=y
+ 	if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+ 	    CPIO_SCRIPT_TOKEN="#PAX"
+ 	    TAR_SCRIPT_TOKEN="#PAX"
+@@ -41,9 +43,9 @@
+ #
+ #
+ 
+-printf "Install nonexistent devices ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-	printf "Enter the root password:\n"
+-	su root -c "sh scripts/vsx-pcts/nonexist_device.setup"
+-fi
++#printf "Install nonexistent devices ..? [y] "
++#read cmd
++#if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++#	printf "Enter the root password:\n"
++#	su root -c "sh scripts/vsx-pcts/nonexist_device.setup"
++#fi
+diff -Naur lsb_vsx-2.0-1/test_sets/setup_testsets.sh lsb_vsx-2.0-1-host/test_sets/setup_testsets.sh
+--- lsb_vsx-2.0-1/test_sets/setup_testsets.sh	2022-07-18 12:39:27.950040106 +0200
++++ lsb_vsx-2.0-1-host/test_sets/setup_testsets.sh	2022-08-08 17:25:52.208621871 +0200
+@@ -135,16 +135,17 @@
+ 
+ #---------------------------------------------------------------------
+ # Pre Configure testset scripts
+-run_testset_config_script pre-config
++#don' t create loopback disk for now
++run_testset_config_script #pre-config
+ 
+ ######################################################################
+ # Run config script
+-printf "Run config.sh ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++#printf "Run config.sh ..? [y] "
++#read cmd
++#if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+ 	config.sh
+-fi
+-printf "\n----------------------------------------------------------\n"
++#fi
++#printf "\n----------------------------------------------------------\n"
+ 
+ # Common cleanup needed
+ # Fixup NSIG to _NSIG which common to all Linux's (and CLK_TCK)
+@@ -163,10 +164,10 @@
+ ######################################################################
+ # Build the test framework
+ cd $INSTDIR
+-
+ printf "\n\n----------------------------------------------------------\n"
+ printf "Building the test framework ... enter the root password\n"
+-su root -c make
++#we don't want to use root
++make
+ if [ $? -ne 0 ]; then
+   echo "Test framework compilation failed. Aborting"
+   exit 1
+@@ -186,8 +187,9 @@
+ 
+ ######################################################################
+ # Parameterisation
+-printf "Install tetexec.cfg ..? [y] "
+-read cmd
++#printf "Install tetexec.cfg ..? [y] "
++#read cmd
++cmd=y
+ if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+ 
+   echo "Parameterizing the $TET_EXECUTE/tetexec.cfg file"
+@@ -217,11 +219,11 @@
+ 
+ ######################################################################
+ # Build & Execute testsets
+-printf "Build and Execute testsets ..? [y]"
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-  sh run_testsets.sh
+-fi
++#printf "Build and Execute testsets ..? [y]"
++#read cmd
++#if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++#  sh run_testsets.sh
++#fi
+ 
+ echo 
+ echo "In order to re run the test suites at a later date run the"
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/vprog/vmake.sh lsb_vsx-2.0-1-host/test_sets/SRC/common/vprog/vmake.sh
+--- lsb_vsx-2.0-1/test_sets/SRC/common/vprog/vmake.sh	2022-07-18 12:39:27.954040018 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/common/vprog/vmake.sh	2022-08-23 18:18:22.976834133 +0200
+@@ -256,6 +256,10 @@
+ 	;;
+ esac
+ 
++#move executable to TESTROOT
++mv "$TET_EXECUTE/../tset/$sect/$area/$tset"/T.$i "$Mtdir"/T.$i
++exit 0
++
+ if test "$macros" = n
+ then
+ 	# Create a dummy macro testset
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.mid lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.mid
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.mid	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.mid	2022-08-08 16:18:55.075164768 +0200
+@@ -19,8 +19,6 @@
+ 	test -d $(TET_EXECUTE) || { \
+ 	    mkdir $(TET_EXECUTE) && \
+ 	    touch $(TET_EXECUTE)/.keepme && \
+-	    $(CHOWN) vsx0 $(TET_EXECUTE) && \
+-	    $(CHGRP) vsxg0 $(TET_EXECUTE) && \
+ 	    $(CHMOD) u=rwx,g=rx,o=rx $(TET_EXECUTE); \
+ 	}
+ 
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.nfs lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.nfs
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.nfs	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.nfs	2022-08-08 16:20:39.673442927 +0200
+@@ -48,7 +48,7 @@
+ # Run install.sh as user vsx0, ensuring HOME is set to vsx0 home directory
+ 
+ install:
+-	su vsx0 -c 'HOME=`pwd` BIN/install.sh'
++	su 'whoami' -c 'HOME=`pwd` BIN/install.sh'
+ 
+ # Assign privileges to the chmog program
+ 
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.top lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.top
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.top	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/install/Makefile.top	2022-08-08 16:21:14.078200464 +0200
+@@ -35,19 +35,22 @@
+ # Check make is running with the necessary privileges
+ 
+ privchk:
+-	@if test -z "`id | grep 'uid=0[^0-9]' || true`"; then \
+-	    echo >&2 "make must be run as super-user"; \
+-	    exit 1; \
+-	fi
++	#we don't want to use root
++	#@if test -z "`id | grep 'uid=0[^0-9]' || true`"; then \
++	    #echo >&2 "make must be run as super-user"; \
++	    #exit 1; \
++	#fi
+ 
+ # Run install.sh as user vsx0, ensuring HOME is set to vsx0 home directory
+ 
+ install:
+-	su vsx0 -c 'HOME=`pwd` BIN/install.sh'
++	#run as owner
++	HOME=`pwd` BIN/install.sh
+ 
+ # Assign privileges to the chmog program
+ 
+ chmogpriv:	$(CHMOG)
+-	chown root $(CHMOG)
+-	chmod u+s $(CHMOG)
++	#we don't want to use root
++	#chown root $(CHMOG)
++	#chmod u+s $(CHMOG)
+ 
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/targets/filldisc lsb_vsx-2.0-1-host/test_sets/SRC/install/targets/filldisc
+--- lsb_vsx-2.0-1/test_sets/SRC/install/targets/filldisc	2022-07-18 12:39:27.962039842 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/install/targets/filldisc	2022-08-08 16:04:25.003303100 +0200
+@@ -3,11 +3,11 @@
+ # Initialise file system for ENOSPC tests
+ 
+ MOUNT_DIR = /tmp/vsxmnt
+-
++#don't mount loopback disk for now
+ filldisc:
+-	test -d $(MOUNT_DIR) || mkdir $(MOUNT_DIR)
+-	mount $(NOSPC_DEV) $(MOUNT_DIR)
+-	cd $(MOUNT_DIR) && $(SCRIPTS)/filldisc.sh
+-	sync; sleep 2; df $(MOUNT_DIR)
+-	-umount $(MOUNT_DIR)
++	#test -d $(MOUNT_DIR) || mkdir $(MOUNT_DIR)
++	#mount $(NOSPC_DEV) $(MOUNT_DIR)
++	#cd $(MOUNT_DIR) && $(SCRIPTS)/filldisc.sh
++	#sync; sleep 2; df $(MOUNT_DIR)
++	#-umount $(MOUNT_DIR)
+ 

@@ -1,0 +1,169 @@
+diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c
+--- lsb_vsx-2.0-1/src/tet3/tcc/scen1.c	2022-07-18 12:39:27.910040986 +0200
++++ lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c	2022-08-22 17:33:01.736662293 +0200
+@@ -94,7 +94,7 @@
+ #define isattached(s)	(*(s) && !isspace(*(s)))
+ 
+ /*
+-** structure of the line cache stack used by getline() and ungetline()
++** structure of the line cache stack used by getline2() and ungetline()
+ ** this is a linked list
+ ** the lc_next and lc_last elements must be 1st and 2nd so as to
+ ** enable the stack to be manipulated by the llist functions
+@@ -134,7 +134,7 @@
+ 
+ /*
+ ** pointer to the currently active input file stack element;
+-** that is: the element in the stack where getline() and ungetline()
++** that is: the element in the stack where getline2() and ungetline()
+ ** fetch and store input lines
+ **
+ ** normally, the currently active element is at the top of the stack;
+@@ -148,7 +148,7 @@
+ 
+ /* static function declarations */
+ static int find1scen PROTOLIST((void));
+-static char *getline PROTOLIST((void));
++static char *getline2 PROTOLIST((void));
+ static void includefile PROTOLIST((char *, char *, int));
+ static struct ifstack *ifsalloc PROTOLIST((void));
+ static void ifsfree PROTOLIST((struct ifstack *));
+@@ -172,6 +172,8 @@
+ static char *firstpart PROTOLIST((char *));
+ #endif
+ 
++/*Changing getline function name to getline2 to avoid multiple declaration
++
+ 
+ /*
+ **	proc1scfile() - tokenise a scenario input file
+@@ -243,7 +245,7 @@
+ 	**	the scenario processor can find it
+ 	*/
+ 	for (;;) {
+-		if ((line = getline()) == (char *) 0)
++		if ((line = getline2()) == (char *) 0)
+ 			return(ferror(ifstp->if_fp) ? -1 : 0);
+ 		if (!isspace(*line)) {
+ 			/* start of new scenario */
+@@ -286,7 +288,7 @@
+ 	register struct scentab *ep;
+ 
+ 	/* read the scenario name - starts in column 1 */
+-	line = getline();
++	line = getline2();
+ 	ASSERT(line);
+ 	ASSERT(!isspace(*line));
+ 
+@@ -314,7 +316,7 @@
+ 		return(-1);
+ 
+ 	/* process the rest of the current scenario */
+-	while ((line = getline()) != (char *) 0) {
++	while ((line = getline2()) != (char *) 0) {
+ 		if (!isspace(*line)) {
+ 			/* a new scenario */
+ 			ungetline(line);
+@@ -1168,13 +1170,13 @@
+ }
+ 
+ /*
+-**	getline() - get the next non-blank, non-comment line
++**	getline2() - get the next non-blank, non-comment line
+ **		from the currently active input file
+ **
+ **	return a pointer to the line, or (char *) 0 on EOF or error
+ */
+ 
+-static char *getline()
++static char *getline2()
+ {
+ 	static char buf[LBUFLEN];
+ 	struct lcache *lcp;
+@@ -1187,7 +1189,7 @@
+ 	if ((lcp = lcpop()) != (struct lcache *) 0) {
+ 		(void) strcpy(buf, lcp->lc_line);
+ 		lcfree(lcp);
+-		TRACE2(tet_Tscen, 10, "getline(): line = <%s>", firstpart(buf));
++		TRACE2(tet_Tscen, 10, "getline2(): line = <%s>", firstpart(buf));
+ 		return(buf);
+ 	}
+ 
+@@ -1218,14 +1220,14 @@
+ 			}
+ 			else
+ 				TRACE2(tet_Tscen, 10,
+-					"getline(): encountered EOF on %s",
++					"getline2(): encountered EOF on %s",
+ 					ifstp->if_fname);
+ 			if (ifstp->if_next) {
+ 				(void) fclose(ifstp->if_fp);
+ 				ifsfree(ifspop());
+ 				continue;
+ 			}
+-			TRACE1(tet_Tscen, 10, "getline(): return EOF");
++			TRACE1(tet_Tscen, 10, "getline2(): return EOF");
+ 			return((char *) 0);
+ 		}
+ 
+@@ -1260,7 +1262,7 @@
+ 
+ 		/* if there is anything left, return it */
+ 		if (p >= buf) {
+-			TRACE4(tet_Tscen, 10, "getline(): fname = %s, lineno = %s, line = <%s>",
++			TRACE4(tet_Tscen, 10, "getline2(): fname = %s, lineno = %s, line = <%s>",
+ 				ifstp->if_fname, tet_i2a(ifstp->if_lcount),
+ 				firstpart(buf));
+ 			return(buf);
+
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c
+--- lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c	2022-07-18 12:39:27.950040106 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c	2022-08-23 12:30:04.705832109 +0200
+@@ -94,7 +94,8 @@
+ #define	QUOTE		7
+ 
+ private	int	getstring();
+-private int	getline();
++/*Changing getline function name to getline2 to avoid multiple declaration */
++private int	getline2();
+ 
+ private int	clinno;
+ private int     state;
+@@ -169,7 +170,7 @@
+ 		in_rpt("Test Code:");
+ 		state = START;
+ 		do {
+-			n = getline(fd, str);
++			n = getline2(fd, str);
+ 			if (str[0] != NUL)
+ 				in_rpt("%2d:  %s", clinno, str);
+ 			clinno++;
+@@ -186,7 +187,7 @@
+ 			in_rpt("Test Code for file %s:", filname);
+ 			state = START;
+ 			do {
+-				n = getline(fd, str);
++				n = getline2(fd, str);
+ 				if (str[0] != NUL)
+ 					in_rpt("%2d:  %s", clinno, str);
+ 				clinno++;
+@@ -353,7 +354,7 @@
+  *	function to read a line of code from file descripor fd.
+  */
+ private int
+-getline(fd, str)
++getline2(fd, str)
+ 	int     fd;
+ 	char    *str;
+ {
+@@ -361,7 +362,7 @@
+ 	int		leave;
+ 	char		c;
+ 
+-	DBUG_ENTER("getline");
++	DBUG_ENTER("getline2");
+ 	str[0] = NUL;
+ 	if (state == END)
+ 		DBUG_RETURN(END);
+
+

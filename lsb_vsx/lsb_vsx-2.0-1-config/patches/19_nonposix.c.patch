@@ -1,0 +1,204 @@
+--- lsb_vsx-2.0-1/test_sets/SRC/common/vport/nonposix.c	2022-07-18 12:39:27.954040018 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/vport/nonposix.c	2022-08-26 12:03:39.928354000 +0200
+@@ -282,75 +282,7 @@
+ 
+ #endif /* __STDC__ */
+ 
+-#ifndef __linux__
+-
+-public	int	opterr = 1;
+-public	int	optind = 1;
+-public	char	*optarg;
+-
+-public int
+-getopt(argc, argv, opts)
+-int	argc;
+-char	**argv, *opts;
+-{
+-	static int sp = 1;
+-	int c;
+-	char *cp;
+-
+-	if (sp == 1)
+-	{
+-		if (optind >= argc ||
+-		   argv[optind][0] != '-' || argv[optind][1] == '\0')
+-			return EOF;
+-		else if(strcmp(argv[optind], "--") == 0)
+-		{
+-			optind++;
+-			return EOF;
+-		}
+-	}
+-
+-	c = argv[optind][sp];
+-	if (c == ':' || (cp=strchr(opts, c)) == NULL)
+-	{
+-		if (opterr)
+-			(void) fprintf(stderr, "%s: illegal option -- %c\n",
+-				argv[0], c);
+-		if (argv[optind][++sp] == '\0')
+-		{
+-			optind++;
+-			sp = 1;
+-		}
+-		return '?';
+-	}
+-	if (*++cp == ':')
+-	{
+-		if (argv[optind][sp+1] != '\0')
+-			optarg = &argv[optind++][sp+1];
+-		else if(++optind >= argc)
+-		{
+-			if (opterr)
+-				(void) fprintf(stderr,
+-				    "%s: option requires an argument -- %c\n",
+-				    argv[0], c);
+-			sp = 1;
+-			return '?';
+-		} else
+-			optarg = argv[optind++];
+-		sp = 1;
+-	}
+-	else
+-	{
+-		if (argv[optind][++sp] == '\0')
+-		{
+-			sp = 1;
+-			optind++;
+-		}
+-		optarg = NULL;
+-	}
+-	return c;
+-}
+-
+-#endif /* __linux__ */
++/*Phoenix lib contains getopt func */
+ 
+ public int
+ isnan(x)
+@@ -359,123 +291,8 @@
+ 	return (x != x);
+ }
+ 
+-#ifndef __linux__
+-
+-#define	tst(a, b) (*mode == 'r' ? (b) : (a))
+-
+-static pid_t *popen_pid = NULL;
+-
+-public FILE *
+-popen(cmd, mode)
+-char	*cmd, *mode;
+-{
+-	int	p[2];
+-	int	myside, yourside;
+-	pid_t	*poptr, pid;
+-
+-	static long open_max;
+-
+-	if (popen_pid == NULL)
+-	{
+-		errno = 0;
+-		open_max = sysconf(_SC_OPEN_MAX);
+-		if (open_max < 0 && errno == 0)
+-			open_max = 256;
+-		if (open_max < 0 ||
+-		   (popen_pid = (pid_t *)calloc((size_t) open_max,
+-		   sizeof(pid_t))) == NULL)
+-			return NULL;
+-	}
+-
+-	if (pipe(p) < 0)
+-		return NULL;
+-
+-	myside = tst(p[1], p[0]);
+-	yourside = tst(p[0], p[1]);
+-
+-	if ((pid = fork()) == 0)
+-	{
+-		/* myside and yourside reverse roles in child */
+-		int	stdio;
+-
+-		/* close all pipes from other popen's */
+-		poptr = &popen_pid[open_max];
+-		while (poptr > popen_pid)
+-		{
+-			if (*--poptr != 0)
+-				(void) close(poptr - popen_pid);
+-		}
+-		stdio = tst(0, 1);
+-		(void) close(myside);
+-		(void) close(stdio);
+-		(void) fcntl(yourside, F_DUPFD, stdio);
+-		(void) close(yourside);
+-		(void) execlp("sh", "sh", "-c", cmd, (char *)0);
+-		_exit(1);
+-	}
+-	else if (pid == -1)
+-		return NULL;
+-
+-	popen_pid[myside] = pid;
+-	(void) close(yourside);
+-
+-	return fdopen(myside, mode);
+-}
+-
+-public int
+-pclose(ptr)
+-FILE	*ptr;
+-{
+-	int f, status, err = errno;
+-	pid_t p;
+-	sigset_t set, oset;
+-
+-	if (popen_pid == NULL)
+-	{
+-		/* no popen() calls made */
+-		errno = ECHILD;
+-		return SYSERROR;
+-	}
+-
+-	f = fileno(ptr);
+-	p = popen_pid[f];
+-	(void) fclose(ptr);
+-	popen_pid[f] = 0;
+-
+-	if (p <= 0)
+-	{
+-		/* no child to wait for */
+-		errno = ECHILD;
+-		return SYSERROR;
+-	}
+-
+-	(void) sigemptyset(&set);
+-	(void) sigaddset(&set, SIGHUP);
+-	(void) sigaddset(&set, SIGINT);
+-	(void) sigaddset(&set, SIGQUIT);
+-	(void) sigprocmask(SIG_BLOCK, &set, &oset);
+-
+-	if (waitpid(p, &status, 0) != p)
+-	{
+-		status = SYSERROR;
+-		err = errno;
+-	}
+-
+-	(void) sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
+-	if (sigpending(&set) != SYSERROR &&
+-	   (sigismember(&set, SIGHUP) ||
+-	    sigismember(&set, SIGINT) ||
+-	    sigismember(&set, SIGQUIT)))
+-	{
+-		(void) sigsuspend(&oset);
+-		err = errno;
+-	}
+-
+-	errno = err;
+-	return status;
+-}
+ 
+-#endif /* __linux__ */
++/*Phoenix lib contains popen and pclose func */
+ 
+ #if !(__STDC__ > 0) && !ANSI_VPRINTF_FUNC 
+ 

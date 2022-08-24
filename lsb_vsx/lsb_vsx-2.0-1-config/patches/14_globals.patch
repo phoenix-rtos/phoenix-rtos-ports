@@ -1,0 +1,15 @@
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/drivers/globals.c lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/globals.c
+--- lsb_vsx-2.0-1/test_sets/SRC/common/drivers/globals.c	2022-07-18 12:39:27.950040106 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/globals.c	2022-08-22 13:04:58.442229333 +0200
+@@ -46,7 +46,10 @@
+ 
+ public	int	ntests;				/* number of tests */
+ public	int	test_index;			/* Index into tcnrl struct */
+-public	int	debug		= FALSE;	/* true for "-D" flag */
++/* Commented to avoid multiple definition of debug, first defined
++** in phoenix-rtos-project/libphoenix/arch/ia32/syscalls.S
++*/
++/*public	int	debug		= FALSE;*/	/* true for "-D" flag */
+ public	int	cstatus;			/* child return status */
+ public	int	running		= FALSE;	/* testset is running */
+ public	struct tcntrl	**test;			/* test control array */
