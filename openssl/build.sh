@@ -34,7 +34,7 @@ done
 #
 if [ ! -f "${PREFIX_OPENSSL_BUILD}/Makefile" ]; then
 	cp "$PREFIX_OPENSSL/30-phoenix.conf" "$PREFIX_OPENSSL_SRC/Configurations/"
-	(cd "${PREFIX_OPENSSL_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL")
+	(cd "${PREFIX_OPENSSL_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
 fi
 
 
