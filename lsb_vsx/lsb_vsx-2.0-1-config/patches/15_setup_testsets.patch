@@ -73,3 +73,4 @@ diff -Naur lsb_vsx-2.0-1/test_sets/setup_testsets.sh lsb_vsx-2.0-1-phoenix/test_
 +#echo "In order to re run the test suites at a later date run the"
 +#echo "rerun_tests program in vsx0's home directory as the vsx0 user"
 +#echo
+

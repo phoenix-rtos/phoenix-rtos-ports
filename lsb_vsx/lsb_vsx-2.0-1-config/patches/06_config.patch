@@ -1,10 +1,10 @@
 --- lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh	2022-07-18 12:39:27.958039930 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/scripts/config.sh	2022-08-26 11:01:59.407283334 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/scripts/config.sh	2022-09-07 15:28:11.993122880 +0200
 @@ -11,6 +11,8 @@
  #		Outputs - Parameter File for Subsequent Phases		#
  #########################################################################
  
-+#Deletion of prompting for paramaters values and setting them manually
++#Deletion of prompting for parameters values and setting them manually
 +
  tfile=/tmp/tfile$$		# miscellaneous temporary files
  cfile=/tmp/cfile$$.c
@@ -513,3 +513,4 @@
  			"$VSXDIR"/install/Makefile.top &&
  		cd $VSXDIR/install/targets &&
  		cat $dirgid_target $filldisc_target $user_targets \
+		

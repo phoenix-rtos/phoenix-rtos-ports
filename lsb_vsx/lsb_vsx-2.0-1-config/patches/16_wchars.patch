@@ -17,3 +17,4 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/wchars/Makefile.org lsb_vsx-2.0-1-
  
  wchars.bin:	wcc $(VSXDIR)/wchars.cfg
  		./wcc $(VSXDIR)/wchars.cfg $@
+		

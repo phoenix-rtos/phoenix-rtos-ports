@@ -1,6 +1,5 @@
-diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-host/test_sets/SRC/install/scripts/config.sh
 --- lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh	2022-07-18 12:39:27.958039930 +0200
-+++ lsb_vsx-2.0-1-host/test_sets/SRC/install/scripts/config.sh	2022-08-08 16:03:39.038757667 +0200
++++ lsb_vsx-2.0-1-host/test_sets/SRC/install/scripts/config.sh	2022-09-08 18:07:53.300761413 +0200
 @@ -110,49 +110,15 @@
  	fi
  }
@@ -77,7 +76,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -done
 +
 +#Setting test mode
-+TEST_MODE="UNIX98"
++TEST_MODE="POSIX96"
  
  # Set DEFINES based on test mode
  
@@ -127,7 +126,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  
  if test -z "$TET_EXECUTE"
  then
-@@ -483,147 +413,36 @@
+@@ -483,147 +413,38 @@
  else
  	default=$TET_EXECUTE
  fi
@@ -135,20 +134,22 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -Where is the root directory of the tree from which the
 -testsets will be executed [$default]? "
 -if test -z "$ans"
--then
--	ans=$default
--fi
--if test ! -d "$ans"
 +echo $TET_EXECUTE
 +if test ! -d "$TET_EXECUTE"
  then
--	echo "*** warning: directory $ans does not exist"
--	echo "*** it will be created by the VSX install procedure"
+-	ans=$default
 +	echo "*** warning: directory $TET_EXECUTE does not exist"
  fi
+-if test ! -d "$ans"
+-then
+-	echo "*** warning: directory $ans does not exist"
+-	echo "*** it will be created by the VSX install procedure"
+-fi
 -TET_EXECUTE="$ans"
  
-+SPEED="3"
++# Keep default speed
++
++SPEED="5"
  if test -z "$SPEED"
  then
  	default="5"
@@ -174,10 +175,11 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -	esac
 -done
  
-+INCDIRS=/usr/include
++INCDIRS="/usr/include /usr/include/x86_64-linux-gnu"
  if test -z "$INCDIRS"
  then
- 	INCDIRS="/usr/include"
+-	INCDIRS="/usr/include"
++	INCDIRS="/usr/include /usr/include/x86_64-linux-gnu"
  fi
 -while :
 -do
@@ -198,7 +200,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -		;;
 -	esac
 -done
--
+ 
 -if test -z "$confirm"
 -then
 -	INCDIRS=""
@@ -224,10 +226,8 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -		fi
 -	done
 -fi
- 
-+CC=gcc
-+default=$CC
- 
+-
+-
 -if test -z "$CC"
 -then
 -	default=`mywhere c89`
@@ -266,7 +266,9 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
 -		break
 -	fi
 -done
--
++CC=gcc
++default=$CC
+ 
 +COPTS=""
  if test -z "$COPTS"
  then
@@ -283,7 +285,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  
  if test -z "$LDFLAGS"
  then
-@@ -631,12 +450,6 @@
+@@ -631,12 +452,6 @@
  else
  	default=$LDFLAGS
  fi
@@ -296,7 +298,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  
  echo "
  Searching for archive maintenance tools ..."
-@@ -815,75 +628,6 @@
+@@ -815,75 +630,6 @@
  	;;
  esac
  
@@ -372,7 +374,45 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  # Only ask for XNFS_CLIENT, XNFS_SERVER and SERVER_TET_ROOT if testing XNFS
  
  case "$TEST_XNFS" in
-@@ -1088,19 +832,6 @@
+@@ -957,35 +703,12 @@
+ esac
+ 
+ # Only ask for VPRINTF_SUPP if installing in a POSIX mode
++# Phoenix-RTOS support vprintf
+ 
+ case "$TEST_MODE" in
+ POSIX*|FIPS*)
+-	if test -z "$VPRINTF_SUPP"
+-	then
+-		default=y
+-	else
+-		default=$VPRINTF_SUPP
+-	fi
+-	while :
+-	do
+-		getans "
+-Is the ANSI function vprintf() supported (y/n) [$default]? "
+-		if test -z "$ans"
+-		then
+-			ans=$default
+-		fi
+-		case "$ans" in
+-		y|n)
+-			VPRINTF_SUPP=$ans
+-			break
+-			;;
+-		*)
+-			;;
+-		esac
+-	done
+-	;;
+-*)
+ 	VPRINTF_SUPP=y
++	default=y
+ 	;;
+ esac
+ 
+@@ -1088,19 +811,6 @@
  		default=$CFPURE
  		textplus="(type \"none\" if no such option exists) "
  	fi
@@ -392,7 +432,7 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  	;;
  esac
  
-@@ -1118,62 +849,12 @@
+@@ -1118,62 +828,12 @@
  	else
  		default="$MLIB"
  	fi
@@ -455,13 +495,14 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/scripts/config.sh lsb_vsx-2.0-1-h
  	;;
  esac
  
-@@ -1340,7 +1021,8 @@
+@@ -1340,7 +1000,8 @@
  	done
  
  	(
 -		sed "s/^all:.*/all:	privchk mktroot $dirgid_target install chmogpriv $filldisc_target $user_targets $fixed_targets/" \
-+	#	sed "s/^all:.*/all:	mktroot $dirgid_target install $user_targets $fixed_targets/" \
++	# We build only this targets
 +		sed "s/^all:.*/all:     install $dirgid_target mktroot /" \
  			"$VSXDIR"/install/Makefile.top &&
  		cd $VSXDIR/install/targets &&
  		cat $dirgid_target $filldisc_target $user_targets \
+		

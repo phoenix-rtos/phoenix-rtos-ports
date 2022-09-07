@@ -1,12 +1,59 @@
-diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c
+--- lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c	2022-07-18 12:39:27.950040106 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c	2022-09-09 10:06:29.650026180 +0200
+@@ -94,7 +94,8 @@
+ #define	QUOTE		7
+ 
+ private	int	getstring();
+-private int	getline();
++/*Changing getline function name to lsb_vsx_getline to avoid multiple declaration */
++private int	lsb_vsx_getline();
+ 
+ private int	clinno;
+ private int     state;
+@@ -169,7 +170,7 @@
+ 		in_rpt("Test Code:");
+ 		state = START;
+ 		do {
+-			n = getline(fd, str);
++			n = lsb_vsx_getline(fd, str);
+ 			if (str[0] != NUL)
+ 				in_rpt("%2d:  %s", clinno, str);
+ 			clinno++;
+@@ -186,7 +187,7 @@
+ 			in_rpt("Test Code for file %s:", filname);
+ 			state = START;
+ 			do {
+-				n = getline(fd, str);
++				n = lsb_vsx_getline(fd, str);
+ 				if (str[0] != NUL)
+ 					in_rpt("%2d:  %s", clinno, str);
+ 				clinno++;
+@@ -353,7 +354,7 @@
+  *	function to read a line of code from file descripor fd.
+  */
+ private int
+-getline(fd, str)
++lsb_vsx_getline(fd, str)
+ 	int     fd;
+ 	char    *str;
+ {
+@@ -361,7 +362,7 @@
+ 	int		leave;
+ 	char		c;
+ 
+-	DBUG_ENTER("getline");
++	DBUG_ENTER("lsb_vsx_getline");
+ 	str[0] = NUL;
+ 	if (state == END)
+ 		DBUG_RETURN(END);
 --- lsb_vsx-2.0-1/src/tet3/tcc/scen1.c	2022-07-18 12:39:27.910040986 +0200
-+++ lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c	2022-08-22 17:33:01.736662293 +0200
++++ lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c	2022-09-09 10:09:24.390553064 +0200
 @@ -94,7 +94,7 @@
  #define isattached(s)	(*(s) && !isspace(*(s)))
  
  /*
 -** structure of the line cache stack used by getline() and ungetline()
-+** structure of the line cache stack used by getline2() and ungetline()
++** structure of the line cache stack used by lsb_vsx_getline() and ungetline()
  ** this is a linked list
  ** the lc_next and lc_last elements must be 1st and 2nd so as to
  ** enable the stack to be manipulated by the llist functions
@@ -15,7 +62,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  /*
  ** pointer to the currently active input file stack element;
 -** that is: the element in the stack where getline() and ungetline()
-+** that is: the element in the stack where getline2() and ungetline()
++** that is: the element in the stack where lsb_vsx_getline() and ungetline()
  ** fetch and store input lines
  **
  ** normally, the currently active element is at the top of the stack;
@@ -24,7 +71,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  /* static function declarations */
  static int find1scen PROTOLIST((void));
 -static char *getline PROTOLIST((void));
-+static char *getline2 PROTOLIST((void));
++static char *lsb_vsx_getline PROTOLIST((void));
  static void includefile PROTOLIST((char *, char *, int));
  static struct ifstack *ifsalloc PROTOLIST((void));
  static void ifsfree PROTOLIST((struct ifstack *));
@@ -32,7 +79,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  static char *firstpart PROTOLIST((char *));
  #endif
  
-+/*Changing getline function name to getline2 to avoid multiple declaration
++/*Changing getline function name to lsb_vsx_getline to avoid multiple declaration
 +
  
  /*
@@ -42,7 +89,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  	*/
  	for (;;) {
 -		if ((line = getline()) == (char *) 0)
-+		if ((line = getline2()) == (char *) 0)
++		if ((line = lsb_vsx_getline()) == (char *) 0)
  			return(ferror(ifstp->if_fp) ? -1 : 0);
  		if (!isspace(*line)) {
  			/* start of new scenario */
@@ -51,7 +98,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  
  	/* read the scenario name - starts in column 1 */
 -	line = getline();
-+	line = getline2();
++	line = lsb_vsx_getline();
  	ASSERT(line);
  	ASSERT(!isspace(*line));
  
@@ -60,7 +107,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  
  	/* process the rest of the current scenario */
 -	while ((line = getline()) != (char *) 0) {
-+	while ((line = getline2()) != (char *) 0) {
++	while ((line = lsb_vsx_getline()) != (char *) 0) {
  		if (!isspace(*line)) {
  			/* a new scenario */
  			ungetline(line);
@@ -69,14 +116,14 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  
  /*
 -**	getline() - get the next non-blank, non-comment line
-+**	getline2() - get the next non-blank, non-comment line
++**	lsb_vsx_getline() - get the next non-blank, non-comment line
  **		from the currently active input file
  **
  **	return a pointer to the line, or (char *) 0 on EOF or error
  */
  
 -static char *getline()
-+static char *getline2()
++static char *lsb_vsx_getline()
  {
  	static char buf[LBUFLEN];
  	struct lcache *lcp;
@@ -85,7 +132,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  		(void) strcpy(buf, lcp->lc_line);
  		lcfree(lcp);
 -		TRACE2(tet_Tscen, 10, "getline(): line = <%s>", firstpart(buf));
-+		TRACE2(tet_Tscen, 10, "getline2(): line = <%s>", firstpart(buf));
++		TRACE2(tet_Tscen, 10, "lsb_vsx_getline(): line = <%s>", firstpart(buf));
  		return(buf);
  	}
  
@@ -94,7 +141,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  			else
  				TRACE2(tet_Tscen, 10,
 -					"getline(): encountered EOF on %s",
-+					"getline2(): encountered EOF on %s",
++					"lsb_vsx_getline(): encountered EOF on %s",
  					ifstp->if_fname);
  			if (ifstp->if_next) {
  				(void) fclose(ifstp->if_fp);
@@ -102,7 +149,7 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  				continue;
  			}
 -			TRACE1(tet_Tscen, 10, "getline(): return EOF");
-+			TRACE1(tet_Tscen, 10, "getline2(): return EOF");
++			TRACE1(tet_Tscen, 10, "lsb_vsx_getline(): return EOF");
  			return((char *) 0);
  		}
  
@@ -111,59 +158,9 @@ diff -Naur lsb_vsx-2.0-1/src/tet3/tcc/scen1.c lsb_vsx-2.0-1-phoenix/src/tet3/tcc
  		/* if there is anything left, return it */
  		if (p >= buf) {
 -			TRACE4(tet_Tscen, 10, "getline(): fname = %s, lineno = %s, line = <%s>",
-+			TRACE4(tet_Tscen, 10, "getline2(): fname = %s, lineno = %s, line = <%s>",
++			TRACE4(tet_Tscen, 10, "lsb_vsx_getline(): fname = %s, lineno = %s, line = <%s>",
  				ifstp->if_fname, tet_i2a(ifstp->if_lcount),
  				firstpart(buf));
  			return(buf);
-
-diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c
---- lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c	2022-07-18 12:39:27.950040106 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c	2022-08-23 12:30:04.705832109 +0200
-@@ -94,7 +94,8 @@
- #define	QUOTE		7
- 
- private	int	getstring();
--private int	getline();
-+/*Changing getline function name to getline2 to avoid multiple declaration */
-+private int	getline2();
- 
- private int	clinno;
- private int     state;
-@@ -169,7 +170,7 @@
- 		in_rpt("Test Code:");
- 		state = START;
- 		do {
--			n = getline(fd, str);
-+			n = getline2(fd, str);
- 			if (str[0] != NUL)
- 				in_rpt("%2d:  %s", clinno, str);
- 			clinno++;
-@@ -186,7 +187,7 @@
- 			in_rpt("Test Code for file %s:", filname);
- 			state = START;
- 			do {
--				n = getline(fd, str);
-+				n = getline2(fd, str);
- 				if (str[0] != NUL)
- 					in_rpt("%2d:  %s", clinno, str);
- 				clinno++;
-@@ -353,7 +354,7 @@
-  *	function to read a line of code from file descripor fd.
-  */
- private int
--getline(fd, str)
-+getline2(fd, str)
- 	int     fd;
- 	char    *str;
- {
-@@ -361,7 +362,7 @@
- 	int		leave;
- 	char		c;
- 
--	DBUG_ENTER("getline");
-+	DBUG_ENTER("getline2");
- 	str[0] = NUL;
- 	if (state == END)
- 		DBUG_RETURN(END);
 
 

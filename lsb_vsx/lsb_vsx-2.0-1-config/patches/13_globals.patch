@@ -13,3 +13,5 @@ diff -Naur lsb_vsx-2.0-1/test_sets/SRC/common/drivers/globals.c lsb_vsx-2.0-1-ph
  public	int	cstatus;			/* child return status */
  public	int	running		= FALSE;	/* testset is running */
  public	struct tcntrl	**test;			/* test control array */
+ 
+ 

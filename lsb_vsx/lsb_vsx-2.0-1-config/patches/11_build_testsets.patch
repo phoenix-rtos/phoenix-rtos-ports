@@ -1,6 +1,6 @@
 --- lsb_vsx-2.0-1/test_sets/run_testsets.sh	2022-07-18 12:39:27.950040106 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/run_testsets.sh	2022-08-26 10:05:26.051772446 +0200
-@@ -8,25 +8,45 @@
++++ lsb_vsx-2.0-1-phoenix/test_sets/run_testsets.sh	2022-09-09 10:18:52.686683925 +0200
+@@ -8,25 +8,43 @@
  printf "\n\n----------------------------------------------------------------------\n"
  printf "Building and Executing testsets\n"
  
@@ -10,21 +10,20 @@
 +#read cmd
 +cmd=y
  if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-  tcc -p -b -s $HOME/scen.bld $*
 +  #copy bin and test_sets/BIN folders with programs compiled under phoenix to temporary folder
 +  #these are needed to exec tcc for executing tests
 +  cp ../bin/* ../../tmp/tetbin_phoenix
 +  cp ../test_sets/BIN/* ../../tmp/BIN_phoenix
 +  #clean bin and test_sets/BIN folder
-+  rm -f ../bin/*
-+  rm -f ../test_sets/BIN/*
++  rm -f ../bin/* ../test_sets/BIN/*
 +  #copy bin and test_sets/BIN folders compiled under host
 +  cp  ../../tmp/tetbin_host/* ../bin
 +  cp ../../tmp/BIN_host/* ../test_sets/BIN
 +  #execute build
-   tcc -p -b -s $HOME/scen.bld $*
++  tcc -p -b -s $HOME/scen.bld -n .hdr
 +  #clean unnecessary after build files
-+  rm -f ../bin/*
-+  rm -f ../test_sets/BIN/*
++  rm -f ../bin/* ../test_sets/BIN/*
 +  #bring back phoenix bin and test_sets/BIN for forward test execution
 +  cp ../../tmp/tetbin_phoenix/* ../bin
 +  cp ../../tmp/BIN_phoenix/* ../test_sets/BIN
@@ -36,7 +35,7 @@
 -(cd results; awk -f `which vres` `ls -d 0* | tail -1`/journal)
 -printf "A formal report has been saved in $HOME/results/report\n"
 -(cd results; vrpt `ls -d 0* | tail -1`/journal >$HOME/results/report)
-+#This part commented because execution is processed on phoenix system
++#This part commented because execution is processed on Phoenix-RTOS
  
 -printf "Rerun just the failures (produces a journal of only fails) ..? [y] "
 -read cmd

@@ -5,30 +5,33 @@ LSB_VSX="lsb_vsx-${LSB_VSX_VER}"
 
 PREFIX_LSB_VSX="${PREFIX_PROJECT}/phoenix-rtos-ports/lsb_vsx"
 PREFIX_LSB_VSX_BUILD="${PREFIX_BUILD}/lsb_vsx"
-PREFIX_LSB_VSX_SRC=${PREFIX_LSB_VSX_BUILD}/${LSB_VSX}
 PREFIX_LSB_VSX_CONFIG="${PREFIX_LSB_VSX}/${LSB_VSX}-config/"
 PREFIX_LSB_VSX_MARKERS="$PREFIX_LSB_VSX_BUILD/markers/"
 PREFIX_LSB_VSX_FILES="$PREFIX_LSB_VSX_BUILD/files"
 PREFIX_LSB_VSX_TMP="$PREFIX_LSB_VSX_BUILD/tmp"
-PREFIX_LSB_VSX_TESTS="${PREFIX_PROJECT}/phoenix-rtos-tests/lsb_vsx"
 
-b_log "Building lsb-vsx"
+b_log "Building lsb-vsx (posix tests suite)"
+
+if [ -d "$PREFIX_LSB_VSX_FILES" ]; then
+	b_log "Lsb-vsx (posix tests suite) has been built already"
+	exit 0
+fi
 
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_LSB_VSX_BUILD" "$PREFIX_LSB_VSX_MARKERS"
-mkdir -p "$PREFIX_LSB_VSX_BUILD" "$PREFIX_LSB_VSX_FILES"
-mkdir -p "$PREFIX_LSB_VSX_BUILD" "$PREFIX_LSB_VSX_TMP"
-mkdir -p "$PREFIX_LSB_VSX_TMP" "$PREFIX_LSB_VSX_TMP"/tetbin_host
-mkdir -p "$PREFIX_LSB_VSX_TMP" "$PREFIX_LSB_VSX_TMP"/tetbin_phoenix
-mkdir -p "$PREFIX_LSB_VSX_TMP" "$PREFIX_LSB_VSX_TMP"/BIN_host
-mkdir -p "$PREFIX_LSB_VSX_TMP" "$PREFIX_LSB_VSX_TMP"/BIN_phoenix
+mkdir -p "$PREFIX_LSB_VSX_MARKERS"
+mkdir -p "$PREFIX_LSB_VSX_FILES"
+mkdir -p "$PREFIX_LSB_VSX_TMP"
+mkdir -p "$PREFIX_LSB_VSX_TMP"/tetbin_host
+mkdir -p "$PREFIX_LSB_VSX_TMP"/tetbin_phoenix
+mkdir -p "$PREFIX_LSB_VSX_TMP"/BIN_host
+mkdir -p "$PREFIX_LSB_VSX_TMP"/BIN_phoenix
 
 [ -f "$PREFIX_LSB_VSX/tet_vsxgen_3.02.tgz" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/tet_vsxgen_3.02.tgz -P "$PREFIX_LSB_VSX"
 [ -f "$PREFIX_LSB_VSX/lts_vsx-pcts2.0beta2.tgz" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/lts_vsx-pcts2.0beta2.tgz -P "$PREFIX_LSB_VSX"
 [ -f "$PREFIX_LSB_VSX/lts_vsx-pcts2.0beta.tgz" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/lts_vsx-pcts2.0beta.tgz -P "$PREFIX_LSB_VSX"
-[ -f "$PREFIX_LSB_VSX_BUILD/files/install.sh" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/install.sh -P "$PREFIX_LSB_VSX_BUILD"
+[ -f "$PREFIX_LSB_VSX_BUILD/install.sh" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/install.sh -P "$PREFIX_LSB_VSX_BUILD"
 
 #
 # # Store compiler name for later use
@@ -44,7 +47,13 @@ if [ ! -f "$PREFIX_LSB_VSX_MARKERS/01_install.patch.applied" ]; then
         patch "$PREFIX_LSB_VSX_BUILD/install.sh" < "$patchfile" 
 		touch "$PREFIX_LSB_VSX_MARKERS/01_install.patch.applied"
 fi
-cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh
+
+# shellcheck search install.sh in current
+# directory not in PREFIX_LSB_VSX_BUILD therefore
+# emits warnning which we disable
+# shellcheck disable=SC1000-SC9999
+(cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh)
+
 #
 # # Apply host patches
 #
@@ -59,20 +68,22 @@ done
 #
 # # Build host executables needed to build tests
 #
-cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh
+# shellcheck disable=SC1000-SC9999
+(cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh)
 #
 # # Copy needed executables for later use
 #
-cd "$PREFIX_LSB_VSX_FILES" && cp bin/* "$PREFIX_LSB_VSX_TMP"/tetbin_host
-cd "$PREFIX_LSB_VSX_FILES" && cp test_sets/BIN/* "$PREFIX_LSB_VSX_TMP"/BIN_host
+(cd "$PREFIX_LSB_VSX_FILES" && cp bin/* "$PREFIX_LSB_VSX_TMP"/tetbin_host)
+(cd "$PREFIX_LSB_VSX_FILES" && cp test_sets/BIN/* "$PREFIX_LSB_VSX_TMP"/BIN_host)
 #
 # #Clear all files
 #
-rm -rf "$PREFIX_LSB_VSX_FILES"/*
+rm -rf "${PREFIX_LSB_VSX_FILES:?}"/*
 #
 # # Install all once again for build under phoenix
 #
-cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh
+# shellcheck disable=SC1000-SC9999
+(cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh)
 
 #
 # # Apply patches to build everything under phoenix
@@ -88,7 +99,9 @@ done
 #
 # # Build all under phoenix
 #
-cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh
+
+# shellcheck disable=SC1000-SC9999
+(cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh)
 
 #
 # # Copy all to phoenix file system
