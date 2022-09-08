@@ -16,7 +16,7 @@ PREFIX_AZURE_INC="${PREFIX_AZURE_ROOT}/include"
 PREFIX_AZURE_BIN="${PREFIX_AZURE_ROOT}/bin"
 PREFIX_AZURE_PATCHES="${PREFIX_AZURE}/patches"
 
-CONNECTION_STRING_PATCH="${PREFIX_AZURE_PATCHES}/08_connection_string.patch"
+CONNECTION_STRING_PATCH="${PREFIX_AZURE_PATCHES}/04_connection_string.patch"
 
 b_log "Building azure iot sdk"
 
@@ -49,8 +49,8 @@ fi
 for patchfile in "${PREFIX_AZURE_PATCHES}"/*.patch; do
 	if ! [ -f "${PREFIX_AZURE_MARKERS}/$(basename "$patchfile").applied" ]; then
 		echo "applying patch: $patchfile"
-		[[ "${LONG_TEST}" != "y" ]] && [[ $(basename "$patchfile") == "10_c-utility_utests.patch" ]] && continue
-		[[ "${TARGET}" != "armv7m7-imxrt106x"* ]] && [[ $(basename "$patchfile") == "09_armv7m7-imxrt106x.patch" ]] && continue
+		[[ "${LONG_TEST}" != "y" ]] && [[ $(basename "$patchfile") == "06_c-utility_utests.patch" ]] && continue
+		[[ "${TARGET}" != "armv7m7-imxrt106x"* ]] && [[ $(basename "$patchfile") == "05_armv7m7-imxrt106x.patch" ]] && continue
 		patch -d "${PREFIX_AZURE_BUILD}" -p0 -i "$patchfile" && touch "${PREFIX_AZURE_MARKERS}/$(basename "$patchfile").applied"
 	fi
 	# There are some cpp sources, which is currently not supported in Phoenix-RTOS
