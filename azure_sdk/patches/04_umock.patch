@@ -1,0 +1,14 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/deps/umock-c/inc/umock_c/aux_inc/stdint.h azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/inc/umock_c/aux_inc/stdint.h
+--- azure-iot-sdk-c-lts_01_2022/deps/umock-c/inc/umock_c/aux_inc/stdint.h	2022-10-19 15:52:19.996095525 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/inc/umock_c/aux_inc/stdint.h	2022-10-19 16:34:14.814441554 +0200
+@@ -31,6 +31,10 @@
+ typedef unsigned int       uint_fast32_t;
+ typedef unsigned long long uint_fast64_t;
+ 
++/* uintptr_t has to also be defined - sys/types.h on Phoenix-RTOS needs it
++   Note that for riscv64 architecture this definition is wrong and should be set to uint64_t */
++typedef uint32_t uintptr_t;
++
+ #define INT8_MIN         (-127i8 - 1)
+ #define INT16_MIN        (-32767i16 - 1)
+ #define INT32_MIN        (-2147483647i32 - 1)

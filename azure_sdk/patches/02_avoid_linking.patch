@@ -15,7 +15,7 @@
  
  if(LINUX)
 -    set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
-+    # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
++    # pthread, m, and rt are present in libphoenix library, so there is no need to link it separately
 +    # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
      if (NOT ${use_default_uuid})
          if(APPLE)

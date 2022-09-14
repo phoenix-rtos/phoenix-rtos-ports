@@ -1,0 +1,38 @@
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt
+--- azure-iot-sdk-c-lts_01_2022/CMakeLists.txt	2022-10-24 11:20:46.268591376 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt	2022-10-24 16:44:33.477538043 +0200
+@@ -83,6 +83,9 @@
+ option(use_microsoftazure_de_cert "set use_microsoftazure_de_cert to ON if the MicrosoftAzure DE cert is to be used for samples, set to OFF to not use it" OFF)
+ option(use_portal_azure_cn_cert "set use_portal_azure_cn_cert to ON if the Portal Azure CN cert is to be used for samples, set to OFF to not use it" OFF)
+ 
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{PHOENIX_EXTRA_CXXFLAGS}")
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} $ENV{PHOENIX_EXTRA_CFLAGS}")
++
+ ########## Conditional Options set ##########
+ if (WIN32 OR MACOSX)
+     option(use_openssl "set use_openssl to ON to use OpenSSL." OFF)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/configs/azure_iot_build_rules.cmake azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/configs/azure_iot_build_rules.cmake
+--- azure-iot-sdk-c-lts_01_2022/c-utility/configs/azure_iot_build_rules.cmake	2022-10-24 11:18:51.722068344 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/configs/azure_iot_build_rules.cmake	2022-10-24 16:44:51.212709780 +0200
+@@ -66,6 +66,9 @@
+     include_directories(${SHARED_UTIL_INC_FOLDER}/azure_c_shared_utility/windowsce)
+ endif()
+ 
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{PHOENIX_EXTRA_CXXFLAGS}")
++set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} $ENV{PHOENIX_EXTRA_CFLAGS}")
++
+ # System-specific compiler flags
+ if(MSVC)
+       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/iothub_client/src/iothubtransport_mqtt_common.c azure-iot-sdk-c-lts_01_2022-phoenix/iothub_client/src/iothubtransport_mqtt_common.c
+--- azure-iot-sdk-c-lts_01_2022/iothub_client/src/iothubtransport_mqtt_common.c	2022-10-24 11:18:51.834074672 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/iothub_client/src/iothubtransport_mqtt_common.c	2022-10-24 14:07:52.851960979 +0200
+@@ -1763,7 +1763,7 @@
+ static void processTwinNotification(PMQTTTRANSPORT_HANDLE_DATA transportData, MQTT_MESSAGE_HANDLE msgHandle, const char* topicName)
+ {
+     size_t request_id;
+-    int status_code;
++    int status_code = 0;
+     bool notification_msg;
+ 
+     if (parseDeviceTwinTopicInfo(topicName, &notification_msg, &request_id, &status_code) != 0)
