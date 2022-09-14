@@ -1,19 +1,6 @@
-diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt
---- azure-iot-sdk-c-lts_01_2022/CMakeLists.txt	2022-03-25 10:07:50.479819142 +0100
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
-@@ -293,7 +293,8 @@
- if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
-     # Used for serializer
-     add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/sal)
--    add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
-+    # micromock not supported on Phoenix-RTOS because of cpp sources
-+    # add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
- endif()
- 
- set_platform_files(${SHARED_UTIL_FOLDER})
 diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt
---- azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt	2022-03-25 10:07:50.487819464 +0100
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+--- azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt	2022-10-20 14:34:31.318550063 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/CMakeLists.txt	2022-10-20 13:51:44.823199782 +0200
 @@ -593,6 +593,8 @@
      endif()
  endif()
@@ -21,11 +8,12 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/CMakeLists.txt 
 +# c-utility unit tests have to be enabled manually here
 +set(run_unittests ON)
  if(LINUX)
-     # pthread, m, rt and uuid are present in libphoenix library, so there is no need to link it separately
+     # pthread, m, and rt are present in libphoenix library, so there is no need to link it separately
      # set(aziotsharedutil_target_libs ${aziotsharedutil_target_libs} pthread m rt)
+Only in azure-iot-sdk-c-lts_01_2022-phoenix/c-utility: CMakeLists.txt.orig
 diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition_ut/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/condition_ut/CMakeLists.txt
---- azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-25 10:04:20.446267076 +0100
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/condition_ut/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+--- azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition_ut/CMakeLists.txt	2022-10-20 14:34:31.338550069 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/tests/condition_ut/CMakeLists.txt	2022-10-20 13:51:44.843200278 +0200
 @@ -26,7 +26,8 @@
  
  if(WIN32)
@@ -37,8 +25,8 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/tests/condition
  
  compile_c_test_artifacts_as(${theseTestsName} C99)
 diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMakeLists.txt azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/CMakeLists.txt
---- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMakeLists.txt	2022-03-25 10:04:20.458267695 +0100
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/CMakeLists.txt	2022-03-24 15:57:39.552679848 +0100
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMakeLists.txt	2022-10-20 14:34:31.342550070 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/CMakeLists.txt	2022-10-20 13:51:44.847200377 +0200
 @@ -17,4 +17,5 @@
  endif()
  
@@ -46,23 +34,52 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/CMake
 -add_subdirectory(micromock)
 +# micromock not supported on Phoenix-RTOS because of cpp sources
 +# add_subdirectory(micromock)
-diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/deps/umock-c/src/umockcallrecorder.c azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/src/umockcallrecorder.c
---- azure-iot-sdk-c-lts_01_2022/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:22:58.109094803 +0200
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/deps/umock-c/src/umockcallrecorder.c	2022-03-29 14:18:34.237404916 +0200
-@@ -529,7 +529,8 @@
-                     result->expected_call_count = umock_call_recorder->expected_call_count;
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/inc/aux_inc/stdbool.h azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/inc/aux_inc/stdbool.h
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/inc/aux_inc/stdbool.h	2022-10-20 14:34:31.346550071 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/inc/aux_inc/stdbool.h	2022-10-20 13:51:44.851200476 +0200
+@@ -11,7 +11,10 @@
+ #ifndef __cplusplus
  
-                     result->actual_calls = (UMOCKCALL_HANDLE*)umockalloc_malloc(sizeof(UMOCKCALL_HANDLE) * umock_call_recorder->actual_call_count);
--                    if (result->actual_calls == NULL)
-+                    /* Linux incompatibility -> malloc(0) returns NULL on Phoenix-RTOS */
-+                    if (result->actual_calls == NULL && umock_call_recorder->actual_call_count != 0 )
-                     {
-                         /* Codes_SRS_UMOCKCALLRECORDER_01_053: [ If allocating memory for the actual calls fails, umockcallrecorder_clone shall fail and return NULL. ]*/
-                         umockcallrecorder_destroy(result);
-# This file will only be downloaded if tests are built, that's why this isn't placed in add_void.patch 
+ typedef unsigned char bool;
++/* It was probably missing here and produced the 'two or more data types in declaration specifiers' warning */
++#ifdef _MSC_VER
+ typedef bool _Bool;
++#endif
+ 
+ #define false	0
+ #define true	1
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/inc/aux_inc/stdint.h azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/inc/aux_inc/stdint.h
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/inc/aux_inc/stdint.h	2022-10-20 14:34:31.346550071 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/inc/aux_inc/stdint.h	2022-10-20 13:51:44.851200476 +0200
+@@ -31,6 +31,10 @@
+ typedef unsigned int       uint_fast32_t;
+ typedef unsigned long long uint_fast64_t;
+ 
++/* uintptr_t has to also be defined - sys/types.h on Phoenix-RTOS needs it
++   Note that for riscv64 architecture this definition is wrong and should be set to uint64_t */
++typedef uint32_t uintptr_t;
++
+ #define INT8_MIN         (-127i8 - 1)
+ #define INT16_MIN        (-32767i16 - 1)
+ #define INT32_MIN        (-2147483647i32 - 1)
+diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/src/ctest.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/src/ctest.c
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest/src/ctest.c	2022-10-20 14:34:31.346550071 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/ctest/src/ctest.c	2022-10-20 13:51:44.851200476 +0200
+@@ -19,6 +19,11 @@
+ #include "vld.h"
+ #endif
+ 
++/* for some reason SIZE_MAX may be not visible here - define it to the default value as in other sources */
++#ifndef SIZE_MAX
++#define SIZE_MAX ((size_t)~(size_t)0)
++#endif
++
+ const TEST_FUNCTION_DATA* g_CurrentTestFunction;
+ jmp_buf g_ExceptionJump;
+ size_t RunTests(const TEST_FUNCTION_DATA* testListHead, const char* testSuiteName)
 diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c
---- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c	2022-03-25 10:04:27.910650133 +0100
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c	2022-03-24 15:57:39.552679848 +0100
+--- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c	2022-10-20 14:34:31.350550072 +0200
++++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c	2022-10-20 13:51:44.855200575 +0200
 @@ -29,7 +29,7 @@
  #else
  
@@ -71,3 +88,4 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testr
 +extern void dummy_function_to_silence_compiler_is_never_called(void)
  {
  }
+ 

@@ -19,6 +19,3 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # For libraries and headers in the target directories
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
-# Using PREFIX_H instead libphoenix/include does not work here
-include_directories("$ENV{TOPDIR}/libphoenix/include")
