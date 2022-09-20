@@ -5,9 +5,9 @@ LSB_VSX="lsb_vsx-${LSB_VSX_VER}"
 
 PREFIX_LSB_VSX="${PREFIX_PROJECT}/phoenix-rtos-ports/lsb_vsx"
 PREFIX_LSB_VSX_BUILD="${PREFIX_BUILD}/lsb_vsx"
-PREFIX_LSB_VSX_CONFIG="${PREFIX_LSB_VSX}/${LSB_VSX}-config/"
-PREFIX_LSB_VSX_MARKERS="$PREFIX_LSB_VSX_BUILD/markers/"
-PREFIX_LSB_VSX_FILES="$PREFIX_LSB_VSX_BUILD/files"
+PREFIX_LSB_VSX_CONFIG="${PREFIX_LSB_VSX}/${LSB_VSX}-config"
+PREFIX_LSB_VSX_MARKERS="$PREFIX_LSB_VSX_BUILD/markers"
+PREFIX_LSB_VSX_FILES="${PREFIX_LSB_VSX_BUILD}/files"
 PREFIX_LSB_VSX_TMP="$PREFIX_LSB_VSX_BUILD/tmp"
 
 b_log "Building lsb-vsx (posix tests suite)"
@@ -41,23 +41,19 @@ export CC_BUF
 #
 # # Apply patches to install script
 #
-patchfile="$PREFIX_LSB_VSX_CONFIG"patches/01_install.patch
+patchfile="$PREFIX_LSB_VSX_CONFIG"/patches/01_install.patch
 if [ ! -f "$PREFIX_LSB_VSX_MARKERS/01_install.patch.applied" ]; then
 		echo "applying patch: $patchfile"
         patch "$PREFIX_LSB_VSX_BUILD/install.sh" < "$patchfile" 
 		touch "$PREFIX_LSB_VSX_MARKERS/01_install.patch.applied"
 fi
 
-# shellcheck search install.sh in current
-# directory not in PREFIX_LSB_VSX_BUILD therefore
-# emits warnning which we disable
-# shellcheck disable=SC1000-SC9999
 (cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh)
 
 #
 # # Apply host patches
 #
-for patchfile in "$PREFIX_LSB_VSX_CONFIG"patches/*host*.patch; do
+for patchfile in "$PREFIX_LSB_VSX_CONFIG"/patches/*host*.patch; do
  	if [ ! -f "$PREFIX_LSB_VSX_MARKERS/$(basename "$patchfile").applied" ]; then
  		echo "applying patch: $patchfile"
  		patch -d "$PREFIX_LSB_VSX_BUILD"/files -p1 < "$patchfile" 
@@ -68,8 +64,8 @@ done
 #
 # # Build host executables needed to build tests
 #
-# shellcheck disable=SC1000-SC9999
-(cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh)
+chmod 755 "$PREFIX_LSB_VSX_FILES"/setup.sh
+(cd "$PREFIX_LSB_VSX_BUILD"/files && ./setup.sh)
 #
 # # Copy needed executables for later use
 #
@@ -82,13 +78,12 @@ rm -rf "${PREFIX_LSB_VSX_FILES:?}"/*
 #
 # # Install all once again for build under phoenix
 #
-# shellcheck disable=SC1000-SC9999
 (cd "$PREFIX_LSB_VSX_BUILD" && . ./install.sh)
 
 #
 # # Apply patches to build everything under phoenix
 #
-for patchfile in "$PREFIX_LSB_VSX_CONFIG"patches/*.patch; do
+for patchfile in "$PREFIX_LSB_VSX_CONFIG"/patches/*.patch; do
  	if [ ! -f "$PREFIX_LSB_VSX_MARKERS/$(basename "$patchfile").applied" ]; then
  		echo "applying patch: $patchfile"
  		patch -d "$PREFIX_LSB_VSX_BUILD"/files -p1 < "$patchfile" 
@@ -99,8 +94,7 @@ done
 #
 # # Build all under phoenix
 #
-
-# shellcheck disable=SC1000-SC9999
+chmod 755 "$PREFIX_LSB_VSX_FILES"/setup.sh
 (cd "$PREFIX_LSB_VSX_BUILD"/files && . ./setup.sh)
 
 #
