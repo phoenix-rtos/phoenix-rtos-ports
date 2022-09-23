@@ -1,0 +1,58 @@
+diff -Naur lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.mid lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/Makefile.mid
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.mid	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/Makefile.mid	2022-07-19 16:54:40.812403439 +0200
+@@ -19,8 +19,6 @@
+ 	test -d $(TET_EXECUTE) || { \
+ 	    mkdir $(TET_EXECUTE) && \
+ 	    touch $(TET_EXECUTE)/.keepme && \
+-	    $(CHOWN) vsx0 $(TET_EXECUTE) && \
+-	    $(CHGRP) vsxg0 $(TET_EXECUTE) && \
+ 	    $(CHMOD) u=rwx,g=rx,o=rx $(TET_EXECUTE); \
+ 	}
+
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.nfs	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/Makefile.nfs	2022-09-22 13:46:09.548886943 +0200
+@@ -99,8 +99,8 @@
+ # Check chmog program exists
+ 
+ $(CHMOG):
+-	@echo >&2 "$(CHMOG) has not been installed by install.sh"
+-	@false
++	#@echo >&2 "$(CHMOG) has not been installed by install.sh"
++	#@false
+ 
+ # separate target for mounting XNFS file systems with `make mount'
+ 
+--- lsb_vsx-2.0-1/test_sets/SRC/install/Makefile.top	2022-07-18 12:39:27.958039930 +0200
++++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/Makefile.top	2022-09-22 14:20:53.978388246 +0200
+@@ -35,19 +35,22 @@
+ # Check make is running with the necessary privileges
+ 
+ privchk:
+-	@if test -z "`id | grep 'uid=0[^0-9]' || true`"; then \
+-	    echo >&2 "make must be run as super-user"; \
+-	    exit 1; \
+-	fi
++	#we don't want to use root
++	#@if test -z "`id | grep 'uid=0[^0-9]' || true`"; then \
++	    #echo >&2 "make must be run as super-user"; \
++	    #exit 1; \
++	#fi
+ 
+ # Run install.sh as user vsx0, ensuring HOME is set to vsx0 home directory
+ 
+ install:
+-	su vsx0 -c 'HOME=`pwd` BIN/install.sh'
++	#run as owner
++	HOME=`pwd` BIN/install.sh
+ 
+ # Assign privileges to the chmog program
+ 
+-chmogpriv:	$(CHMOG)
+-	chown root $(CHMOG)
+-	chmod u+s $(CHMOG)
++chmogpriv:
++	#we don't want to use root
++	#chown root $(CHMOG)
++	#chmod u+s $(CHMOG)
+ 

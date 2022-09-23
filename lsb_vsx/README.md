@@ -29,7 +29,7 @@ All tests desirable should be run via test runner where output is conveniently p
 
 ## Known issues
 
-We ommit installing loopdisc and pseudolanguages (it requires root privileges), which cause some test case to fail.
+We omit installing loopdisc and pseudolanguages (it requires root privileges), which cause some test case to fail.
 
 Many tests failed to compile due to libphoenix lacking some functions.
 
