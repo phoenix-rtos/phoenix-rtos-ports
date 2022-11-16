@@ -1,28 +1,24 @@
---- lsb_vsx-2.0-1/src/defines.mk	2022-07-18 12:39:27.910040986 +0200
-+++ lsb_vsx-2.0-1-phoenix/src/defines.mk	2022-09-21 11:16:52.834131085 +0200
-@@ -88,10 +88,18 @@
+diff -ur lsb_vsx-2.0-1/src/defines.mk lsb_vsx-2.0-1-phoenix/src/defines.mk
+--- lsb_vsx-2.0-1/src/defines.mk	2022-11-15 16:20:37.933983019 +0100
++++ lsb_vsx-2.0-1-phoenix/src/defines.mk	2022-11-15 16:16:39.796315399 +0100
+@@ -87,11 +87,14 @@
+ TET_CDEFS = -D_POSIX_SOURCE -DNSIG=_NSIG
  DTET_CDEFS = -DINETD
  
++# set default host cc and ld if it's not set
  # CC - the name of the C compiler
 -CC = gcc
--#
++CC ?= gcc
+ #
++LD ?= ld
  # LD_R - the program that performs partial linking
 -LD_R = ld -r
-+# Set appropriate values to LD_R and CC depending on platform we build
-+ifeq ($(PLATFORM),PHOENIX-RTOS)
-+	CC = $(CC_BUF)
-+	LD_R = $(LD) -r
-+endif
-+
-+ifeq ($(PLATFORM),HOST)
-+        CC = gcc
-+        LD_R = ld -r
-+endif
++LD_R = $(LD) -r
 +
  #
  # CDEFS and COPTS - options that are always passed to cc when compiling
  # program and "ordinary" library files
-@@ -153,7 +161,7 @@
+@@ -153,7 +156,7 @@
  # Set SHLIB_COPTS to SHLIB_NOT_SUPPORTED if shared libraries are not supported
  # on your system or if you don't want to build the shared versions of the
  # API libraries.
@@ -31,7 +27,7 @@
  #
  # SHLIB_CC names the compiler that is used when generating the object files
  # that are to be put in a shared library.
-@@ -179,7 +187,7 @@
+@@ -179,7 +182,7 @@
  #
  # C_PLUS - the name of the C++ compiler
  # To disable C++ support, set C_PLUS = CPLUSPLUS_NOT_SUPPORTED.

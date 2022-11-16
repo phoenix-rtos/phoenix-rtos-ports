@@ -21,12 +21,12 @@ SUBSETS=""
 
 #VSXDIR - this parameter defines the source directory for the VSX software.
 #	The value given to this parameter must be a full pathname
-VSXDIR="$TET_ROOT/test_sets/SRC"
+VSXDIR="${TET_ROOT}/test_sets/SRC"
 
 #TET_EXECUTE - this parameter defines the directory from which the VSX tests
 #	will be executed.
 #	The value given to this parameter must be a full pathname
-TET_EXECUTE="$TET_ROOT/test_sets/TESTROOT"
+TET_EXECUTE="${TET_ROOT}/test_sets/TESTROOT"
 
 #SPEED - this parameter defines the speed of the machine on a 1-10 scale
 #	A speed of 1 is given to a very fast machine and 10 to a very 
@@ -42,12 +42,12 @@ SPEED="5"
 #INCDIRS - this parameter defines the directories which contain the include
 #	files for the system being tested, in order of searching.
 #	This parameter is normally set to /usr/include
-INCDIRS="$INCDIRS"
+INCDIRS="${INCDIRS}"
 
 #CC - this parameter defines the C compiler to be used in building the suite.
 #	This parameter is normally set to a pathname for c89 or cc.
 #	It must be set to (a pathname for) c89 for UNIX98 registration runs.
-CC="$CC"
+CC="${CC}"
 
 #COPTS - this parameter defines any special command line options needed by the
 #	C compiler.

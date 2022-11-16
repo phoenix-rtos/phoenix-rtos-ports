@@ -1,6 +1,7 @@
---- lsb_vsx-2.0-1/test_sets/run_testsets.sh	2022-07-18 12:39:27.950040106 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/run_testsets.sh	2022-09-09 10:18:52.686683925 +0200
-@@ -8,25 +8,43 @@
+diff -ur lsb_vsx-2.0-1/test_sets/run_testsets.sh lsb_vsx-2.0-1-phoenix/test_sets/run_testsets.sh
+--- lsb_vsx-2.0-1/test_sets/run_testsets.sh	2022-11-14 21:14:46.537564004 +0100
++++ lsb_vsx-2.0-1-phoenix/test_sets/run_testsets.sh	2022-11-14 21:14:10.717568942 +0100
+@@ -8,25 +8,41 @@
  printf "\n\n----------------------------------------------------------------------\n"
  printf "Building and Executing testsets\n"
  
@@ -13,15 +14,13 @@
 -  tcc -p -b -s $HOME/scen.bld $*
 +  #copy bin and test_sets/BIN folders with programs compiled under phoenix to temporary folder
 +  #these are needed to exec tcc for executing tests
-+  cp ../bin/* ../../tmp/tetbin_phoenix
-+  cp ../test_sets/BIN/* ../../tmp/BIN_phoenix
-+  #clean bin and test_sets/BIN folder
-+  rm -f ../bin/* ../test_sets/BIN/*
++  mv -f ../bin/* ../../tmp/tetbin_phoenix
++  mv -f ../test_sets/BIN/* ../../tmp/BIN_phoenix
 +  #copy bin and test_sets/BIN folders compiled under host
-+  cp  ../../tmp/tetbin_host/* ../bin
++  cp ../../tmp/tetbin_host/* ../bin
 +  cp ../../tmp/BIN_host/* ../test_sets/BIN
 +  #execute build
-+  tcc -p -b -s $HOME/scen.bld -n .hdr
++  tcc -p -b -s ${PREFIX_LSB_VSX_CONFIG}/scen.bld -n .hdr
 +  #clean unnecessary after build files
 +  rm -f ../bin/* ../test_sets/BIN/*
 +  #bring back phoenix bin and test_sets/BIN for forward test execution
