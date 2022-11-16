@@ -71,12 +71,10 @@ fi
 
 [ "${PORTS_AZURE_SDK}" = "y" ] && ./phoenix-rtos-ports/azure_sdk/build.sh
 
-<<<<<<< HEAD
 [ "${PORTS_PICOCOM}" = "y" ] && ./phoenix-rtos-ports/picocom/build.sh
-=======
+
 [ "${PORTS_LSB_VSX}" = "y" ] && ./phoenix-rtos-ports/lsb_vsx/build.sh
 
 
->>>>>>> 2d4be31 (lsb_vsx: add lsb_vsx posix test suite)
 
 exit 0
