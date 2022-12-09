@@ -1,0 +1,11 @@
+--- dropbear-2018.76/config.sub	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76.phoenix/config.sub	2022-12-01 14:26:40.667515381 +0100
+@@ -1376,7 +1376,7 @@
+	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
+	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
+	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
+-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
++	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -phoenix*)
+	# Remember, each alternative MUST END IN *, to match a version number.
+		;;
+	-qnx*)

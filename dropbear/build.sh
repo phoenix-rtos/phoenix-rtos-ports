@@ -46,7 +46,7 @@ if [ ! -f "$PREFIX_DROPBEAR_BUILD/config.h" ]; then
 
 	( cd "${PREFIX_DROPBEAR_BUILD}" && "${PREFIX_DROPBEAR_SRC}/configure" CPPFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" \
 		LDFLAGS="${CFLAGS} ${LDFLAGS} ${DROPBEAR_LDFLAGS}" ARFLAGS="-r" \
-		--host="$HOST_TARGET" --includedir="${PREFIX_H}"  \
+		--host="${HOST}" --includedir="${PREFIX_H}"  \
 		--prefix="${PREFIX_PROG}" --program-prefix="${PREFIX_PROG}" --libdir="${PREFIX_A}" --bindir="${PREFIX_PROG}" --enable-zlib="$ENABLE_ZLIB" --enable-static \
 		--disable-lastlog --disable-utmp --disable-utmpx --disable-wtmp --disable-wtmpx --disable-harden )
 fi
@@ -61,6 +61,7 @@ make PROGRAMS="dropbear dbclient dropbearkey scp" -C "${PREFIX_DROPBEAR_BUILD}" 
 cp -a "$PREFIX_DROPBEAR_BUILD/dropbearmulti" "$PREFIX_PROG/dropbearmulti"
 
 b_install "$PREFIX_PORTS_INSTALL/dropbearmulti" /usr/bin
+mkdir -p "$PREFIX_ROOTFS/usr/sbin"
 ln -f "$PREFIX_ROOTFS/usr/bin/dropbearmulti" "$PREFIX_ROOTFS/usr/sbin/dropbear"
 ln -f "$PREFIX_ROOTFS/usr/bin/dropbearmulti" "$PREFIX_ROOTFS/usr/bin/dbclient"
 ln -f "$PREFIX_ROOTFS/usr/bin/dropbearmulti" "$PREFIX_ROOTFS/usr/bin/scp"
