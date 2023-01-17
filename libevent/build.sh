@@ -3,6 +3,8 @@
 set -e
 
 LIBEVENT=libevent-2.1.12-stable
+PKG_URL="https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/${LIBEVENT}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${LIBEVENT}.tar.gz"
 
 b_log "Building libevent"
 PREFIX_LIBEVENT="${PREFIX_PROJECT}/phoenix-rtos-ports/libevent"
@@ -16,7 +18,11 @@ PREFIX_LIBEVENT_INSTALL="${PREFIX_LIBEVENT_BUILD}/install"
 #
 mkdir -p "$PREFIX_LIBEVENT_BUILD"
 
-[ -f "${PREFIX_LIBEVENT}/${LIBEVENT}.tar.gz" ] || wget https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz -P "$PREFIX_LIBEVENT" --no-check-certificate
+if [ ! -f "${PREFIX_LIBEVENT}/${LIBEVENT}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_LIBEVENT}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_LIBEVENT}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_LIBEVENT_SRC" ] || tar zxf "${PREFIX_LIBEVENT}/${LIBEVENT}.tar.gz" -C "$PREFIX_LIBEVENT_BUILD"
 
 #

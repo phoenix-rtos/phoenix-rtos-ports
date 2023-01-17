@@ -3,6 +3,8 @@
 set -e
 
 WPA_SUPPLICANT=wpa_supplicant-2.9
+PKG_URL="https://w1.fi/releases/${WPA_SUPPLICANT}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${WPA_SUPPLICANT}.tar.gz"
 
 b_log "Building wpa_supplicant"
 PREFIX_WPA_SUPPLICANT="${PREFIX_PROJECT}/phoenix-rtos-ports/wpa_supplicant"
@@ -16,7 +18,11 @@ PREFIX_WPA_SUPPLICANT_INSTALL="${PREFIX_WPA_SUPPLICANT_BUILD}/install"
 #
 mkdir -p "$PREFIX_WPA_SUPPLICANT_BUILD"
 
-[ -f "${PREFIX_WPA_SUPPLICANT}/${WPA_SUPPLICANT}.tar.gz" ] || wget https://w1.fi/releases/${WPA_SUPPLICANT}.tar.gz -P "$PREFIX_WPA_SUPPLICANT" --no-check-certificate
+if [ ! -f "$PREFIX_WPA_SUPPLICANT/${WPA_SUPPLICANT}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_WPA_SUPPLICANT}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_WPA_SUPPLICANT}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_WPA_SUPPLICANT_SRC" ] || tar zxf "${PREFIX_WPA_SUPPLICANT}/${WPA_SUPPLICANT}.tar.gz" -C "$PREFIX_WPA_SUPPLICANT_BUILD"
 
 #

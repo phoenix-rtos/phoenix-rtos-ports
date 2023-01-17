@@ -2,7 +2,10 @@
 
 set -e
 
-OPENIKED=openiked-portable-6.9.0
+OPENIKED_VER=6.9.0
+OPENIKED="openiked-portable-${OPENIKED_VER}"
+PKG_URL="https://github.com/openiked/openiked-portable/archive/refs/tags/v${OPENIKED_VER}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENIKED}.tar.gz"
 
 b_log "Building openiked"
 PREFIX_OPENIKED=${TOPDIR}/phoenix-rtos-ports/openiked
@@ -16,8 +19,12 @@ PREFIX_OPENIKED_INSTALL="${PREFIX_OPENIKED_BUILD}/install"
 #
 mkdir -p "$PREFIX_OPENIKED_BUILD"
 
-[ -f "${PREFIX_OPENIKED}/v6.9.0.tar.gz" ] || wget https://github.com/openiked/openiked-portable/archive/refs/tags/v6.9.0.tar.gz -P "$PREFIX_OPENIKED" --no-check-certificate
-[ -d "$PREFIX_OPENIKED_SRC" ] || tar zxf "${PREFIX_OPENIKED}/v6.9.0.tar.gz" -C "$PREFIX_OPENIKED_BUILD"
+if [ ! -f "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -O "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_OPENIKED}" --no-check-certificate
+	fi
+fi
+[ -d "$PREFIX_OPENIKED_SRC" ] || tar zxf "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" -C "$PREFIX_OPENIKED_BUILD"
 
 #
 # Apply patches

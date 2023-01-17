@@ -5,6 +5,8 @@ set -e
 # The latest version that is compatible with azure iot sdk lts_01_2022
 MBEDTLS_VER="2.28.0"
 MBEDTLS="mbedtls-${MBEDTLS_VER}"
+PKG_URL="https://github.com/Mbed-TLS/mbedtls/archive/v${MBEDTLS_VER}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${MBEDTLS}.tar.gz"
 
 PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"
 PREFIX_MBEDTLS_BUILD="${PREFIX_BUILD}/mbedtls"
@@ -18,7 +20,9 @@ b_log "Building mbedtls"
 # Download and unpack
 mkdir -p "${PREFIX_MBEDTLS_BUILD}" "${PREFIX_MBEDTLS_MARKERS}"
 if ! [ -f "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" ]; then
-	wget https://github.com/Mbed-TLS/mbedtls/archive/v${MBEDTLS_VER}.tar.gz -O "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz"
+	if ! wget "$PKG_URL" -O "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_MBEDTLS}" --no-check-certificate
+	fi
 fi
 
 if ! [ -d "${PREFIX_MBEDTLS_SRC}" ]; then

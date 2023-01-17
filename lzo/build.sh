@@ -3,6 +3,8 @@
 set -e
 
 LZO=lzo-2.10
+PKG_URL="http://www.oberhumer.com/opensource/lzo/download/${LZO}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${LZO}.tar.gz"
 
 b_log "Building lzo"
 PREFIX_LZO="${PREFIX_PROJECT}/phoenix-rtos-ports/lzo"
@@ -13,7 +15,11 @@ PREFIX_LZO_SRC="${PREFIX_LZO_BUILD}/${LZO}"
 # Download and unpack
 #
 mkdir -p "$PREFIX_LZO_BUILD"
-[ -f "$PREFIX_LZO/${LZO}.tar.gz" ] || wget http://www.oberhumer.com/opensource/lzo/download/${LZO}.tar.gz -P "$PREFIX_LZO"
+if [ ! -f "$PREFIX_LZO/${LZO}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_LZO}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_LZO}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_LZO_SRC" ] || tar zxf "$PREFIX_LZO/${LZO}.tar.gz" -C "$PREFIX_LZO_BUILD"
 
 #

@@ -3,6 +3,8 @@
 set -e
 
 OPENVPN=openvpn-2.4.7
+PKG_URL="https://swupdate.openvpn.org/community/releases/${OPENVPN}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENVPN}.tar.gz"
 
 b_log "Building openvpn"
 PREFIX_OPENVPN="${PREFIX_PROJECT}/phoenix-rtos-ports/openvpn"
@@ -14,7 +16,11 @@ PREFIX_OPENVPN_MARKERS="${PREFIX_OPENVPN_BUILD}/markers"
 # Download and unpack
 #
 mkdir -p "$PREFIX_OPENVPN_BUILD" "$PREFIX_OPENVPN_MARKERS"
-[ -f "$PREFIX_OPENVPN/${OPENVPN}.tar.gz" ] || wget https://swupdate.openvpn.org/community/releases/${OPENVPN}.tar.gz -P "$PREFIX_OPENVPN" --no-check-certificate
+if [ ! -f "$PREFIX_OPENVPN/${OPENVPN}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_OPENVPN}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_OPENVPN}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_OPENVPN_SRC" ] || tar zxf "$PREFIX_OPENVPN/${OPENVPN}.tar.gz" -C "$PREFIX_OPENVPN_BUILD"
 
 #

@@ -3,6 +3,8 @@
 set -e
 
 CURL=curl-7.64.1
+PKG_URL="https://curl.haxx.se/download/${CURL}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${CURL}.tar.gz"
 
 b_log "Building curl"
 PREFIX_CURL="${PREFIX_PROJECT}/phoenix-rtos-ports/curl"
@@ -14,7 +16,11 @@ PREFIX_CURL_INSTALL="$PREFIX_CURL_BUILD/install"
 # Download and unpack
 #
 mkdir -p "$PREFIX_CURL_BUILD" "$PREFIX_CURL_INSTALL"
-[ -f "$PREFIX_CURL/${CURL}.tar.gz" ] || wget https://curl.haxx.se/download/${CURL}.tar.gz -P "$PREFIX_CURL" --no-check-certificate
+if [ ! -f "$PREFIX_CURL/${CURL}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_CURL}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_CURL}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_CURL_SRC" ] || tar zxf "$PREFIX_CURL/${CURL}.tar.gz" -C "$PREFIX_CURL_BUILD"
 
 

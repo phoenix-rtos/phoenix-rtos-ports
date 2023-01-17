@@ -3,6 +3,8 @@
 set -e
 
 ZLIB=zlib-1.2.11
+PKG_URL="https://zlib.net/fossils/${ZLIB}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${ZLIB}.tar.gz"
 
 b_log "Building zlib"
 PREFIX_ZLIB="${PREFIX_PROJECT}/phoenix-rtos-ports/zlib"
@@ -15,7 +17,11 @@ PREFIX_ZLIB_MARKERS="${PREFIX_ZLIB_BUILD}/markers"
 #
 mkdir -p "$PREFIX_ZLIB_BUILD"
 
-[ -f "${PREFIX_ZLIB}/${ZLIB}.tar.gz" ] || wget https://zlib.net/fossils/${ZLIB}.tar.gz -P "$PREFIX_ZLIB" --no-check-certificate
+if [ ! -f "$PREFIX_ZLIB/${ZLIB}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_ZLIB}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_ZLIB}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_ZLIB_SRC" ] || tar zxf "${PREFIX_ZLIB}/${ZLIB}.tar.gz" -C "$PREFIX_ZLIB_BUILD"
 
 #
