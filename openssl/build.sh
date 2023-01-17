@@ -3,6 +3,8 @@
 set -e
 
 OPENSSL=openssl-1.1.1a
+PKG_URL="https://www.openssl.org/source/${OPENSSL}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENSSL}.tar.gz"
 
 b_log "Building openssl"
 PREFIX_OPENSSL="${PREFIX_PROJECT}/phoenix-rtos-ports/openssl"
@@ -15,7 +17,11 @@ PREFIX_OPENSSL_MARKERS="$PREFIX_OPENSSL_BUILD/markers/"
 # Download and unpack
 #
 mkdir -p "$PREFIX_OPENSSL_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS"
-[ -f "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" ] || wget https://www.openssl.org/source/${OPENSSL}.tar.gz -P "$PREFIX_OPENSSL" --no-check-certificate
+if [ ! -f "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_OPENSSL}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_OPENSSL}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_OPENSSL_SRC" ] || tar zxf "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" -C "$PREFIX_OPENSSL_BUILD"
 
 #

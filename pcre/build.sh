@@ -3,21 +3,23 @@
 set -e
 
 PCRE=pcre-8.42
+PKG_URL="http://ftp.exim.org/pub/pcre/${PCRE}.tar.bz2"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${PCRE}.tar.bz2"
 
 b_log "Building pcre"
 PREFIX_PCRE="${PREFIX_PROJECT}/phoenix-rtos-ports/pcre"
 PREFIX_PCRE_BUILD="${PREFIX_BUILD}/pcre"
 PREFIX_PCRE_SRC="${PREFIX_PCRE_BUILD}/${PCRE}"
 
-if [ -n "$CLEAN" ]; then
-	rm -fr "${PREFIX_PCRE_BUILD:?}"/*
-fi
-
 #
 # Download and unpack
 #
 mkdir -p "$PREFIX_PCRE_BUILD"
-[ -f "$PREFIX_PCRE/${PCRE}.tar.bz2" ] || wget http://ftp.exim.org/pub/pcre/${PCRE}.tar.bz2 -P "$PREFIX_PCRE"
+if [ ! -f "$PREFIX_PCRE/${PCRE}.tar.bz2" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_PCRE}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_PCRE}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_PCRE_SRC" ] || tar jxf "$PREFIX_PCRE/${PCRE}.tar.bz2" -C "$PREFIX_PCRE_BUILD"
 
 

@@ -3,6 +3,8 @@
 set -e
 
 LUA=lua-5.3.5
+PKG_URL="https://www.lua.org/ftp/${LUA}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${LUA}.tar.gz"
 
 b_log "Building lua"
 PREFIX_LUA="${PREFIX_PROJECT}/phoenix-rtos-ports/lua"
@@ -11,7 +13,11 @@ PREFIX_LUA_SRC="${PREFIX_LUA_BUILD}/${LUA}"
 
 
 mkdir -p "$PREFIX_LUA_BUILD"
-[ -f "$PREFIX_LUA/${LUA}.tar.gz" ] || wget https://www.lua.org/ftp/lua-5.3.5.tar.gz -P "$PREFIX_LUA" --no-check-certificate
+if [ ! -f "$PREFIX_LUA/${LUA}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_LUA}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_LUA}" --no-check-certificate
+	fi
+fi
 if [ ! -d "$PREFIX_LUA_SRC" ]; then
 	tar zxf "$PREFIX_LUA/${LUA}.tar.gz" -C "$PREFIX_LUA_BUILD"
 	cp "$PREFIX_LUA/Makefile" "$PREFIX_LUA_SRC/src/"

@@ -3,6 +3,8 @@
 set -e
 
 LIGHTTPD="lighttpd-1.4.53"
+PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${LIGHTTPD}.tar.gz"
 
 b_log "Building lighttpd"
 PREFIX_LIGHTTPD="${PREFIX_PROJECT}/phoenix-rtos-ports/lighttpd"
@@ -17,7 +19,11 @@ PREFIX_PCRE=${PREFIX_BUILD}
 # Download and unpack
 #
 mkdir -p "$PREFIX_LIGHTTPD_BUILD" "$PREFIX_LIGHTTPD_MARKERS"
-[ -f "$PREFIX_LIGHTTPD/${LIGHTTPD}.tar.gz" ] || wget https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.gz -P "$PREFIX_LIGHTTPD" --no-check-certificate
+if [ ! -f "$PREFIX_LIGHTTPD/${LIGHTTPD}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_LIGHTTPD}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_LIGHTTPD}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_LIGHTTPD_SRC" ] || tar zxf "$PREFIX_LIGHTTPD/${LIGHTTPD}.tar.gz" -C "$PREFIX_LIGHTTPD_BUILD"
 
 #

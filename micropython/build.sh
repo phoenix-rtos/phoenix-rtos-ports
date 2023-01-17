@@ -4,6 +4,8 @@ set -e
 
 UPYTH_VER="1.15"
 UPYTH="micropython-${UPYTH_VER}"
+PKG_URL="https://github.com/micropython/micropython/releases/download/v${UPYTH_VER}/${UPYTH}.tar.xz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${UPYTH}.tar.xz"
 
 PREFIX_UPYTH="${PREFIX_PROJECT}/phoenix-rtos-ports/micropython"
 PREFIX_UPYTH_BUILD="${PREFIX_BUILD}/micropython"
@@ -24,7 +26,11 @@ b_log "Building micropython"
 # Download and unpack
 #
 mkdir -p "$PREFIX_UPYTH_BUILD" "$PREFIX_UPYTH_MARKERS"
-[ -f "$PREFIX_UPYTH/${UPYTH}.tar.xz" ] || wget https://github.com/micropython/micropython/releases/download/v${UPYTH_VER}/${UPYTH}.tar.xz -P "$PREFIX_UPYTH"
+if [ ! -f "$PREFIX_UPYTH/${UPYTH}.tar.xz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_UPYTH}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_UPYTH}" --no-check-certificate
+	fi
+fi
 [ -d "${PREFIX_UPYTH_SRC}" ] || tar xf "$PREFIX_UPYTH/${UPYTH}.tar.xz" -C "$PREFIX_UPYTH_BUILD"
 
 

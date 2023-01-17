@@ -2,7 +2,10 @@
 
 set -e
 
-SSCEP=sscep-0.9.0
+SSCEP_VER=0.9.0
+SSCEP="sscep-${SSCEP_VER}"
+PKG_URL="https://github.com/certnanny/sscep/archive/refs/tags/v${SSCEP_VER}.tar.gz"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${SSCEP}.tar.gz"
 
 b_log "Building sscep"
 PREFIX_SSCEP=${PREFIX_PROJECT}/phoenix-rtos-ports/sscep
@@ -16,7 +19,11 @@ PREFIX_SSCEP_INSTALL="${PREFIX_SSCEP_BUILD}/install"
 #
 mkdir -p "$PREFIX_SSCEP_BUILD"
 
-[ -f "${PREFIX_SSCEP}/${SSCEP}.tar.gz" ] || wget https://github.com/certnanny/sscep/archive/refs/tags/v0.9.0.tar.gz -O "${PREFIX_SSCEP}/${SSCEP}.tar.gz" --no-check-certificate
+if [ ! -f "$PREFIX_SSCEP/${SSCEP}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -O "${PREFIX_SSCEP}/${SSCEP}.tar.gz" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_SSCEP}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_SSCEP_SRC" ] || tar zxf "$PREFIX_SSCEP/${SSCEP}.tar.gz" -C "$PREFIX_SSCEP_BUILD"
 
 #

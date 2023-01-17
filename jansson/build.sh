@@ -3,6 +3,8 @@
 set -e
 
 JANSSON=jansson-2.12
+PKG_URL="http://www.digip.org/jansson/releases/${JANSSON}.tar.bz2"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${JANSSON}.tar.bz2"
 
 b_log "Building jansson"
 PREFIX_JANSSON="${PREFIX_PROJECT}/phoenix-rtos-ports/jansson"
@@ -13,7 +15,11 @@ PREFIX_JANSSON_SRC="${PREFIX_JANSSON_BUILD}/${JANSSON}"
 # Download and unpack
 #
 mkdir -p "$PREFIX_JANSSON_BUILD"
-[ -f "$PREFIX_JANSSON/${JANSSON}.tar.bz2" ] || wget http://www.digip.org/jansson/releases/${JANSSON}.tar.bz2 -P "$PREFIX_JANSSON"
+if [ ! -f "$PREFIX_JANSSON/${JANSSON}.tar.bz2" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_JANSSON}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_JANSSON}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_JANSSON_SRC" ] || tar jxf "$PREFIX_JANSSON/${JANSSON}.tar.bz2" -C "$PREFIX_JANSSON_BUILD"
 
 
