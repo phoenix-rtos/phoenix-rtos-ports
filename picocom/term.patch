@@ -1,0 +1,27 @@
+--- picocom-3.1/term.c	2023-02-07 22:11:59.377024052 +0100
++++ picocom-3.1/term_phoenix.c	2023-02-07 22:12:54.663111161 +0100
+@@ -35,10 +35,24 @@
+ #include <errno.h>
+ #include <unistd.h>
+ #include <termios.h>
++#include <fcntl.h>
+ #ifdef USE_FLOCK
+ #include <sys/file.h>
+ #endif
+ 
++
++/*
++* Phoenix-RTOS patch
++*
++* CRTSCTS termios cflag is BSD specific,
++* This compilation is for Phoenix-RTOS which does not support this flag.
++* This macro has a chance to be forward compatible if Phoenix-RTOS will support it in the future.
++*/
++#ifndef CRTSCTS
++#define CRTSCTS 0
++#endif
++
++
+ /* glibc for MIPS has its own bits/termios.h which does not define
+  * CMSPAR, so we use the value from the generic bits/termios.h
+  */

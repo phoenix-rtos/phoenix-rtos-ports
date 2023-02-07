@@ -71,4 +71,6 @@ fi
 
 [ "${PORTS_AZURE_SDK}" = "y" ] && ./phoenix-rtos-ports/azure_sdk/build.sh
 
+[ "${PORTS_PICOCOM}" = "y" ] && ./phoenix-rtos-ports/picocom/build.sh
+
 exit 0
