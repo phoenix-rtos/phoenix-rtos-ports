@@ -1,0 +1,11 @@
+--- picocom-3.1/picocom.c	2023-02-07 20:22:59.197390004 +0100
++++ picocom-3.1/picocom_phoenix.c	2023-02-07 20:22:47.325424505 +0100
+@@ -36,6 +36,8 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/wait.h>
++#include <sys/select.h>
++#include <sys/time.h>
+ #include <limits.h>
+ #ifdef USE_FLOCK
+ #include <sys/file.h>
