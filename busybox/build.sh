@@ -3,6 +3,8 @@
 set -e
 
 BUSYBOX=busybox-1.27.2
+PKG_URL="https://busybox.net/downloads/${BUSYBOX}.tar.bz2"
+PKG_MIRROR_URL="https://files.phoesys.com/ports/${BUSYBOX}.tar.bz2"
 
 b_log "Building busybox"
 PREFIX_BUSYBOX="${PREFIX_PROJECT}/phoenix-rtos-ports/busybox"
@@ -16,7 +18,11 @@ PREFIX_BUSYBOX_MARKERS="$PREFIX_BUSYBOX_BUILD/markers/"
 # Download and unpack
 #
 mkdir -p "$PREFIX_BUSYBOX_BUILD" "$PREFIX_BUSYBOX_MARKERS"
-[ -f "$PREFIX_BUSYBOX/${BUSYBOX}.tar.bz2" ] || wget "http://busybox.net/downloads/${BUSYBOX}.tar.bz2" -P "$PREFIX_BUSYBOX" --no-check-certificate
+if [ ! -f "$PREFIX_BUSYBOX/${BUSYBOX}.tar.gz" ]; then
+	if ! wget -T 10 "$PKG_URL" -P "${PREFIX_BUSYBOX}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_BUSYBOX}" --no-check-certificate
+	fi
+fi
 [ -d "$PREFIX_BUSYBOX_SRC" ] || ( tar jxf "$PREFIX_BUSYBOX/${BUSYBOX}.tar.bz2" -C "$PREFIX_BUSYBOX_BUILD" && rm -rf "${PREFIX_BUSYBOX_MARKERS:?}/*")
 
 #
