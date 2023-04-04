@@ -18,7 +18,7 @@ PREFIX_BUSYBOX_MARKERS="$PREFIX_BUSYBOX_BUILD/markers/"
 # Download and unpack
 #
 mkdir -p "$PREFIX_BUSYBOX_BUILD" "$PREFIX_BUSYBOX_MARKERS"
-if [ ! -f "$PREFIX_BUSYBOX/${BUSYBOX}.tar.gz" ]; then
+if [ ! -f "$PREFIX_BUSYBOX/${BUSYBOX}.tar.bz2" ]; then
 	if ! wget -T 10 "$PKG_URL" -P "${PREFIX_BUSYBOX}" --no-check-certificate; then
 		wget "$PKG_MIRROR_URL" -P "${PREFIX_BUSYBOX}" --no-check-certificate
 	fi
