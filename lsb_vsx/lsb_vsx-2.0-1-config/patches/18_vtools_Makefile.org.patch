@@ -1,0 +1,58 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vtools/Makefile.org	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vtools/Makefile.org	2023-03-07 12:10:39.573542729 +0100
+@@ -26,9 +26,6 @@
+ RM =		rm -f
+ LINT =	lint
+ LINT1 =		/usr/lib/lint1
+-CHOWN =	chown
+-CHGRP =	chgrp
+-CHMOD =	chmod
+ RANLIB =	ranlib
+ LORDER =	echo
+ TSORT =	cat
+@@ -46,10 +43,6 @@
+ VSXBIN =	$(VSXDIR)/BIN
+ 
+ 
+-INSTOWN =	vsx0
+-INSTGRP =	vsxg0
+-INSTMODE =	755
+-
+ DBUG =	
+ COPTS =	
+ LDFLAGS =
+@@ -109,34 +102,19 @@
+ 		$(CC) -o $@ $(HA_OFILES) $(LIBS) $(SYSLIBS) $(LDFLAGS)
+ 		@echo " $@ made"
+ 
+-y.tab.c:	c-parse.y
+-		yacc -v $?
+-
+ 
+ $(VSXBIN)/cs_arc:	cs_arc
+ 		cp $? $@
+-		-$(CHOWN) $(INSTOWN) $@
+-		-$(CHGRP) $(INSTGRP) $@
+-		-$(CHMOD) $(INSTMODE) $@
+ 
+ $(VSXBIN)/chmog:	chmog
+ 		-$(RM) $@
+ 		cp $? $@
+-		-$(CHOWN) $(INSTOWN) $@
+-		-$(CHGRP) $(INSTGRP) $@
+-		-$(CHMOD) $(INSTMODE) $@
+ 
+ $(VSXBIN)/hdrdefs:	hdrdefs
+ 		cp $? $@
+-		-$(CHOWN) $(INSTOWN) $@
+-		-$(CHGRP) $(INSTGRP) $@
+-		-$(CHMOD) $(INSTMODE) $@
+ 
+ $(VSXBIN)/hdranal:	hdranal
+ 		cp $? $@
+-		-$(CHOWN) $(INSTOWN) $@
+-		-$(CHGRP) $(INSTGRP) $@
+-		-$(CHMOD) $(INSTMODE) $@
+ 
+ $(LIBS):
+ 	-@echo "Warning: cannot continue making: $@ needs to be installed"

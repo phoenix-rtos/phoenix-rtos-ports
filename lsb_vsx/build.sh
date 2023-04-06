@@ -26,6 +26,7 @@ mkdir -p "${PREFIX_LSB_VSX_TMP}"/tetbin_phoenix
 mkdir -p "${PREFIX_LSB_VSX_TMP}"/BIN_host
 mkdir -p "${PREFIX_LSB_VSX_TMP}"/BIN_phoenix
 
+
 [ -f "${PREFIX_TET_PACKAGE}" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/tet_vsxgen_3.02.tgz -P "${PREFIX_LSB_VSX}"
 [ -f "${PREFIX_LSB_VSX}/lts_vsx-pcts2.0beta2.tgz" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/lts_vsx-pcts2.0beta2.tgz -P "${PREFIX_LSB_VSX}"
 [ -f "${PREFIX_LSB_VSX}/lts_vsx-pcts2.0beta.tgz" ] || wget http://www.opengroup.org/infosrv/lsb/ogdeliverables/LSB-VSX2.0-1/lts_vsx-pcts2.0beta.tgz -P "${PREFIX_LSB_VSX}"
@@ -75,6 +76,7 @@ for patchfile in "$PREFIX_LSB_VSX_CONFIG"/patches/*.patch; do
  	fi
 done
 
+
 #
 # # Build host executables needed to build tests
 #
@@ -123,8 +125,8 @@ echo "---Preparing Phoenix-RTOS tcc and tests to run after starting the system--
 #
 # # Copy files required for running tests to Phoenix-RTOS rootfs
 #
-mkdir -p "${PREFIX_ROOTFS_LSB_VSX}/test_sets"
+mkdir -p "${PREFIX_ROOTFS_LSB_VSX}/files/test_sets"
 
 # we use --force, because, when building recursively in _fs may be write protected files
-cp -af "${PREFIX_LSB_VSX_FILES}/bin" "${PREFIX_ROOTFS_LSB_VSX}"
-(cd "${PREFIX_LSB_VSX_FILES}/test_sets" && cp -af "TESTROOT" "scen.exec" "tetclean.cfg" "${PREFIX_ROOTFS_LSB_VSX}/test_sets")
+cp -af "${PREFIX_LSB_VSX_FILES}/bin" "${PREFIX_ROOTFS_LSB_VSX}/files"
+(cd "${PREFIX_LSB_VSX_FILES}/test_sets" && cp -af "TESTROOT" "scen.exec" "tetclean.cfg" "${PREFIX_ROOTFS_LSB_VSX}/files/test_sets")
