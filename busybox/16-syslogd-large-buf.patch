@@ -1,11 +1,84 @@
-diff -Naur a/sysklogd/syslogd.c b/sysklogd/syslogd.c
---- a/sysklogd/syslogd.c	2021-12-16 23:27:24.952624736 +0100
-+++ b/sysklogd/syslogd.c	2021-12-21 12:53:44.699561975 +0100
-@@ -950,6 +950,7 @@
+--- busybox-1.27.2/sysklogd/syslogd.c	2017-07-06 17:14:57.000000000 +0200
++++ busybox-1.27.2.phoenix/sysklogd/syslogd.c	2023-05-18 15:18:14.304609632 +0200
+@@ -146,6 +146,7 @@
+ //usage:	IF_FEATURE_SYSLOGD_CFG(
+ //usage:     "\n	-f FILE		Use FILE as config (default:/etc/syslog.conf)"
+ //usage:	)
++//usage:     "\n	-R SIZE		Unix socket custom SO_RCVBUF size (KB) (default 4KB)"
+ /* //usage:  "\n	-m MIN		Minutes between MARK lines (default 20, 0=off)" */
+ //usage:
+ //usage:#define syslogd_example_usage
+@@ -233,6 +234,8 @@
+ 	/*int markInterval;*/                   \
+ 	/* level of messages to be logged */    \
+ 	int logLevel;                           \
++	/* SO_RCVBUF custom size */             \
++	int rcvBufSize;                         \
+ IF_FEATURE_ROTATE_LOGFILE( \
+ 	/* max size of file before rotation */  \
+ 	unsigned logFileSize;                   \
+@@ -290,6 +293,7 @@
+ 	.markInterval = 20 * 60,
+ #endif
+ 	.logLevel = 8,
++	.rcvBufSize = 4 * 1024,
+ #if ENABLE_FEATURE_ROTATE_LOGFILE
+ 	.logFileSize = 200 * 1024,
+ 	.logFileRotate = 1,
+@@ -316,6 +320,7 @@
+ 	OPTBIT_outfile, // -O
+ 	OPTBIT_loglevel, // -l
+ 	OPTBIT_small, // -S
++	OPTBIT_rcvbuf, // -R
+ 	IF_FEATURE_ROTATE_LOGFILE(OPTBIT_filesize   ,)	// -s
+ 	IF_FEATURE_ROTATE_LOGFILE(OPTBIT_rotatecnt  ,)	// -b
+ 	IF_FEATURE_REMOTE_LOG(    OPTBIT_remotelog  ,)	// -R
+@@ -329,6 +334,7 @@
+ 	OPT_nofork      = 1 << OPTBIT_nofork  ,
+ 	OPT_outfile     = 1 << OPTBIT_outfile ,
+ 	OPT_loglevel    = 1 << OPTBIT_loglevel,
++	OPT_rcvbuf      = 1 << OPTBIT_rcvbuf  ,
+ 	OPT_small       = 1 << OPTBIT_small   ,
+ 	OPT_filesize    = IF_FEATURE_ROTATE_LOGFILE((1 << OPTBIT_filesize   )) + 0,
+ 	OPT_rotatecnt   = IF_FEATURE_ROTATE_LOGFILE((1 << OPTBIT_rotatecnt  )) + 0,
+@@ -339,7 +345,7 @@
+ 	OPT_cfg         = IF_FEATURE_SYSLOGD_CFG(   (1 << OPTBIT_cfg        )) + 0,
+ 	OPT_kmsg        = IF_FEATURE_KMSG_SYSLOG(   (1 << OPTBIT_kmsg       )) + 0,
+ };
+-#define OPTION_STR "m:nO:l:S" \
++#define OPTION_STR "m:nO:l:SR:" \
+ 	IF_FEATURE_ROTATE_LOGFILE("s:" ) \
+ 	IF_FEATURE_ROTATE_LOGFILE("b:" ) \
+ 	IF_FEATURE_REMOTE_LOG(    "R:*") \
+@@ -348,12 +354,12 @@
+ 	IF_FEATURE_SYSLOGD_DUP(   "D"  ) \
+ 	IF_FEATURE_SYSLOGD_CFG(   "f:" ) \
+ 	IF_FEATURE_KMSG_SYSLOG(   "K"  )
+-#define OPTION_DECL *opt_m, *opt_l \
++#define OPTION_DECL *opt_m, *opt_l, *opt_R \
+ 	IF_FEATURE_ROTATE_LOGFILE(,*opt_s) \
+ 	IF_FEATURE_ROTATE_LOGFILE(,*opt_b) \
+ 	IF_FEATURE_IPC_SYSLOG(    ,*opt_C = NULL) \
+ 	IF_FEATURE_SYSLOGD_CFG(   ,*opt_f = NULL)
+-#define OPTION_PARAM &opt_m, &(G.logFile.path), &opt_l \
++#define OPTION_PARAM &opt_m, &(G.logFile.path), &opt_l, &opt_R \
+ 	IF_FEATURE_ROTATE_LOGFILE(,&opt_s) \
+ 	IF_FEATURE_ROTATE_LOGFILE(,&opt_b) \
+ 	IF_FEATURE_REMOTE_LOG(    ,&remoteAddrList) \
+@@ -950,6 +956,7 @@
  	unlink(sunx.sun_path);
  
  	sock_fd = xsocket(AF_UNIX, SOCK_DGRAM, 0);
-+	setsockopt_int(sock_fd, SOL_SOCKET, SO_RCVBUF, 16384);
++	setsockopt_int(sock_fd, SOL_SOCKET, SO_RCVBUF, G.rcvBufSize);
  	xbind(sock_fd, (struct sockaddr *) &sunx, sizeof(sunx));
  	chmod(_PATH_LOG, 0666);
  
+@@ -1129,6 +1136,8 @@
+ 	//if (opts & OPT_outfile) // -O
+ 	if (opts & OPT_loglevel) // -l
+ 		G.logLevel = xatou_range(opt_l, 1, 8);
++	if (opts & OPT_rcvbuf) // -R
++		G.rcvBufSize = xatou_range(opt_R, 1, INT_MAX/1024) * 1024;
+ 	//if (opts & OPT_small) // -S
+ #if ENABLE_FEATURE_ROTATE_LOGFILE
+ 	if (opts & OPT_filesize) // -s
