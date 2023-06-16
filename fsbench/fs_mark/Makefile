@@ -10,7 +10,7 @@ DIR1= /test/dir1
 DIR2= /test/dir2
 
 COBJS= fs_mark.o lib_timing.o
-CFLAGS= -O2 -Wall -D_FILE_OFFSET_BITS=64
+CFLAGS+= -O2 -Wall -D_FILE_OFFSET_BITS=64 $(LDFLAGS)
 
 all: fs_mark 
 
