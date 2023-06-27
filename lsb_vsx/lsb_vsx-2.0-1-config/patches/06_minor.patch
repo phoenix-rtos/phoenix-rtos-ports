@@ -1,0 +1,33 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vtools/obstack.h	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vtools/obstack.h	2023-06-27 16:41:28.723608279 +0200
+@@ -287,7 +287,13 @@
+    : (int) obst_free ((h), (h)->temp + (char *) (h)->chunk)))
+ #endif
+ 
+-extern void bcopy();
++/* Declared in libphoenix/include/string.h,
++** commented to avoid conflict.
++ */
++
++/*
++ extern void bcopy();
++*/
+ 
+ #endif /* not __OBSTACKS__ */
+ 
+--- lsb_vsx_cp2/test_sets/SRC/common/vlib/sigvars.c	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vlib/sigvars.c	2023-06-27 16:44:40.409528339 +0200
+@@ -56,6 +56,13 @@
+ #include	<vsx_signal.h>
+ #include	<sysdep.h>
+ 
++/*
++** Added this define for compatibility, SIGPOLL is marked obsolescent
++** https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
++ */
++#define SIGPOLL SIGIO
++
++
+ public	int	sig_array[VNUMSIG + 1] = {
+ 	0,
+ 	SIGABRT,

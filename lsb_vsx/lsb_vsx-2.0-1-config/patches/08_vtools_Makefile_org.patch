@@ -1,0 +1,13 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vtools/Makefile.org	2023-06-23 17:23:16.704472949 +0200
++++ lsb_vsx_cp/test_sets/SRC/common/vtools/Makefile.org	2023-06-23 17:23:56.635842692 +0200
+@@ -109,10 +109,6 @@
+ 		$(CC) -o $@ $(HA_OFILES) $(LIBS) $(SYSLIBS) $(LDFLAGS)
+ 		@echo " $@ made"
+ 
+-y.tab.c:	c-parse.y
+-		yacc -v $?
+-
+-
+ $(VSXBIN)/cs_arc:	cs_arc
+ 		cp $? $@
+ 		-$(CHOWN) $(INSTOWN) $@

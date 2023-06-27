@@ -1,0 +1,53 @@
+--- lsb_vsx_cp2/src/makefile	2023-06-20 16:51:04.668788932 +0200
++++ lsb_vsx_cp/src/makefile	2023-06-20 16:50:23.503704362 +0200
+@@ -61,7 +61,7 @@
+ 
+ include defines.mk
+ 
+-DIRS = tet3 xpg3sh/api ksh/api posix_sh/api scripts # not perl or java
++DIRS = tet3 # not perl or java
+ 
+ first_make_rule: all
+ 
+@@ -81,41 +81,6 @@
+ 		echo $$i...;						\
+ 		(cd $$i && $(MAKE) $@);					\
+ 	done;								\
+-									\
+-	x="`(perl -e 'exit 0') 2>&1 || true`";				\
+-	case "$$x%%$@" in						\
+-	%%*|?*%%CLEAN|?*%%clean|?*%%CLOBBER|?*%%clobber)		\
+-		echo perl...;						\
+-		(cd perl && $(MAKE) $@);				\
+-		;;							\
+-	*)								\
+-		echo 'perl...   skipped (cannot execute perl)';		\
+-		;;							\
+-	esac;								\
+-									\
+-	case "$(JAVA_CDEFS):$(JAVA_COPTS)" in				\
+-	*NOT_SUPPORTED*)						\
+-		;;							\
+-	*)								\
+-		echo > tmp$$$$.java;					\
+-		x="`(javac tmp$$$$.java) 2>&1 || true`";		\
+-		rm -f tmp$$$$.java;					\
+-		case "$$x%%$@" in					\
+-		%%*|?*%%CLEAN|?*%%clean|?*%%CLOBBER|?*%%clobber)	\
+-			if test -d java;				\
+-			then						\
+-				echo java...;				\
+-				(cd java && $(MAKE) $@);		\
+-			else						\
+-				echo 'java...   skipped (java API not installed)';\
+-			fi;						\
+-			;;						\
+-		*)							\
+-			echo 'java...   skipped (cannot execute javac)';\
+-			;;						\
+-		esac;							\
+-		;;							\
+-	esac;
+ 
+ 
+ # remainder is all to produce duplicate targets in TET/ETET/dTET2 locations

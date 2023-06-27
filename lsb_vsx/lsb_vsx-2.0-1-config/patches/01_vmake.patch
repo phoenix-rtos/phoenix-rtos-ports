@@ -1,0 +1,14 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vprog/vmake.sh	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vprog/vmake.sh	2023-06-27 17:23:43.888460866 +0200
+@@ -256,6 +256,11 @@
+ 	;;
+ esac
+ 
++if [ "$PLATFORM" = "PHOENIX-RTOS" ]; then
++	mv "$TET_EXECUTE/../tset/$sect/$area/$tset"/T.$i "$Mtdir"/T.$i
++	exit 0
++fi
++
+ if test "$macros" = n
+ then
+ 	# Create a dummy macro testset

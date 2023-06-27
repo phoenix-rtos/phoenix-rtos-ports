@@ -73,4 +73,8 @@ fi
 
 [ "${PORTS_PICOCOM}" = "y" ] && ./phoenix-rtos-ports/picocom/build.sh
 
+[ "${PORTS_LSB_VSX}" = "y" ] && ./phoenix-rtos-ports/lsb_vsx/build.sh
+
+
+
 exit 0

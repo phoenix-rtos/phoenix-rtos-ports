@@ -1,0 +1,20 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vport/nonposix.c	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vport/nonposix.c	2023-06-23 17:46:15.938975000 +0200
+@@ -282,7 +282,7 @@
+ 
+ #endif /* __STDC__ */
+ 
+-#ifndef __linux__
++#if (!defined(__linux__) && !defined(__phoenix__))
+ 
+ public	int	opterr = 1;
+ public	int	optind = 1;
+@@ -359,7 +359,7 @@
+ 	return (x != x);
+ }
+ 
+-#ifndef __linux__
++#if (!defined(__linux__) && !defined(__phoenix__))
+ 
+ #define	tst(a, b) (*mode == 'r' ? (b) : (a))
+ 
