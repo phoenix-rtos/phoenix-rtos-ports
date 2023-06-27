@@ -1,0 +1,44 @@
+--- lsb_vsx_cp2/setup.sh	2023-06-23 17:03:26.331676851 +0200
++++ lsb_vsx_cp/setup.sh	2023-06-23 16:57:54.541416002 +0200
+@@ -1,38 +1,16 @@
+ #!/bin/sh
+ 
+-# Leave the following line in the skeleton as the
+-# installer replaces it with root of the installation directory
+-echo Unconfigured
+-
+ if [ ! $TET_ROOT ]; then
+-  echo "Script has not been installed correctly. Please use the provided" 
+-  echo "installaton script to install TET/vsxgen and the test suites"
++  echo "TET_ROOT is unset"
+   exit 1
+ fi
+ 
+ export TET_ROOT
+ 
+-# Check installation
+-if [ ! -f $TET_ROOT/profile ]; then
+-  echo Cannot find installation or it is misconfigured
+-  echo Aborting.
+-  exit 1
+-fi
+-
+-# Build and install TET
+-cd $TET_ROOT && . ./profile
+-echo "----------------------------------------------------------------------"
+-echo "Building/Installing TET"
+-
+-cd src && make install
++cd $TET_ROOT/src && make install
+ 
+ if [ $? -ne 0 ]; then
+   echo "Build/Install of TET failed. Aborting."
+ fi
+ 
+-# Build and install testsets
+-cd ../test_sets && . ./profile
+-echo "----------------------------------------------------------------------"
+-echo "Building/Installing test sets"
+-
+-sh setup_testsets.sh
++sh $TET_ROOT/test_sets/setup_testsets.sh

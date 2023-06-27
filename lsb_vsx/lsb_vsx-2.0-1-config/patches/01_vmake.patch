@@ -1,11 +1,9 @@
---- lsb_vsx-2.0-1/test_sets/SRC/common/vprog/vmake.sh	2022-07-18 12:39:27.954040018 +0200
-+++ lsb_vsx-2.0-1-host/test_sets/SRC/common/vprog/vmake.sh	2022-09-22 14:57:52.940952293 +0200
-@@ -256,6 +256,13 @@
+--- lsb_vsx_cp2/test_sets/SRC/common/vprog/vmake.sh	2023-03-07 11:54:08.368165044 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/vprog/vmake.sh	2023-06-27 17:23:43.888460866 +0200
+@@ -256,6 +256,11 @@
  	;;
  esac
  
-+# Move executable to TESTROOT
-+
 +if [ "$PLATFORM" = "PHOENIX-RTOS" ]; then
 +	mv "$TET_EXECUTE/../tset/$sect/$area/$tset"/T.$i "$Mtdir"/T.$i
 +	exit 0

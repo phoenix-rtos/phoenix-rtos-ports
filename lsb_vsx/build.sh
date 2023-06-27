@@ -17,7 +17,7 @@ PREFIX_ROOTFS_LSB_VSX="${PREFIX_ROOTFS}/usr/test/lsb_vsx_posix/"
 b_log "Building lsb-vsx (posix test suite)"
 
 #
-# Download and unpack
+# # Download and unpack
 #
 mkdir -p "${PREFIX_LSB_VSX_MARKERS}"
 mkdir -p "${PREFIX_LSB_VSX_FILES}"
@@ -36,11 +36,11 @@ mkdir -p "${PREFIX_LSB_VSX_TMP}"/BIN_phoenix
 #
 CC_BUF="${CC}"
 LD_BUF="${LD}"
-export CC_BUF
-export PREFIX_LSB_VSX
-
 TET_ROOT="${PREFIX_LSB_VSX_BUILD}/files"
-export TET_ROOT
+PATH=$TET_ROOT/bin:$PATH
+HOME="${TET_ROOT}/test_sets"
+
+export CC_BUF PREFIX_LSB_VSX TET_ROOT PATH HOME
 
 #
 # # Unpack files
@@ -57,13 +57,15 @@ if [ ! -d "${PREFIX_LSB_VSX_FILES}"/src ]; then
 		tar xfz "${PREFIX_LSB_VSX}/${test_suite}" -C "${TET_ROOT}/test_sets"
 	done;
 
-	# Configure setup script and profiles
-	sed "s|echo Unconfigured|TET_ROOT=$TET_ROOT|" "$TET_ROOT"/setup.sh.skeleton \
-	> "$TET_ROOT"/setup.sh && rm "$TET_ROOT"/setup.sh.skeleton
-	sed "s|echo Unconfigured|TET_ROOT=$TET_ROOT|" "$TET_ROOT"/profile.skeleton \
-	> "$TET_ROOT"/profile && rm "$TET_ROOT"/profile.skeleton
-	sed "s|echo Unconfigured|TET_ROOT=$TET_ROOT|" "$TET_ROOT"/test_sets/profile.skeleton  > "$TET_ROOT"/test_sets/profile && rm "$TET_ROOT"/test_sets/profile.skeleton
+	# Remove redundant files
+	rm "$TET_ROOT"/profile.skeleton "$TET_ROOT"/test_sets/profile.skeleton
+
+	# Change name
+	mv "$TET_ROOT"/setup.sh.skeleton "$TET_ROOT"/setup.sh
 fi
+
+# Change read-only privileges
+chmod u=rw "${TET_ROOT}"/src/makefile
 
 #
 # # Apply patches
@@ -85,9 +87,7 @@ if [ ! -f "$PREFIX_LSB_VSX_MARKERS/host_step.stamp-files-prepared" ]; then
 	CC=gcc
 	LD=ld
 
-	export INCDIRS
-	export CC
-	export LD
+	export INCDIRS CC LD
 
 	echo "---Preparing host tcc exectutables to build tests in the next step---"
 	chmod 755 "$PREFIX_LSB_VSX_FILES"/setup.sh
@@ -107,17 +107,15 @@ if [ ! -f "$PREFIX_LSB_VSX_MARKERS/host_step.stamp-files-prepared" ]; then
 	touch "$PREFIX_LSB_VSX_MARKERS/host_step.stamp-files-prepared"
 fi
 
+
 #
 # # Build all under phoenix
 #
-INCDIRS="$PREFIX_PROJECT/libphoenix/include"
+INCDIRS="$PREFIX_PROJECT/libphoenix/include $TET_ROOT/test_sets/SRC/INC"
 CC="${CC_BUF}"
 LD="${LD_BUF}"
 # we are using scenario file (scen.bld), where is the list containing all tests for build
-export PREFIX_LSB_VSX_CONFIG
-export CC
-export LD
-export INCDIRS
+export PREFIX_LSB_VSX_CONFIG CC LD INCDIRS
 
 echo "---Preparing Phoenix-RTOS tcc and tests to run after starting the system---"
 (cd "${PREFIX_LSB_VSX_BUILD}"/files && PLATFORM=PHOENIX-RTOS ./setup.sh)
@@ -129,4 +127,5 @@ mkdir -p "${PREFIX_ROOTFS_LSB_VSX}/files/test_sets"
 
 # we use --force, because, when building recursively in _fs may be write protected files
 cp -af "${PREFIX_LSB_VSX_FILES}/bin" "${PREFIX_ROOTFS_LSB_VSX}/files"
+find . -name scen.exec
 (cd "${PREFIX_LSB_VSX_FILES}/test_sets" && cp -af "TESTROOT" "scen.exec" "tetclean.cfg" "${PREFIX_ROOTFS_LSB_VSX}/files/test_sets")

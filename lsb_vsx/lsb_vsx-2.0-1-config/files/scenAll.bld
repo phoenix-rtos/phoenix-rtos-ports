@@ -39,7 +39,6 @@ all
 	/tset/ANSI.os/genuts/srand/T.srand
 	/tset/ANSI.os/jump/longjmp/T.longjmp
 	/tset/ANSI.os/jump/setjmp/T.setjmp
-	/tset/ANSI.os/locale/setlocale/T.setlocale
 	/tset/ANSI.os/maths/acos/T.acos
 	/tset/ANSI.os/maths/asin/T.asin
 	/tset/ANSI.os/maths/atan/T.atan

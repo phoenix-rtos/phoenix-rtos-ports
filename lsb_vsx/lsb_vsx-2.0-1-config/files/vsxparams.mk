@@ -17,7 +17,7 @@ TEST_XNFS="n"
 
 #SUBSETS - a space-separated list of the subsets of VSX to be installed
 #	For example: "base dm"
-SUBSETS=""
+SUBSETS="base"
 
 #VSXDIR - this parameter defines the source directory for the VSX software.
 #	The value given to this parameter must be a full pathname
@@ -37,7 +37,7 @@ SPEED="5"
 #	Normally set to the PATH in effect when config.sh was run.
 #	Must contain the directories where commands specified in other
 #	parameters reside (if full path names are not given).
-#PATH="$TET_ROOT/bin:$TET_ROOT/test_sets/BIN:$TET_ROOT/test_sets/TESTROOT/BIN:/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin:/usr/local/bin"
+PATH="$PATH:$TET_ROOT/bin:$TET_ROOT/test_sets/BIN:$TET_ROOT/test_sets/TESTROOT/BIN"
 
 #INCDIRS - this parameter defines the directories which contain the include
 #	files for the system being tested, in order of searching.
@@ -117,7 +117,7 @@ MLIB="-lm"
 
 #RPCLIB - the name of the RPC library
 #	This parameter is only used when testing XNFS.
-RPCLIB=".../SRC/LIB/xnfs_socket.a"
+RPCLIB=""
 
 #RPC_TYPE - whether the RPC library is TLI or socket-based
 #	This parameter must be set to "TLI" or "socket".

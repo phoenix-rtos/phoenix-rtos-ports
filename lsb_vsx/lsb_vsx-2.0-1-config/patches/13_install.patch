@@ -1,40 +1,30 @@
---- lsb_vsx-2.0-1/test_sets/SRC/install/scripts/install.sh	2022-07-22 10:57:39.567599982 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/install/scripts/install.sh	2022-09-22 11:43:09.630952562 +0200
-@@ -11,16 +11,20 @@
- #		Outputs - Installation Report				#
- #########################################################################
- 
-+#
-+#delete 2 function routines checks because they are compiled using phoenix-gcc
-+#thus cannot be run on host
-+#
-+
- trap "" 1 2 3
- 
- tfile=/tmp/ch.ss.tmp		# miscellaneous temporary files
+--- lsb_vsx_cp2/test_sets/SRC/install/scripts/install.sh	2023-03-07 11:54:08.372168962 +0100
++++ lsb_vsx_cp/test_sets/SRC/install/scripts/install.sh	2023-06-27 15:07:16.675352967 +0200
+@@ -17,11 +17,12 @@
  cfile=/tmp/ch.ss.c
  cdirfile=/tmp/chd.ss.c
  tdir=/tmp/ch.dr
 -ifile=/tmp/ch.ss.i
++#ifile=/tmp/ch.ss.i
  
  #  Remove temporary files and exit if a hangup or interrupt occurs
 -rm_tmp1="rm -f /tmp/ans a.out $tfile $cfile"
-+rm_tmp1="rm -f $tfile $cfile"
++#rm_tmp1="rm -f /tmp/ans a.out $tfile $cfile"
  rm_tmp2="rm -f $cdirfile $ifile"
++rm_tmp1="rm -f $tfile $cfile"
  trap "$rm_tmp1; $rm_tmp2; exit 1" 1 2
  
-@@ -134,6 +138,10 @@
-     -e "/LONG_DOUBLE_SUPPORTED/s/ORTED.*$/ORTED	$DEF_LONG_DOUBLE/" \
- 	../INC/std.h.orig > ../INC/std.h
+ echo "
+@@ -84,6 +85,8 @@
+ echo "
+ Updating the file std.h with the system dependencies"
  
-+# This define resolves obsolete I_PUSH from ioctl.h
++echo "#define I_PUSH -1" >> ../INC/std.h
 +
-+echo "#define I_PUSH 0x5420" >> ../INC/std.h
-+
- #########################################################################
- #									#
- # Create the include files for use by VSX				#
-@@ -157,152 +165,6 @@
+ DEF_XPG=_XOPEN_SOURCE	# caters for new X/Open modes without change
+ case "$TEST_MODE" in
+ POSIX*|FIPS*) DEF_XPG=0 ;;
+@@ -157,152 +160,6 @@
  
  #########################################################################
  #									#
@@ -187,3 +177,46 @@
  # Set up the testroot 							#
  #									#
  #########################################################################
+@@ -465,34 +322,6 @@
+ 	;;
+ esac
+ 
+-#########################################################################
+-#									#
+-# Create scenario files including the sections for the selected subsets	#
+-#									#
+-#########################################################################
+-echo "
+-Creating the scenario files scen.bld and scen.exec"
+-
+-NFS=
+-case $TEST_XNFS in
+-[Yy]) NFS=nfs ;;
+-esac
+-
+-if test -f $HOME/scen.bld
+-then
+-	echo "*** existing scen.bld moved to oldscen.bld"
+-	rm -f $HOME/oldscen.bld
+-	mv $HOME/scen.bld $HOME/oldscen.bld
+-fi
+-echo all > $HOME/scen.bld
+-for subset in $SUBSETS
+-do
+-	if test -f $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}bld
+-	then sed 1d $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}bld
+-	else sed 1d $VSXDIR/subsets/$subset/scen.${NFS}bld
+-	fi
+-done >> $HOME/scen.bld
+-
+ if test -f $HOME/scen.exec
+ then
+ 	echo "*** existing scen.exec moved to oldscen.exec"
+@@ -517,7 +346,6 @@
+ Installing userintf.c and other files in the relevant directories"
+ 
+ cp $VSXDIR/userintf.c $VSXDIR/common/vport
+-cp $VSXDIR/rpcincs.h $VSXDIR/INC
+ rm -f $VSXDIR/common/drivers/testvars.h
+ echo '/* THIS FILE IS AUTO-GENERATED: DO NOT EDIT */
+ "VSX_CHRDEV_FILE",

@@ -1,11 +1,11 @@
---- lsb_vsx-2.0-1/test_sets/SRC/common/drivers/Clocal.c	2022-07-18 12:39:27.950040106 +0200
-+++ lsb_vsx-2.0-1-phoenix/test_sets/SRC/common/drivers/Clocal.c	2022-09-09 10:06:29.650026180 +0200
+--- lsb_vsx_cp2/test_sets/SRC/common/drivers/Clocal.c	2023-03-07 11:54:08.364161127 +0100
++++ lsb_vsx_cp/test_sets/SRC/common/drivers/Clocal.c	2023-06-27 17:12:15.883772984 +0200
 @@ -94,7 +94,8 @@
  #define	QUOTE		7
  
  private	int	getstring();
 -private int	getline();
-+/*Changing getline function name to lsb_vsx_getline to avoid multiple declaration */
++/* Changing getline function name to lsb_vsx_getline to avoid multiple declaration */
 +private int	lsb_vsx_getline();
  
  private int	clinno;
@@ -46,8 +46,8 @@
  	str[0] = NUL;
  	if (state == END)
  		DBUG_RETURN(END);
---- lsb_vsx-2.0-1/src/tet3/tcc/scen1.c	2022-07-18 12:39:27.910040986 +0200
-+++ lsb_vsx-2.0-1-phoenix/src/tet3/tcc/scen1.c	2022-09-09 10:09:24.390553064 +0200
+--- lsb_vsx_cp2/src/tet3/tcc/scen1.c	2023-03-07 11:54:08.344141538 +0100
++++ lsb_vsx_cp/src/tet3/tcc/scen1.c	2023-06-27 17:15:58.829432999 +0200
 @@ -94,7 +94,7 @@
  #define isattached(s)	(*(s) && !isspace(*(s)))
  
@@ -75,16 +75,7 @@
  static void includefile PROTOLIST((char *, char *, int));
  static struct ifstack *ifsalloc PROTOLIST((void));
  static void ifsfree PROTOLIST((struct ifstack *));
-@@ -172,6 +172,8 @@
- static char *firstpart PROTOLIST((char *));
- #endif
- 
-+/*Changing getline function name to lsb_vsx_getline to avoid multiple declaration
-+
- 
- /*
- **	proc1scfile() - tokenise a scenario input file
-@@ -243,7 +245,7 @@
+@@ -243,7 +243,7 @@
  	**	the scenario processor can find it
  	*/
  	for (;;) {
@@ -93,7 +84,7 @@
  			return(ferror(ifstp->if_fp) ? -1 : 0);
  		if (!isspace(*line)) {
  			/* start of new scenario */
-@@ -286,7 +288,7 @@
+@@ -286,7 +286,7 @@
  	register struct scentab *ep;
  
  	/* read the scenario name - starts in column 1 */
@@ -102,7 +93,7 @@
  	ASSERT(line);
  	ASSERT(!isspace(*line));
  
-@@ -314,7 +316,7 @@
+@@ -314,7 +314,7 @@
  		return(-1);
  
  	/* process the rest of the current scenario */
@@ -111,7 +102,7 @@
  		if (!isspace(*line)) {
  			/* a new scenario */
  			ungetline(line);
-@@ -1168,13 +1170,13 @@
+@@ -1168,13 +1168,13 @@
  }
  
  /*
@@ -127,7 +118,7 @@
  {
  	static char buf[LBUFLEN];
  	struct lcache *lcp;
-@@ -1187,7 +1189,7 @@
+@@ -1187,7 +1187,7 @@
  	if ((lcp = lcpop()) != (struct lcache *) 0) {
  		(void) strcpy(buf, lcp->lc_line);
  		lcfree(lcp);
@@ -136,7 +127,7 @@
  		return(buf);
  	}
  
-@@ -1218,14 +1220,14 @@
+@@ -1218,14 +1218,14 @@
  			}
  			else
  				TRACE2(tet_Tscen, 10,
@@ -153,7 +144,7 @@
  			return((char *) 0);
  		}
  
-@@ -1260,7 +1262,7 @@
+@@ -1260,7 +1260,7 @@
  
  		/* if there is anything left, return it */
  		if (p >= buf) {
@@ -162,5 +153,12 @@
  				ifstp->if_fname, tet_i2a(ifstp->if_lcount),
  				firstpart(buf));
  			return(buf);
-
-
+@@ -1269,7 +1269,7 @@
+ }
+ 
+ /*
+-**	ungetline() - store a line for subsequent retrieval by getline()
++**	ungetline() - store a line for subsequent retrieval by lsb_vsx_getline()
+ */
+ 
+ static void ungetline(line)
