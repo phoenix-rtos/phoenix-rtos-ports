@@ -73,4 +73,6 @@ fi
 
 [ "${PORTS_PICOCOM}" = "y" ] && ./phoenix-rtos-ports/picocom/build.sh
 
+[ "${PORTS_FS_MARK}" = "y" ] && ./phoenix-rtos-ports/fs_mark/build.sh
+
 exit 0
