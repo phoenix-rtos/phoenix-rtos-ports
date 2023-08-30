@@ -8,7 +8,7 @@ PKG_URL="https://github.com/openiked/openiked-portable/archive/refs/tags/v${OPEN
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENIKED}.tar.gz"
 
 b_log "Building openiked"
-PREFIX_OPENIKED=${TOPDIR}/phoenix-rtos-ports/openiked
+PREFIX_OPENIKED="${PREFIX_PROJECT}/phoenix-rtos-ports/openiked"
 PREFIX_OPENIKED_BUILD=${PREFIX_BUILD}/openiked
 PREFIX_OPENIKED_SRC="${PREFIX_OPENIKED_BUILD}/${OPENIKED}"
 PREFIX_OPENIKED_MARKERS="${PREFIX_OPENIKED_BUILD}/markers"
