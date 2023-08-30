@@ -13,7 +13,7 @@ install_binary () {
 AZURE_VER="lts_01_2022"
 AZURE="azure-iot-sdk-c"
 
-PREFIX_AZURE="${TOPDIR}/phoenix-rtos-ports/azure_sdk"
+PREFIX_AZURE="${PREFIX_PROJECT}/phoenix-rtos-ports/azure_sdk"
 PREFIX_AZURE_BUILD="${PREFIX_BUILD}/azure_sdk"
 PREFIX_AZURE_SRC="${PREFIX_AZURE_BUILD}/${AZURE}-${AZURE_VER}"
 PREFIX_AZURE_MARKERS="${PREFIX_AZURE_BUILD}/markers"

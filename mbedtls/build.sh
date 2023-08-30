@@ -8,7 +8,7 @@ MBEDTLS="mbedtls-${MBEDTLS_VER}"
 PKG_URL="https://github.com/Mbed-TLS/mbedtls/archive/v${MBEDTLS_VER}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${MBEDTLS}.tar.gz"
 
-PREFIX_MBEDTLS="${TOPDIR}/phoenix-rtos-ports/mbedtls"
+PREFIX_MBEDTLS="${PREFIX_PROJECT}/phoenix-rtos-ports/mbedtls"
 PREFIX_MBEDTLS_BUILD="${PREFIX_BUILD}/mbedtls"
 PREFIX_MBEDTLS_SRC="${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}"
 PREFIX_MBEDTLS_PATCHES="${PREFIX_MBEDTLS}/patches"
