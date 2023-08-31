@@ -37,9 +37,9 @@ for patchfile in "$PREFIX_BUSYBOX"/*.patch; do
 done
 
 #
-# Clean and configure
+# Configure
 #
-if [ -n "$CLEAN" ] || [ ! -f "${PREFIX_BUSYBOX_BUILD}/.config" ] || [ "${BUSYBOX_CONFIG}" -nt "${PREFIX_BUSYBOX_BUILD}/.config" ]; then
+if [ ! -f "${PREFIX_BUSYBOX_BUILD}/.config" ] || [ "${BUSYBOX_CONFIG}" -nt "${PREFIX_BUSYBOX_BUILD}/.config" ]; then
 	cp -a "${BUSYBOX_CONFIG}" "${PREFIX_BUSYBOX_BUILD}"/.config
 	make -C "${PREFIX_BUSYBOX_BUILD}" KBUILD_SRC="$PREFIX_BUSYBOX_SRC" -f "${PREFIX_BUSYBOX_SRC}"/Makefile CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" clean
 fi
