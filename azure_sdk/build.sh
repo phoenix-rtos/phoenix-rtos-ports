@@ -62,15 +62,10 @@ fi
 
 # Set phoenix c compiler and system root
 PHOENIX_COMPILER_CMD=${CC}
+# shellcheck disable=SC2086
 PHOENIX_SYSROOT=$(${CC} ${CFLAGS} --print-sysroot)
 export PHOENIX_COMPILER_CMD PHOENIX_SYSROOT
 
-# When compiling azure sdk with Phoenix-RTOS there may be some additional warnings
-# disable the harmless ones (-Wno-unused-function -Wno-unused-variable -Wno-unknown-pragmas)
-# and accept void func(); declaration, not only void func(void); (-Wno-strict-prototypes)
-PHOENIX_EXTRA_CFLAGS="-Wno-unused-function -Wno-unused-variable -Wno-unknown-pragmas -Wno-strict-prototypes"
-PHOENIX_EXTRA_CXXFLAGS="${PHOENIX_EXTRA_CFLAGS}"
-export PHOENIX_EXTRA_CFLAGS PHOENIX_EXTRA_CXXFLAGS
 
 # Build (http and amqp protocols are currently not supported yet)
 # Treat Phoenix-RTOS as Linux and providing toolchain file was the most suitable solution
