@@ -72,12 +72,9 @@ else
 	b_log "The compilation attempt will start in 5 seconds..."
 	sleep 5
 fi
-# changing LDFLAGS from "ld" params format to "gcc" params - prefixing with -Wl, and changing spaces to colons
-LDFLAGS_VAR=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
-
 export STRIPFLAGS_EXTRA="${STRIPEXP}"
 export PHOENIX_MATH_ABSENT="expm1 log1p asinh acosh atanh erf tgamma lgamma copysign __sin __cos __tan __signbit"
-export LDFLAGS_EXTRA="${CFLAGS} $LDFLAGS_VAR"
+export LDFLAGS_EXTRA="${CFLAGS} ${LDFLAGS}"
 export CFLAGS_EXTRA="${CFLAGS} -DUPYTH_STACKSZ=${UPYTH_STACKSZ} -DUPYTH_HEAPSZ=${UPYTH_HEAPSZ} "
 # clear original ld-format ldflags/cflags
 export LDFLAGS=""

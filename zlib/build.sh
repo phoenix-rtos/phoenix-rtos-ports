@@ -38,8 +38,7 @@ for patchfile in "${PREFIX_ZLIB}"/patches/*.patch; do
 done
 
 # changing LDFLAGS from "ld" params format to "gcc" params - prefixing with -Wl, and changing spaces to colons
-LDFLAGS_VAR=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
-LDFLAGS="${CFLAGS} $LDFLAGS_VAR"
+LDFLAGS="${CFLAGS} $LDFLAGS"
 
 #
 # Make
