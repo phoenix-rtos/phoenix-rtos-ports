@@ -39,9 +39,7 @@ for patchfile in "$PREFIX_PCOM"/*.patch; do
 done
 
 
-# Changing LDFLAGS from "ld" params format to "gcc" params - prefixing with -Wl, and changing spaces to colons
-LDFLAGS_VAR=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
-export LDFLAGS="${CFLAGS} $LDFLAGS_VAR"
+export LDFLAGS="${CFLAGS} $LDFLAGS"
 
 
 #

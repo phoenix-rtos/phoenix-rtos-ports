@@ -37,9 +37,6 @@ for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
 	fi
 done
 
-# Convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
-LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
-
 # Flag that can be checked in makefiles
 export phoenix=1
 

@@ -62,11 +62,8 @@ fi
 
 # Set phoenix c compiler and system root
 PHOENIX_COMPILER_CMD=${CC}
-PHOENIX_SYSROOT=$(${CC} --print-sysroot)
+PHOENIX_SYSROOT=$(${CC} ${CFLAGS} --print-sysroot)
 export PHOENIX_COMPILER_CMD PHOENIX_SYSROOT
-
-# Convert ldflags to format recognizable by gcc, for example -q -> -Wl,-q
-LDFLAGS=$(echo " ${LDFLAGS}" | sed "s/\s/,/g" | sed "s/,-/ -Wl,-/g")
 
 # When compiling azure sdk with Phoenix-RTOS there may be some additional warnings
 # disable the harmless ones (-Wno-unused-function -Wno-unused-variable -Wno-unknown-pragmas)
