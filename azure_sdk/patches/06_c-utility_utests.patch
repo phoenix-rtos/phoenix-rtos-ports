@@ -77,15 +77,3 @@ diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/ctest
  const TEST_FUNCTION_DATA* g_CurrentTestFunction;
  jmp_buf g_ExceptionJump;
  size_t RunTests(const TEST_FUNCTION_DATA* testListHead, const char* testSuiteName)
-diff -ur '--exclude=*.git' azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c
---- azure-iot-sdk-c-lts_01_2022/c-utility/testtools/testrunner/src/testmutex.c	2022-10-20 14:34:31.350550072 +0200
-+++ azure-iot-sdk-c-lts_01_2022-phoenix/c-utility/testtools/testrunner/src/testmutex.c	2022-10-20 13:51:44.855200575 +0200
-@@ -29,7 +29,7 @@
- #else
- 
- // XCode complains about a library with no exported functions
--extern void dummy_function_to_silence_compiler_is_never_called()
-+extern void dummy_function_to_silence_compiler_is_never_called(void)
- {
- }
- 
