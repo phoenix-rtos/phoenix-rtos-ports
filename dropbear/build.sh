@@ -43,6 +43,7 @@ if [ ! -f "$PREFIX_DROPBEAR_BUILD/config.h" ]; then
 	DROPBEAR_CFLAGS="-DENDIAN_LITTLE -DUSE_DEV_PTMX ${DROPBEAR_CUSTOM_CFLAGS}"
 	DROPBEAR_LDFLAGS=""
 	ENABLE_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && ENABLE_ZLIB="yes"
+	export OLDCFLAGS="-v"  # HACKISH: fix ./configure script not detecting externally-provided CFLAGS
 
 	( cd "${PREFIX_DROPBEAR_BUILD}" && "${PREFIX_DROPBEAR_SRC}/configure" CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" \
 		LDFLAGS="${CFLAGS} ${LDFLAGS} ${DROPBEAR_LDFLAGS}" ARFLAGS="-r" \
