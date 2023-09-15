@@ -39,8 +39,9 @@ diff -Naur micropython-1.15/ports/unix/mpconfigport.h micropython-phoenix/ports/
  void mp_unix_free_exec(void *ptr, size_t size);
  void mp_unix_mark_exec(void);
 -#define MP_PLAT_ALLOC_EXEC(min_size, ptr, size) mp_unix_alloc_exec(min_size, ptr, size)
+-#define MP_PLAT_FREE_EXEC(ptr, size) mp_unix_free_exec(ptr, size)
 +// #define MP_PLAT_ALLOC_EXEC(min_size, ptr, size) mp_unix_alloc_exec(min_size, ptr, size)
- #define MP_PLAT_FREE_EXEC(ptr, size) mp_unix_free_exec(ptr, size)
++// #define MP_PLAT_FREE_EXEC(ptr, size) mp_unix_free_exec(ptr, size)
  #ifndef MICROPY_FORCE_PLAT_ALLOC_EXEC
  // Use MP_PLAT_ALLOC_EXEC for any executable memory allocation, including for FFI
  // (overriding libffi own implementation)
