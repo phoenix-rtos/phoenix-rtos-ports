@@ -1,0 +1,61 @@
+--- busybox-1.27.2/testsuite/runtest	2023-10-27 17:17:52.404370639 +0200
++++ busybox-1.27.2.phoenix/testsuite/runtest	2023-10-27 17:17:16.635573994 +0200
+@@ -40,7 +40,7 @@
+ 	mkdir -p ".tmpdir.$applet"
+ 	cd ".tmpdir.$applet" || return 1
+ 
+-#	echo "Running testcase $testcase"
++	echo "---Testcase '$testname' starting---"
+ 	d="$tsdir" \
+ 		sh -x -e "$testcase" >"$testname.stdout.txt" 2>&1 || status=$?
+ 	if [ $status -ne 0 ]; then
+
+--- busybox-1.27.2/testsuite/testing.sh	2023-10-27 17:17:52.404370639 +0200
++++ busybox-1.27.2.phoenix/testsuite/testing.sh	2023-10-27 17:17:16.635573994 +0200
+@@ -87,7 +87,7 @@
+ 
+   $ECHO -ne "$3" > expected
+   $ECHO -ne "$4" > input
+-  [ -z "$VERBOSE" ] || echo ======================
++  echo "---Testcase '$NAME' starting---"
+   [ -z "$VERBOSE" ] || echo "echo -ne '$4' >input"
+   [ -z "$VERBOSE" ] || echo "echo -ne '$5' | $2"
+   $ECHO -ne "$5" | eval "$2" > actual
+
+--- busybox-1.27.2/testsuite/bunzip2.tests	2023-10-27 17:17:52.404370639 +0200
++++ busybox-1.27.2.phoenix/testsuite/bunzip2.tests	2023-10-27 17:17:16.635573994 +0200
+@@ -488,6 +488,7 @@
+ }
+ 
+ check() {
++    echo "---Testcase '$1' starting---"
+     eval $2 >t_actual 2>&1
+     if $ECHO -ne "$expected" | cmp - t_actual; then
+ 	echo "PASS: $1"
+@@ -535,6 +536,7 @@
+ 
+ # This test is only for bunzip2
+ if test "${0##*/}" = "bunzip2.tests"; then
++    echo "---Testcase 'test_bz2 file' starting---"
+     if test1_bz2 | ${bb}bunzip2 >/dev/null \
+ 	&& test "`test1_bz2 | ${bb}bunzip2 | md5sum`" = "61bbeee4be9c6f110a71447f584fda7b  -"
+     then
+@@ -544,6 +546,7 @@
+ 	FAILCOUNT=$((FAILCOUNT + 1))
+     fi
+ 
++    echo "---Testcase 'pbzip_4m_zeros file' starting---"
+     if pbzip_4m_zeros | ${bb}bunzip2 >/dev/null \
+ 	&& test "`pbzip_4m_zeros | ${bb}bunzip2 | md5sum`" = "b5cfa9d6c8febd618f91ac2843d50a1c  -"
+     then
+
+--- busybox-1.27.2/testsuite/bzcat.tests	2023-10-27 17:17:52.404370639 +0200
++++ busybox-1.27.2.phoenix/testsuite/bzcat.tests	2023-10-27 17:17:16.635573994 +0200
+@@ -40,6 +40,7 @@
+     }
+ 
+     check() {
++    echo "---Testcase '$1' starting---"
+ 	eval $2 >t_actual 2>&1
+ 	if $ECHO -ne "$expected" | cmp - t_actual; then
+ 	    echo "PASS: $1"
