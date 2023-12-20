@@ -1,5 +1,5 @@
 --- fs_mark-3.3/fs_mark.c	2023-07-10 15:47:05.889696230 +0200
-+++ fs_mark-3.3.phoenix/fs_mark.c	2023-07-31 12:40:45.016383503 +0200
++++ fs_mark-3.3.phoenix/fs_mark.c	2023-11-21 18:07:04.394857627 +0100
 @@ -29,7 +29,7 @@
  #include <sys/types.h>
  #include <sys/wait.h>
@@ -9,7 +9,7 @@
  #include <sys/time.h>
  
  #include <fcntl.h>
-@@ -42,9 +42,8 @@
+@@ -42,22 +42,79 @@
  #include <ctype.h>
  #include <time.h>
  
@@ -21,7 +21,95 @@
  
  #include "fs_mark.h"
  
-@@ -142,7 +141,8 @@
++#include <sys/mman.h>
++
+ void cleanup_exit(void)
+ {
+ 	char child_log_file_name[PATH_MAX];
+-
++#if NOMMU
++	sprintf(child_log_file_name, "%s.%d", log_file_name, (pid_t)-1);
++#else
+ 	sprintf(child_log_file_name, "%s.%d", log_file_name, getpid());
++#endif
+ 	unlink(child_log_file_name);
+ 
+ 	exit(1);
+ }
+ 
++
++#ifdef DUMMYFS_TARGET
++unsigned int get_dummyfs_free_space(void)
++{
++	meminfo_t info;
++	unsigned int free_space;
++
++	info.page.mapsz = -1;
++	info.entry.kmapsz = -1;
++	info.entry.mapsz = -1;
++	info.maps.mapsz = 0;
++	info.maps.map = NULL;
++
++	meminfo(&info);
++	if (info.maps.mapsz == 0) {
++		fprintf(stderr, "mem: no shared memory maps are present\n");
++		return 1;
++	}
++
++	info.maps.map = malloc(info.maps.mapsz * sizeof(mapinfo_t));
++	if (info.maps.map == NULL) {
++		fprintf(stderr, "mem: out of memory\n");
++		return 1;
++	}
++	meminfo(&info);
++	free_space = info.maps.map[2].free;
++	if (dummyfs_size == 0) {
++		dummyfs_size = free_space;
++	}
++
++	free(info.maps.map);
++
++	return free_space;
++}
++
++
++void get_dummyfs_cont_blk(char *name)
++{
++	void *ptr;
++	size_t blk_sz = 512;
++
++	if (errno == ENOMEM || errno == ENOSPC || errno == EIO) {
++		while((ptr = malloc(blk_sz)) != NULL) {
++			free(ptr);
++			blk_sz += 512;
++		}
++		fprintf(stderr, "Lack of contiguous memory block of size %u bytes in %s\n", blk_sz, name);
++		cleanup_exit();
++	}
++}
++#endif
++
++
+ void usage(void)
+ {
+ 	fprintf(stderr,
+@@ -89,7 +146,6 @@
+ void process_args(int argc, char **argv, char **envp)
+ {
+ 	int ret;
+-
+ 	/*
+ 	 * Parse all of the options that the user specified.
+ 	 */
+@@ -129,6 +185,7 @@
+ 			}
+ 			strncpy(child_tasks[num_dirs].test_dir, optarg,
+ 				PATH_MAX);
++
+ 			num_dirs++;
+ 			break;
+ 
+@@ -142,7 +199,8 @@
  			break;
  
  		case 'l':	/* Log file name */
@@ -31,7 +119,41 @@
  			break;
  
  		case 'L':	/* number of iterations */
-@@ -493,11 +493,11 @@
+@@ -386,6 +444,9 @@
+ 	 */
+ 	if ((mkdir(names[file_index].target_dir, 0777) != 0)
+ 	    && (errno != EEXIST)) {
++#ifdef DUMMYFS_TARGET
++                get_dummyfs_cont_blk("mkdir");
++#endif
+ 		fprintf(stderr, "fs_mark: mkdir %s failed: %s\n",
+ 			names[file_index].target_dir, strerror(errno));
+ 		cleanup_exit();
+@@ -462,6 +523,9 @@
+ 	 */
+ 	sprintf(thread_log_file_name, "%s.%d", log_file_name, pid);
+ 	if ((child_log_file_fp = fopen(thread_log_file_name, "w")) == NULL) {
++#ifdef DUMMYFS_TARGET
++		get_dummyfs_cont_blk("fopen");
++#endif
+ 		fprintf(stderr,
+ 			"fs_mark:  setup failed to fopen log file: %s %s\n",
+ 			thread_log_file_name, strerror(errno));
+@@ -476,9 +540,13 @@
+ 	/*
+ 	 * Create my high level test directory
+ 	 */
++
+ 	my_dir = find_dir_name(pid);
+ 
+ 	if ((mkdir(my_dir, 0777) != 0) && (errno != EEXIST)) {
++#ifdef DUMMYFS_TARGET
++                get_dummyfs_cont_blk("mkdir");
++#endif
+ 		fprintf(stderr,
+ 			"fill_dir:mkdir %s failed: %s\n", my_dir,
+ 			strerror(errno));
+@@ -493,11 +561,11 @@
   */
  int get_df_full(char *dir_name)
  {
@@ -45,7 +167,20 @@
  		fprintf(stderr, "fs_mark: statfs failed on %s %s\n", dir_name,
  			strerror(errno));
  		cleanup_exit();
-@@ -517,10 +517,10 @@
+@@ -505,8 +573,11 @@
+ 
+ 	used_blocks = (float)(fs_buf.f_blocks - fs_buf.f_bavail);
+ 
++#ifdef DUMMYFS_TARGET
++	df_used = (used_blocks / dummyfs_size);
++#else
+ 	df_used = (used_blocks / fs_buf.f_blocks);
+-
++#endif
+ 	df_percent_used = (int)(100 * df_used);
+ 
+ 	return (df_percent_used);
+@@ -517,10 +588,10 @@
   */
  unsigned long long get_bytes_free(char *dir_name)
  {
@@ -58,3 +193,172 @@
  		fprintf(stderr, "fs_mark: statfs failed on %s %s\n", dir_name,
  			strerror(errno));
  		cleanup_exit();
+@@ -560,6 +631,9 @@
+ 
+ 		start(0);
+ 		if ((ret = write(fd, io_buffer, write_size)) != write_size) {
++#ifdef DUMMYFS_TARGET
++                        get_dummyfs_cont_blk("write");
++#endif
+ 			fprintf(stderr,
+ 				"fs_mark: write_file write failed: %d %s\n",
+ 				ret, strerror(errno));
+@@ -590,20 +664,28 @@
+  */
+ static void check_space(pid_t my_pid)
+ {
+-	char *my_dir_name;
+ 	unsigned long long bytes_per_loop;
++#ifndef DUMMYFS_TARGET
++	char *my_dir_name;
+ 
+ 	my_dir_name = find_dir_name(my_pid);
++#endif
+ 
+ 	/*
+ 	 * No use in running this if the file system is already full.
+ 	 * Compute free bytes and compare to many bytes needed for this iteration.
+ 	 */
+ 	bytes_per_loop = (unsigned long long)file_size *num_files;
+-	if (get_bytes_free(my_dir_name) < bytes_per_loop) {
++#ifdef DUMMYFS_TARGET
++	/* Leave some memory left for kernel - 16384 bytes */
++	if (get_dummyfs_free_space() < (bytes_per_loop + 16384)) {
++#else
++	/* For now some fs memory is left on purpose due to strange behaviours */
++	if (get_bytes_free(my_dir_name) < ((bytes_per_loop * num_threads) + 550000)) {
++#endif
+ 		fprintf(stdout,
+-			"Insufficient free space in %s to create %d new files, exiting\n",
+-			my_dir_name, num_files);
++			"Insufficient free space to create %d new files, exiting\n",
++			num_files * num_threads);
+ 		do_fill_fs = 0;	/* Setting this signals the main loop to exit */
+ 		cleanup_exit();
+ 	}
+@@ -643,6 +725,7 @@
+ 	 * Once all files of a given size have been processed, the sum of the times are 
+ 	 * recorded in operations/sec.
+ 	 */
++	file_count = 0;
+ 	files_per_sec = 0.0;
+ 	creat_usec = max_creat_usec = min_creat_usec = 0ULL;
+ 	avg_write_usec = max_write_usec = min_write_usec = total_write_usec = 0ULL;
+@@ -683,6 +766,10 @@
+ 		if ((fd =
+ 		     open(file_write_name, O_CREAT | O_RDWR | O_TRUNC,
+ 			  0666)) == -1) {
++#ifdef DUMMYFS_TARGET
++			get_dummyfs_cont_blk("open");
++#endif
++
+ 			fprintf(stderr, "Error in creat: %s\n",
+ 				strerror(errno));
+ 			cleanup_exit();
+@@ -948,8 +1035,14 @@
+ 	 */
+ 	sprintf(child_log_file_name, "%s.%d", log_file_name, child_pid);
+ 	if ((thread_log_fp = fopen(child_log_file_name, "r")) == NULL) {
+-		fprintf(stderr, "fopen failed to open: %s\n",
+-			child_log_file_name);
++		if (errno != ENOENT) {
++#ifdef DUMMYFS_TARGET
++			get_dummyfs_cont_blk("fopen");
++#endif
++			fprintf(stderr, "fopen failed to open: %s\n",
++				child_log_file_name);
++			fprintf(stderr, strerror(errno));
++		}
+ 		cleanup_exit();
+ 	}
+ 
+@@ -1107,17 +1200,40 @@
+  */
+ void thread_work(pid_t my_pid)
+ {
+-
+ 	/*
+ 	 * Do any initialization
+ 	 */
+ 	setup(my_pid);
+ 
++#ifdef DUMMYFS_TARGET
++	get_dummyfs_free_space();
++#endif
+ 	do_run(my_pid);
+ 
+ 	fclose(child_log_file_fp);
++
++#ifdef DUMMYFS_TARGET
++	memset(names, 0, sizeof(struct name_entry) * num_files);
++#endif
+ }
+ 
++#ifdef NOMMU
++/*
++ * On platforms with NOMMU use only 1 thread, due to lack of fork()
++ */
++void fork_threads(void)
++{
++	fflush(stdout);
++	fflush(log_file_fp);
++
++	child_tasks[0].child_pid = -1;
++	thread_work(child_tasks[0].child_pid);
++
++	return;
++}
++
++#else
++
+ /*
+  * This routine is used only when running more than one thread (done whenever writing to
+  * more than one directory).
+@@ -1192,6 +1308,7 @@
+ 	}
+ 	return;
+ }
++#endif
+ 
+ /*
+  * Print some test information and basic parameters to help user understand the rather complex options.
+@@ -1261,7 +1378,7 @@
+ 	 * Check how full the first directory is after each run
+ 	 */
+ 	df_full = get_df_full(child_tasks[0].test_dir);
+-
++	usleep(100000);
+ 	if (verbose_stats)
+ 		fprintf(log_fp,
+ 			"%6u %12u %12u %12.1f %16llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu\n",
+@@ -1339,6 +1456,10 @@
+ 	 * Note that each child uses its copy of this fp for its own sub log file.
+ 	 */
+ 	if ((log_file_fp = fopen(log_file_name, "a")) == NULL) {
++#ifdef DUMMYFS_TARGET
++		get_dummyfs_cont_blk("fopen");
++#endif
++
+ 		fprintf(stderr,
+ 			"fs_mark: failed to fopen log file: %s %s\n",
+ 			log_file_name, strerror(errno));
+@@ -1396,6 +1517,7 @@
+ 					       (nr_iters + 1));
+ 			if (!files_per_sec) {
+ 				perror("realloc");
++				free(files_per_sec);
+ 				cleanup_exit();
+ 			}
+ 		}
+@@ -1418,6 +1540,11 @@
+ 	printf("p50 Files/sec: %llu\n", files_per_sec[nr_iters / 2]);
+ 	printf("p90 Files/sec: %llu\n", files_per_sec[(nr_iters * 9) / 10]);
+ 	printf("p99 Files/sec: %llu\n", files_per_sec[(nr_iters * 99) / 100]);
++	free(files_per_sec);
++	
++	if (names != NULL) {
++		free(names);
++	}
+ 
+ 	return (0);
+ }
