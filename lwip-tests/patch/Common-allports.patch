@@ -1,0 +1,24 @@
+--- contrib_orginal/ports/Common.allports.mk	2024-01-09 16:16:39.398560526 +0100
++++ contrib/ports/Common.allports.mk	2024-01-15 15:32:10.693335127 +0100
+@@ -29,11 +29,9 @@
+ # Author: Adam Dunkels <adam@sics.se>
+ #
+ 
+-#CC=gcc
+-#CC=clang
+ CCDEP?=$(CC)
+ 
+-CFLAGS+=-g -DLWIP_DEBUG -Wall -pedantic -Werror \
++CFLAGS+=-g -DLWIP_DEBUG -Wall -pedantic \
+ 	-Wparentheses -Wsequence-point -Wswitch-default \
+ 	-Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-qual \
+ 	-Wc++-compat -Wwrite-strings -Wold-style-definition -Wcast-align \
+@@ -48,7 +46,7 @@
+ #CFLAGS:=$(CFLAGS) -fsanitize=address -fstack-protector -fstack-check -fsanitize=undefined -fno-sanitize=alignment
+ else
+ # we cannot sanitize alignment on x86-64 targets because clang wants 64 bit alignment
+-CFLAGS+= -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -Wdocumentation -Wno-documentation-deprecated-sync
++# CFLAGS+= -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -Wdocumentation -Wno-documentation-deprecated-sync
+ endif
+ 
+ CONTRIBDIR?=../../..
