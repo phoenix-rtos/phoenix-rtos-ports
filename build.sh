@@ -75,4 +75,8 @@ fi
 
 [ "${PORTS_FS_MARK}" = "y" ] && ./phoenix-rtos-ports/fs_mark/build.sh
 
+[ "${PORTS_CHECK}" = "y" ] && ./phoenix-rtos-ports/check/build.sh
+
+[ "${PORTS_LWIP_TESTS}" = "y" ] && ./phoenix-rtos-ports/lwip-tests/build.sh
+
 exit 0
