@@ -41,7 +41,4 @@ done
 
 # Build fs_mark
 cd "${PREFIX_FS_MARK_BUILD}/${FS_MARK}" && make
-
-cp -a "$PREFIX_FS_MARK_BUILD/${FS_MARK}/fs_mark" "$PREFIX_PROG/fs_mark"
-"${CROSS}strip" -s "${PREFIX_PROG}/fs_mark" -o "${PREFIX_PROG_STRIPPED}/fs_mark"
-b_install "$PREFIX_PORTS_INSTALL/fs_mark" /bin
+cd "${PREFIX_FS_MARK_BUILD}/${FS_MARK}" && make install
