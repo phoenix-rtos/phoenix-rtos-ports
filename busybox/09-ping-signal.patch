@@ -1,8 +1,8 @@
- networking/ping.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ networking/ping.c | 21 +++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/networking/ping.c b/networking/ping.c
-index 94fb007..dc45f94 100644
+index 94fb007..179d9e6 100644
 --- a/networking/ping.c
 +++ b/networking/ping.c
 @@ -25,6 +25,7 @@
@@ -42,6 +42,37 @@ index 94fb007..dc45f94 100644
 +			c = recvfrom(pingsock, G.rcv_packet, G.sizeof_rcv_packet, 0,
  				(struct sockaddr *) &from, &fromlen);
 +		} while (c < 0 && errno == EAGAIN);
+ 		if (c < 0) {
+ 			if (errno != EINTR)
+ 				bb_perror_msg("recvfrom");
+@@ -743,6 +750,7 @@ static void ping4(len_and_sockaddr *lsa)
+ static void ping6(len_and_sockaddr *lsa)
+ {
+ 	int sockopt;
++	int flags;
+ 	struct msghdr msg;
+ 	struct sockaddr_in6 from;
+ 	struct iovec iov;
+@@ -775,6 +783,9 @@ static void ping6(len_and_sockaddr *lsa)
+ 	sockopt = (datalen * 2) + 7 * 1024; /* giving it a bit of extra room */
+ 	setsockopt_SOL_SOCKET_int(pingsock, SO_RCVBUF, sockopt);
+ 
++	flags = fcntl(pingsock,F_GETFL,0);
++	fcntl(pingsock, F_SETFL, flags | O_NONBLOCK);
++
+ 	sockopt = offsetof(struct icmp6_hdr, icmp6_cksum);
+ 	BUILD_BUG_ON(offsetof(struct icmp6_hdr, icmp6_cksum) != 2);
+ 	setsockopt_int(pingsock, SOL_RAW, IPV6_CHECKSUM, sockopt);
+@@ -803,8 +814,10 @@ static void ping6(len_and_sockaddr *lsa)
+ 		struct cmsghdr *mp;
+ 		int hoplimit = -1;
+ 		msg.msg_controllen = sizeof(control_buf);
+-
+-		c = recvmsg(pingsock, &msg, 0);
++		do {
++			usleep(500);
++			c = recvmsg(pingsock, &msg, 0);
++		} while(c < 0 && errno == EAGAIN);
  		if (c < 0) {
  			if (errno != EINTR)
  				bb_perror_msg("recvfrom");
