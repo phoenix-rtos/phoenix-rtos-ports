@@ -1,0 +1,15 @@
+ networking/route.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/networking/route.c b/networking/route.c
+index 811886c..8572b7d 100644
+--- a/networking/route.c
++++ b/networking/route.c
+@@ -45,6 +45,7 @@
+ 
+ #include <sys/socket.h>
+ #include <net/route.h>
++#include <net/ip6_route.h>
+ #include <net/if.h>
+ 
+ #include "libbb.h"
