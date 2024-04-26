@@ -1,0 +1,28 @@
+diff --git a/posix/core_portme.mak b/posix/core_portme.mak
+index 2852069..3eaaabe 100755
+--- a/posix/core_portme.mak
++++ b/posix/core_portme.mak
+@@ -24,8 +24,12 @@ OUTFLAG= -o
+ CC?= cc
+ # Flag: CFLAGS
+ #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
+-PORT_CFLAGS = -O2
+-FLAGS_STR = "$(PORT_CFLAGS) $(XCFLAGS) $(XLFLAGS) $(LFLAGS_END)"
++PORT_CFLAGS =
++FLAGS_STR := $(filter-out -I%,$(PORT_CFLAGS) $(XCFLAGS) $(XLFLAGS) $(LFLAGS_END))
++FLAGS_STR := $(filter-out --sysroot=%,$(FLAGS_STR))
++FLAGS_STR := $(filter-out -B%,$(FLAGS_STR))
++FLAGS_STR := $(filter-out -L%,$(FLAGS_STR))
++FLAGS_STR := "$(filter-out -fmacro-prefix-map=%,$(FLAGS_STR))"
+ CFLAGS = $(PORT_CFLAGS) -I$(PORT_DIR) -Iposix -I. -DFLAGS_STR=\"$(FLAGS_STR)\"
+ # Flag: NO_LIBRT
+ #	Define if the platform does not provide a librt
+@@ -65,7 +69,7 @@ LOAD = echo Loading done
+ RUN = 
+ 
+ OEXT = .o
+-EXE = .exe
++EXE =
+ 
+ # Flag: SEPARATE_COMPILE
+ # Define if you need to separate compilation from link stage. 

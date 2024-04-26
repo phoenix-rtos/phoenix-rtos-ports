@@ -75,4 +75,6 @@ fi
 
 [ "${PORTS_FS_MARK}" = "y" ] && ./phoenix-rtos-ports/fs_mark/build.sh
 
+[ "${PORTS_COREMARK}" = "y" ] && ./phoenix-rtos-ports/coremark/build.sh
+
 exit 0
