@@ -63,6 +63,8 @@ fi
 #
 # Architecture specific flags/values set
 #
+
+# TODO: use strip manually
 if [ "${TARGET_FAMILY}" = "armv7m7" ]; then
 	STRIPEXP="--strip-unneeded"
 elif [ "${TARGET_FAMILY}" = "ia32" ]; then

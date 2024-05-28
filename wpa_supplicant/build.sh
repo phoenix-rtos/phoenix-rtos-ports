@@ -50,7 +50,7 @@ popd
 
 cp -a "${PREFIX_WPA_SUPPLICANT_INSTALL}/bin/wpa_cli" "${PREFIX_PROG}/wpa_cli"
 cp -a "${PREFIX_WPA_SUPPLICANT_INSTALL}/bin/wpa_supplicant" "${PREFIX_PROG}/wpa_supplicant"
-"${CROSS}strip" -s "${PREFIX_PROG}/wpa_cli" -o "${PREFIX_PROG_STRIPPED}/wpa_cli"
-"${CROSS}strip" -s "${PREFIX_PROG}/wpa_supplicant" -o "${PREFIX_PROG_STRIPPED}/wpa_supplicant"
+$STRIP -s "${PREFIX_PROG}/wpa_cli" -o "${PREFIX_PROG_STRIPPED}/wpa_cli"
+$STRIP -s "${PREFIX_PROG}/wpa_supplicant" -o "${PREFIX_PROG_STRIPPED}/wpa_supplicant"
 b_install "${PREFIX_PORTS_INSTALL}/wpa_cli" /usr/bin
 b_install "${PREFIX_PORTS_INSTALL}/wpa_supplicant" /usr/bin

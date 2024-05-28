@@ -57,5 +57,5 @@ cp -a "$PREFIX_OPENSSL_INSTALL/lib/pkgconfig" "$PREFIX_A"
 sed -i "s/openssl\/install$/lib\/pkgconfg/" "$PREFIX_A/pkgconfig/"*
 
 cp -a "$PREFIX_OPENSSL_INSTALL/bin/openssl"  "$PREFIX_PROG"
-"${CROSS}strip" -s "$PREFIX_PROG/openssl" -o "$PREFIX_PROG_STRIPPED/openssl"
+$STRIP -s "$PREFIX_PROG/openssl" -o "$PREFIX_PROG_STRIPPED/openssl"
 b_install "$PREFIX_PORTS_INSTALL/openssl" /usr/bin/
