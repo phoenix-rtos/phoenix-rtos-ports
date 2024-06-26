@@ -49,5 +49,5 @@ fi
 make -C "$PREFIX_OPENVPN_BUILD"
 make -C "$PREFIX_OPENVPN_BUILD" install-exec
 
-$STRIP -s "$PREFIX_PROG/openvpn" -o "$PREFIX_PROG_STRIPPED/openvpn"
+$STRIP -o "$PREFIX_PROG_STRIPPED/openvpn" "$PREFIX_PROG/openvpn"
 b_install "$PREFIX_PORTS_INSTALL/openvpn" /sbin/

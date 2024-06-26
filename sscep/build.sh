@@ -51,5 +51,5 @@ make install DESTDIR="$PREFIX_SSCEP_INSTALL"
 popd
 
 cp -a "${PREFIX_SSCEP_INSTALL}/bin/sscep" "${PREFIX_PROG}/sscep"
-$STRIP -s "${PREFIX_PROG}/sscep" -o "${PREFIX_PROG_STRIPPED}/sscep"
+$STRIP -o "${PREFIX_PROG_STRIPPED}/sscep" "${PREFIX_PROG}/sscep"
 b_install "${PREFIX_PORTS_INSTALL}/sscep" /usr/bin

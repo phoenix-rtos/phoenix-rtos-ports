@@ -6,7 +6,7 @@ install_binary () {
 	BINARY_NAME="$(basename "$1")"
 
 	cp "$1" "${PREFIX_PROG}"
-	$STRIP "${PREFIX_PROG}/${BINARY_NAME}" -o "$PREFIX_PROG_STRIPPED/${BINARY_NAME}"
+	$STRIP  -o "$PREFIX_PROG_STRIPPED/${BINARY_NAME}" "${PREFIX_PROG}/${BINARY_NAME}"
 	b_install "${PREFIX_PROG_STRIPPED}/${BINARY_NAME}" /bin
 }
 

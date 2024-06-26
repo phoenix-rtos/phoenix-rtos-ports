@@ -26,8 +26,8 @@ fi
 # FIXME: no out-of-tree building
 make -C "$PREFIX_LUA_SRC" posix
 
-$STRIP -s "$PREFIX_LUA_SRC/src/lua" -o "$PREFIX_PROG_STRIPPED/lua"
-$STRIP -s "$PREFIX_LUA_SRC/src/luac" -o "$PREFIX_PROG_STRIPPED/luac"
+$STRIP -o "$PREFIX_PROG_STRIPPED/lua" "$PREFIX_LUA_SRC/src/lua"
+$STRIP -o "$PREFIX_PROG_STRIPPED/luac" "$PREFIX_LUA_SRC/src/luac"
 cp -a "$PREFIX_LUA_SRC/src/lua" "$PREFIX_PROG/lua"
 cp -a "$PREFIX_LUA_SRC/src/luac" "$PREFIX_PROG/luac"
 

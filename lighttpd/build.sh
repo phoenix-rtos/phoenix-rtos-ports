@@ -65,5 +65,5 @@ fi
 
 make -C "${PREFIX_LIGHTTPD_BUILD}" install
 
-$STRIP -s "$PREFIX_PROG/lighttpd" -o "$PREFIX_PROG_STRIPPED/lighttpd"
+$STRIP -o "$PREFIX_PROG_STRIPPED/lighttpd" "$PREFIX_PROG/lighttpd"
 b_install "$PREFIX_PORTS_INSTALL/lighttpd" /usr/sbin

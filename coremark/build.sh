@@ -59,5 +59,5 @@ export XCFLAGS="${CFLAGS} -DUSE_PTHREAD -DMULTITHREAD=${PORTS_COREMARK_THREADS} 
 PORT_DIR=phoenix make compile
 
 cp -a "$PREFIX_COREMARK_BUILD/${COREMARK}/coremark" "$PREFIX_PROG/coremark"
-$STRIP -s "${PREFIX_PROG}/coremark" -o "${PREFIX_PROG_STRIPPED}/coremark"
+$STRIP -o "${PREFIX_PROG_STRIPPED}/coremark" "${PREFIX_PROG}/coremark"
 b_install "$PREFIX_PORTS_INSTALL/coremark" /bin

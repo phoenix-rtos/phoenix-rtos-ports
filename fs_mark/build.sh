@@ -43,5 +43,5 @@ done
 cd "${PREFIX_FS_MARK_BUILD}/${FS_MARK}" && make
 
 cp -a "$PREFIX_FS_MARK_BUILD/${FS_MARK}/fs_mark" "$PREFIX_PROG/fs_mark"
-$STRIP -s "${PREFIX_PROG}/fs_mark" -o "${PREFIX_PROG_STRIPPED}/fs_mark"
+$STRIP -o "${PREFIX_PROG_STRIPPED}/fs_mark" "${PREFIX_PROG}/fs_mark"
 b_install "$PREFIX_PORTS_INSTALL/fs_mark" /bin
