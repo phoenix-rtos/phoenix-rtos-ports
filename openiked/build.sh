@@ -54,7 +54,7 @@ popd
 
 cp -a "${PREFIX_OPENIKED_INSTALL}/usr/local/sbin/ikectl" "${PREFIX_PROG}/ikectl"
 cp -a "${PREFIX_OPENIKED_INSTALL}/usr/local/sbin/iked" "${PREFIX_PROG}/iked"
-$STRIP -s "${PREFIX_PROG}/ikectl" -o "${PREFIX_PROG_STRIPPED}/ikectl"
-$STRIP -s "${PREFIX_PROG}/iked" -o "${PREFIX_PROG_STRIPPED}/iked"
+$STRIP -o "${PREFIX_PROG_STRIPPED}/ikectl" "${PREFIX_PROG}/ikectl"
+$STRIP -o "${PREFIX_PROG_STRIPPED}/iked" "${PREFIX_PROG}/iked"
 b_install "${PREFIX_PORTS_INSTALL}/ikectl" /usr/bin
 b_install "${PREFIX_PORTS_INSTALL}/iked" /usr/bin

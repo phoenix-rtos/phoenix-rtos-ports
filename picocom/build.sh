@@ -47,7 +47,7 @@ export LDFLAGS="${CFLAGS} $LDFLAGS"
 #
 (cd "${PREFIX_PCOM_SRC}" && make clean && make)
 cp -a "${PREFIX_PCOM_SRC}/picocom" "$PREFIX_PROG"
-$STRIP -s "${PREFIX_PROG}/picocom" -o "$PREFIX_PROG_STRIPPED/picocom"
+$STRIP -o "$PREFIX_PROG_STRIPPED/picocom" "${PREFIX_PROG}/picocom"
 
 
 b_install "${PREFIX_PROG_STRIPPED}/picocom" /bin
