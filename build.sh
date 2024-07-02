@@ -77,4 +77,6 @@ for port in "${ports[@]}"; do
 	fi
 done
 
+[ "${PORTS_COREMQTT}" = "y" ] && ./phoenix-rtos-ports/coreMQTT/build.sh
+
 exit 0
