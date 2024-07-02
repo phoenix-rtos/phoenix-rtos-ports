@@ -78,4 +78,6 @@ fi
 
 [ "${PORTS_COREMARK}" = "y" ] && ./phoenix-rtos-ports/coremark/build.sh
 
+[ "${PORTS_COREMQTT}" = "y" ] && ./phoenix-rtos-ports/coreMQTT/build.sh
+
 exit 0
