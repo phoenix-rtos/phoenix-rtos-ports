@@ -60,6 +60,7 @@ ports=(
 	"picocom"
 	"fs_mark"
 	"coremark"
+	"coreMQTT"
 )
 
 source "${PREFIX_PROJECT}/phoenix-rtos-ports/build.subr"
