@@ -1,0 +1,151 @@
+ networking/ifconfig.c  | 25 ++++++++--------------
+ networking/interface.c | 56 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 63 insertions(+), 18 deletions(-)
+
+diff --git a/networking/ifconfig.c b/networking/ifconfig.c
+index 0a91e71..9c22c61 100644
+--- a/networking/ifconfig.c
++++ b/networking/ifconfig.c
+@@ -100,6 +100,7 @@
+ #include "libbb.h"
+ #include "inet_common.h"
+ #include <net/if.h>
++#include <net/if6.h>
+ #include <net/if_arp.h>
+ #include <netinet/in.h>
+ #ifdef HAVE_NET_ETHERNET_H
+@@ -129,14 +130,6 @@
+ # define IFF_DYNAMIC     0x8000	/* dialup device with changing addresses */
+ #endif
+ 
+-#if ENABLE_FEATURE_IPV6
+-struct in6_ifreq {
+-	struct in6_addr ifr6_addr;
+-	uint32_t ifr6_prefixlen;
+-	int ifr6_ifindex;
+-};
+-#endif
+-
+ /*
+  * Here are the bit masks for the "flags" member of struct options below.
+  * N_ signifies no arg prefix; M_ signifies arg prefixed by '-'.
+@@ -272,8 +265,8 @@ static const struct arg1opt Arg1Opt[] = {
+ 	{ "SIFMAP",     SIOCSIFMAP,     ifreq_offsetof(ifr_map.irq) },
+ #endif
+ #if ENABLE_FEATURE_IPV6
+-	{ "SIFADDR",    SIOCSIFADDR,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
+-	{ "DIFADDR",    SIOCDIFADDR,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
++	{ "SIFADDR",    SIOCAIFADDR_IN6,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
++	{ "DIFADDR",    SIOCDIFADDR_IN6,    ifreq_offsetof(ifr_addr) }, /* IPv6 version ignores the offset */
+ #endif
+ 	/* Last entry is for unmatched (assumed to be hostname/address) arg. */
+ 	{ "SIFADDR",    SIOCSIFADDR,    ifreq_offsetof(ifr_addr) },
+@@ -453,15 +446,13 @@ int ifconfig_main(int argc UNUSED_PARAM, char **argv)
+ 							}
+ 							if (lsa->u.sa.sa_family == AF_INET6) {
+ 								int sockfd6;
+-								struct in6_ifreq ifr6;
++								struct in6_aliasreq ifr6;
+ 
+ 								sockfd6 = xsocket(AF_INET6, SOCK_DGRAM, 0);
+-								xioctl(sockfd6, SIOCGIFINDEX, &ifr);
+-								ifr6.ifr6_ifindex = ifr.ifr_ifindex;
+-								ifr6.ifr6_prefixlen = prefix_len;
+-								memcpy(&ifr6.ifr6_addr,
+-										&lsa->u.sin6.sin6_addr,
+-										sizeof(struct in6_addr));
++								strncpy_IFNAMSIZ(ifr6.ifra_name, ifr.ifr_name);
++								memcpy(&ifr6.ifrau_addr,
++										&lsa->u.sin6,
++										sizeof(struct sockaddr_in6));
+ 								ioctl_or_perror_and_die(sockfd6, a1op->selector, &ifr6, "SIOC%s", a1op->name);
+ 								if (ENABLE_FEATURE_CLEAN_UP)
+ 									free(lsa);
+diff --git a/networking/interface.c b/networking/interface.c
+index 228ccf7..535c741 100644
+--- a/networking/interface.c
++++ b/networking/interface.c
+@@ -33,6 +33,7 @@
+ 
+ #include "libbb.h"
+ #include "inet_common.h"
++#include <ifaddrs.h>
+ #include <net/if.h>
+ #include <net/if_arp.h>
+ #ifdef HAVE_NET_ETHERNET_H
+@@ -52,7 +53,6 @@
+ #endif
+ 
+ #define _PATH_PROCNET_DEV               "/proc/net/dev"
+-#define _PATH_PROCNET_IFINET6           "/proc/net/if_inet6"
+ 
+ #ifdef HAVE_AFINET6
+ # ifndef _LINUX_IN6_H
+@@ -841,6 +841,7 @@ static void print_bytes_scaled(unsigned long long ull, const char *end)
+ 
+ 
+ #ifdef HAVE_AFINET6
++#if !defined(__phoenix__)
+ #define IPV6_ADDR_ANY           0x0000U
+ 
+ #define IPV6_ADDR_UNICAST       0x0001U
+@@ -913,6 +914,59 @@ static void ife_print6(struct interface *ptr)
+ 	fclose(f);
+ }
+ #else
++static void ife_print6(struct interface *ptr)
++{
++	char addr6[50];
++	
++	struct ifaddrs *ifap;
++	getifaddrs(&ifap);
++
++	while (ifap != NULL) {
++		if (strcmp(ifap->ifa_name, ptr->name) == 0) {
++			struct sockaddr_in6 *addr;
++			addr = ifap->ifa_addr;
++
++			if (addr->sin6_family == AF_INET6) {
++				inet_ntop(AF_INET6, &addr->sin6_addr, addr6, 50);
++
++				/* Get the prefix length */
++				unsigned char *c = ((struct sockaddr_in6 *)ifap->ifa_netmask)->sin6_addr.s6_addr;
++				int i = 0, j = 0;
++				unsigned char n = 0;
++				while (i < 16) {
++					n = c[i];
++					while (n > 0) {
++						if (n & 1) j++;
++						n = n/2;
++					}
++					i++;
++				}
++
++				printf("          inet6 addr: %s/%d", addr6, j);
++				printf(" Scope:");
++
++				if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr)) {
++					puts("link-local");
++				} else if (IN6_IS_ADDR_SITELOCAL(&addr->sin6_addr)) {
++					puts("site-local");
++				} else if (IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr)) {
++					puts("v4mapped");
++				} else if (IN6_IS_ADDR_V4COMPAT(&addr->sin6_addr)) {
++					puts("v4compat");
++				} else if (IN6_IS_ADDR_LOOPBACK(&addr->sin6_addr)) {
++					puts("host");
++				} else if (IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr)) {
++					puts("unspecified");
++				} else {
++					puts("global");
++				}
++			}
++		}
++		ifap = ifap->ifa_next;
++	}
++}
++#endif
++#else
+ #define ife_print6(a) ((void)0)
+ #endif
+ 
