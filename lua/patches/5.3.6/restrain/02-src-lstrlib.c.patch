@@ -1,0 +1,18 @@
+diff --git a/src/lstrlib.c b/src/lstrlib.c
+index b4bed7e..8466f59 100644
+--- a/src/lstrlib.c
++++ b/src/lstrlib.c
+@@ -1543,13 +1543,9 @@ static const luaL_Reg strlib[] = {
+   {"byte", str_byte},
+   {"char", str_char},
+   {"dump", str_dump},
+-  {"find", str_find},
+   {"format", str_format},
+-  {"gmatch", gmatch},
+-  {"gsub", str_gsub},
+   {"len", str_len},
+   {"lower", str_lower},
+-  {"match", str_match},
+   {"rep", str_rep},
+   {"reverse", str_reverse},
+   {"sub", str_sub},

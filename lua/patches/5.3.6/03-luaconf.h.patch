@@ -1,0 +1,44 @@
+diff --git a/src/luaconf.h b/src/luaconf.h
+index 9eeeea6..af10bb2 100644
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -33,7 +33,7 @@
+ ** ensure that all software connected to Lua will be compiled with the
+ ** same configuration.
+ */
+-/* #define LUA_32BITS */
++#define LUA_32BITS
+ 
+ 
+ /*
+@@ -124,7 +124,7 @@
+ #else  /* otherwise use 'long' */
+ #define LUA_INT_TYPE	LUA_INT_LONG
+ #endif
+-#define LUA_FLOAT_TYPE	LUA_FLOAT_FLOAT
++#define LUA_FLOAT_TYPE	LUA_FLOAT_DOUBLE
+ 
+ #elif defined(LUA_C89_NUMBERS)	/* }{ */
+ /*
+@@ -135,7 +135,6 @@
+ 
+ #endif				/* } */
+ 
+-
+ /*
+ ** default configuration for 64-bit Lua ('long long' and 'double')
+ */
+@@ -725,11 +724,13 @@
+ ** its only purpose is to stop Lua from consuming unlimited stack
+ ** space (and to reserve some numbers for pseudo-indices).
+ */
++#if !defined(LUAI_MAXSTACK)
+ #if LUAI_BITSINT >= 32
+ #define LUAI_MAXSTACK		1000000
+ #else
+ #define LUAI_MAXSTACK		15000
+ #endif
++#endif
+ 
+ 
+ /*
