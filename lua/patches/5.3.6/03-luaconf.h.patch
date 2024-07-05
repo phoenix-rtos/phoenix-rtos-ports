@@ -1,0 +1,95 @@
+diff --git a/src/luaconf.h b/src/luaconf.h
+index 9eeeea6..af10bb2 100644
+--- a/src/luaconf.h
++++ b/src/luaconf.h
+@@ -11,6 +11,7 @@
+ #include <limits.h>
+ #include <stddef.h>
+ 
++#include <luaconf_local.h>
+ 
+ /*
+ ** ===================================================================
+@@ -119,19 +120,27 @@
+ /*
+ ** 32-bit integers and 'float'
+ */
++#if !defined(LUA_INT_TYPE)
+ #if LUAI_BITSINT >= 32  /* use 'int' if big enough */
+ #define LUA_INT_TYPE	LUA_INT_INT
+ #else  /* otherwise use 'long' */
+ #define LUA_INT_TYPE	LUA_INT_LONG
+ #endif
++#endif
++#if !defined(LUA_FLOAT_TYPE)
+ #define LUA_FLOAT_TYPE	LUA_FLOAT_FLOAT
++#endif
+ 
+ #elif defined(LUA_C89_NUMBERS)	/* }{ */
+ /*
+ ** largest types available for C89 ('long' and 'double')
+ */
++#if !defined(LUA_INT_TYPE)
+ #define LUA_INT_TYPE	LUA_INT_LONG
++#endif
++#if !defined(LUA_FLOAT_TYPE)
+ #define LUA_FLOAT_TYPE	LUA_FLOAT_DOUBLE
++#endif
+ 
+ #endif				/* } */
+ 
+@@ -203,12 +212,16 @@
+ #define LUA_ROOT	"/usr/local/"
+ #define LUA_LDIR	LUA_ROOT "share/lua/" LUA_VDIR "/"
+ #define LUA_CDIR	LUA_ROOT "lib/lua/" LUA_VDIR "/"
++#if !defined(LUA_PATH_DEFAULT)
+ #define LUA_PATH_DEFAULT  \
+ 		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
+ 		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" \
+ 		"./?.lua;" "./?/init.lua"
++#endif
++#if !defined(LUA_CPATH_DEFAULT)
+ #define LUA_CPATH_DEFAULT \
+ 		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
++#endif
+ #endif			/* } */
+ 
+ 
+@@ -725,11 +738,13 @@
+ ** its only purpose is to stop Lua from consuming unlimited stack
+ ** space (and to reserve some numbers for pseudo-indices).
+ */
++#if !defined(LUAI_MAXSTACK)
+ #if LUAI_BITSINT >= 32
+ #define LUAI_MAXSTACK		1000000
+ #else
+ #define LUAI_MAXSTACK		15000
+ #endif
++#endif
+ 
+ 
+ /*
+@@ -745,7 +760,9 @@
+ @@ of a function in debug information.
+ ** CHANGE it if you want a different size.
+ */
++#if !defined(LUA_IDSIZE)
+ #define LUA_IDSIZE	60
++#endif
+ 
+ 
+ /*
+@@ -755,11 +772,13 @@
+ ** smaller buffer would force a memory allocation for each call to
+ ** 'string.format'.)
+ */
++#if !defined(LUAL_BUFFERSIZE)
+ #if LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE
+ #define LUAL_BUFFERSIZE		8192
+ #else
+ #define LUAL_BUFFERSIZE   ((int)(0x80 * sizeof(void*) * sizeof(lua_Integer)))
+ #endif
++#endif
+ 
+ /* }================================================================== */
+ 
