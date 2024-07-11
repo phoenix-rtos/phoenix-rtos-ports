@@ -1,0 +1,11 @@
+diff -ruN a/libxtrans/Xtranssock.c b/libxtrans/Xtranssock.c
+--- a/libxtrans/Xtranssock.c	2024-07-11 17:36:05.740203908 +0200
++++ b/libxtrans/Xtranssock.c	2024-07-12 09:56:30.954167196 +0200
+@@ -84,7 +84,7 @@
+ 
+ #include <sys/ioctl.h>
+ 
+-
++#define h_addr h_addr_list[0] /* phoenix change */
+ 
+ 

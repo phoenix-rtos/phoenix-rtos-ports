@@ -1,0 +1,563 @@
+diff -ruN a/libtinyX11/ConnDis.c b/libtinyX11/ConnDis.c
+--- a/libtinyX11/ConnDis.c	2024-07-22 14:37:21.452165872 +0200
++++ b/libtinyX11/ConnDis.c	2024-07-22 14:37:21.313167479 +0200
+@@ -39,6 +39,8 @@
+ #include <stdio.h>
+ #include <ctype.h>
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
++
+ #ifndef MINIX
+ #include <sys/socket.h>
+ #endif
+@@ -102,6 +104,7 @@
+     char **auth_datap;			/* RETURN */
+     int *auth_datalenp;			/* RETURN */
+ {
++  HERE
+     int family;
+     int saddrlen;
+     Xtransaddr *saddr;
+@@ -201,6 +204,7 @@
+     idisplay = atoi (pdpynum);
+ 
+ 
++  HERE
+     /*
+      * Step 3, find the screen number.  This field is optional.  It is 
+      * present only if the display number was followed by a period (which
+@@ -308,6 +312,7 @@
+ 	    break;
+ 	    }
+ 
++  HERE
+ 
+ 	if ((connect_stat = _X11TransConnect(trans_conn,address)) < 0 )
+ 	    {
+@@ -316,12 +321,15 @@
+ 
+ 	    if (connect_stat == TRANS_TRY_CONNECT_AGAIN)
+ 	    {
++    HERE
+ 		sleep(1);
+ 		continue;
+ 	    }
+ 	    else
++    HERE
+ 		break;
+ 	    }
++  HERE
+ 
+ 	_X11TransGetPeerAddr(trans_conn, &family, &saddrlen, &saddr);
+ 
+@@ -344,6 +352,7 @@
+ 	    continue;
+ 	    }
+ 
++  HERE
+ 	break;
+ 	}
+ 
+@@ -356,7 +365,9 @@
+      * Set close-on-exec so that programs that fork() doesn't get confused.
+      */
+ 
++  HERE
+     _X11TransSetOption(trans_conn,TRANS_CLOSEONEXEC,1);
++  HERE
+ 
+     /*
+      * Build the expanded display name:
+@@ -379,10 +390,12 @@
+     if (phostname) Xfree (phostname);
+     if (pdpynum) Xfree (pdpynum);
+     if (pscrnum) Xfree (pscrnum);
++  HERE
+ 
+ 
+     GetAuthorization(trans_conn, family, (char *) saddr, saddrlen, idisplay,
+ 		     auth_namep, auth_namelenp, auth_datap, auth_datalenp);
++  HERE
+ 
+     return trans_conn;
+ 
+diff -ruN a/libtinyX11/OpenDis.c b/libtinyX11/OpenDis.c
+--- a/libtinyX11/OpenDis.c	2024-07-22 14:37:21.458165803 +0200
++++ b/libtinyX11/OpenDis.c	2024-07-22 14:37:21.319167410 +0200
+@@ -35,6 +35,7 @@
+ #include <X11/extensions/bigreqstr.h>
+ #include <stdio.h>
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
+ 
+ #define Size_t size_t
+ 
+@@ -82,6 +83,7 @@
+ 	register char *display;
+ #endif
+ {
++  HERE
+ 	register Display *dpy;		/* New Display object being created. */
+ 	register int i;
+ 	int j, k;			/* random iterator indexes */
+@@ -145,6 +147,7 @@
+ 	if ((dpy = (Display *)Xcalloc(1, sizeof(Display))) == NULL) {
+ 		return(NULL);
+ 	}
++  HERE
+ 
+ /*
+  * Call the Connect routine to get the transport connection object.
+@@ -165,6 +168,7 @@
+ 
+ 	dpy->fd = _X11TransGetConnectionNumber (dpy->trans_conn);
+ 
++  HERE
+ 
+ 
+ 	/* Initialize as much of the display structure as we can.
+@@ -225,6 +229,7 @@
+ 	dpy->flushes		= NULL;
+ 	dpy->xcmisc_opcode	= 0;
+ 	dpy->xkb_info		= NULL;
++  HERE
+ 
+ /*
+  * Setup other information in this display structure.
+@@ -249,6 +254,7 @@
+ 	        OutOfMemory (dpy, setup);
+ 		return(NULL);
+ 	}	
++  HERE
+ 
+ 	/* Set up the output buffers. */
+ 	if ((dpy->bufptr = dpy->buffer = Xcalloc(1, BUFSIZE)) == NULL) {
+@@ -299,6 +305,7 @@
+  * Now see if connection was accepted...
+  */
+ 	/* these internal functions expect the display to be locked */
++  HERE
+ 	LockDisplay(dpy);
+ 
+ 	if (prefixread == 0)
+@@ -354,6 +361,7 @@
+ 		OutOfMemory(dpy, setup);
+ 		return (NULL);
+ 	}
++  HERE
+ 
+ /*
+  * We succeeded at authorization, so let us move the data into
+@@ -501,6 +509,7 @@
+ /*
+  * Now start talking to the server to setup all other information...
+  */
++  HERE
+ 
+ 	Xfree (setup);	/* all finished with setup information */
+ 
+@@ -515,6 +524,7 @@
+ /*
+  * finished calling internal routines, now unlock for external routines
+  */
++  HERE
+ 	UnlockDisplay(dpy);
+ 
+ /*
+@@ -536,6 +546,7 @@
+  * call into synchronization routine so that all programs can be
+  * forced synchronous
+  */
++  HERE
+ 	(void) XSynchronize(dpy, _Xdebug);
+ 
+ /*
+@@ -603,6 +614,7 @@
+ /*
+  * and return successfully
+  */
++  HERE
+  	return(dpy);
+ }
+ 
+diff -ruN a/libXfont/fc/fserve.c b/libXfont/fc/fserve.c
+--- a/libXfont/fc/fserve.c	2024-07-22 14:37:21.433166092 +0200
++++ b/libXfont/fc/fserve.c	2024-07-22 14:37:21.296167676 +0200
+@@ -619,7 +619,7 @@
+     if (rep->length > MAX_REPLY_LENGTH)
+     {
+ 	fprintf(stderr, "fserve: reply length %u > MAX_REPLY_LENGTH,"
+-	       " disconnecting from font server\n", (uint)rep->length);
++	       " disconnecting from font server\n", (u_int)rep->length);
+ 	_fs_connection_died (conn);
+ 	*error = FSIO_ERROR;
+ 	return 0;
+diff -ruN a/libxtrans/Xtransint.h b/libxtrans/Xtransint.h
+--- a/libxtrans/Xtransint.h	2024-07-22 14:37:21.467165699 +0200
++++ b/libxtrans/Xtransint.h	2024-07-22 15:30:12.478079720 +0200
+@@ -72,7 +72,7 @@
+  * message.
+  */
+ 
+-#  define XTRANSDEBUG 1
++#  define XTRANSDEBUG 1
+ 
+ 
+ #include <X11/Xtrans.h>
+diff -ruN a/libtinyX11/IfEvent.c b/libtinyX11/IfEvent.c
+--- a/libtinyX11/IfEvent.c	2024-07-22 14:37:21.456165826 +0200
++++ b/libtinyX11/IfEvent.c	2024-07-24 11:50:09.897207666 +0200
+@@ -29,6 +29,8 @@
+ #define NEED_EVENTS
+ #include "Xlibint.h"
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
++
+ /* 
+  * Flush output and (wait for and) return the next event matching the
+  * predicate in the queue.
+@@ -45,10 +47,12 @@
+ 	register XEvent *event;
+ 	char *arg;
+ {
++  HERE
+ 	register _XQEvent *qelt, *prev;
+ 	unsigned long qe_serial = 0;
+ 	
+         LockDisplay(dpy);
++  HERE
+ 	prev = NULL;
+ 	while (1) {
+ 	    for (qelt = prev ? prev->next : dpy->head;
+@@ -56,17 +60,21 @@
+ 		 prev = qelt, qelt = qelt->next) {
+ 		if(qelt->qserial_num > qe_serial
+ 		   && (*predicate)(dpy, &qelt->event, arg)) {
++  HERE
+ 		    *event = qelt->event;
+ 		    _XDeq(dpy, prev, qelt);
+ 		    UnlockDisplay(dpy);
++  HERE
+ 		    return 0;
+ 		}
+ 	    }
+ 	    if (prev)
+ 		qe_serial = prev->qserial_num;
++  HERE
+ 	    _XReadEvents(dpy);
+ 	    if (prev && prev->qserial_num != qe_serial)
+ 		/* another thread has snatched this event */
+ 		prev = NULL;
+ 	}
++  HERE
+ }
+--- a/libtinyX11/XlibInt.c	2024-07-22 14:37:21.465165722 +0200
++++ b/libtinyX11/XlibInt.c	2024-07-25 10:46:11.295957633 +0200
+@@ -43,6 +43,8 @@
+ #include <X11/extensions/xcmiscstr.h>
+ #include <stdio.h>
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
++
+ #ifdef XTHREADS
+ #include "locking.h"
+ 
+@@ -591,6 +593,7 @@
+ {
+ 	char *nextindex;
+ #endif /* XTHREADS*/
++  HERE
+ 	register long size, todo;
+ 	register int write_stat;
+ 	register char *bufindex;
+@@ -617,20 +620,25 @@
+ 	 * until the entire buffer is written.  bufindex will be
+ 	 * incremented and size decremented as buffer is written out.
+ 	 */
++  HERE
+ 	while (size) {
+ 	    ESET(0);
++  HERE
+ 	    write_stat = _X11TransWrite(dpy->trans_conn,
+ 					bufindex, (int) todo);
++  HERE
+ 	    if (write_stat >= 0) {
+ 		size -= write_stat;
+ 		todo = size;
+ 		bufindex += write_stat;
+ 	    } else if (ETEST()) {
++  HERE
+ 		_XWaitForWritable(dpy
+ #ifdef XTHREADS
+ 				  , cv
+ #endif
+ 				  );
++  HERE
+ #ifdef SUNSYSV
+ 	    } else if (ECHECK(0)) {
+ 		_XWaitForWritable(dpy
+@@ -654,7 +662,9 @@
+ 	    } else if (!ECHECK(EINTR)) {
+ 		/* Write failed! */
+ 		/* errno set by write system call. */
++  HERE
+ 		_XIOError(dpy);
++  HERE
+ 	    }
+ 	}
+ 	dpy->last_req = (char *)&_dummy_request;
+@@ -668,6 +678,7 @@
+ #ifdef XTHREADS
+ 	dpy->flags &= ~XlibDisplayWriting;
+ #endif
++  HERE
+ 	return 0;
+ }
+ 
+@@ -856,6 +867,7 @@
+ void _XReadEvents(dpy)
+ 	register Display *dpy;
+ {
++  HERE
+ 	_XAlignedBuffer buf;
+ 	BytesReadable_t pend;
+ 	register BytesReadable_t len;
+@@ -876,6 +888,7 @@
+ 	 * unless we were called from within XProcessInternalConnection
+ 	 * or XLockDisplay
+ 	 */
++  HERE
+ 	xthread_clear_id(self);
+ 	if (dpy->lock && (xthread_have_id (dpy->lock->conni_thread)
+ 			  || xthread_have_id (dpy->lock->locking_thread)))
+@@ -888,6 +901,7 @@
+ 	    cvl = QueueEventReaderLock(dpy);
+ #endif /* XTHREADS */
+ 
++  HERE
+ 	do {
+ #ifdef XTHREADS
+ 	    /* if it is not our turn to read an event off the wire,
+@@ -900,9 +914,11 @@
+ 	    }
+ #endif /* XTHREADS */
+ 	    /* find out how much data can be read */
++  HERE
+ 	    if (_X11TransBytesReadable(dpy->trans_conn, &pend) < 0)
+ 	    	_XIOError(dpy);
+ 	    len = pend;
++      printf("len: %d\n", len);
+ 
+ 	    /* must read at least one xEvent; if none is pending, then
+ 	       we'll just flush and block waiting for it */
+@@ -922,6 +938,7 @@
+ 		    not_yet_flushed = False;
+ 		}
+ 	    }
++  HERE
+ 
+ #ifdef XTHREADS
+ 	    /* If someone is waiting for a reply, gamble that
+@@ -934,6 +951,7 @@
+ #endif /* XTHREADS*/
+ 	    {
+ 		read_buf = buf.buf;
++  HERE
+ 
+ 		/* but we won't read more than the max buffer size */
+ 		if (len > BUFSIZE)
+@@ -949,12 +967,14 @@
+ 		dpy->lock->reading_thread = self;
+ #endif /* XTHREADS */
+ 	    dpy->flags |= XlibDisplayReadEvents;
++      HERE
+ 	    i = _XRead (dpy, read_buf, (long) len);
+ 	    dpy->flags &= ~XlibDisplayReadEvents;
+ 	    if (i == -2) {
+ 		/* special flag from _XRead to say that internal connection has
+ 		   done XPutBackEvent.  Which we can use so we're done. */
+ 	      got_event:
++      HERE
+ #ifdef XTHREADS
+ 		if (dpy->lock && dpy->lock->lock_wait) {
+ 		    if (dpy->lock->event_awaiters != cvl)
+@@ -967,6 +987,7 @@
+ #endif
+ 		break;
+ 	    }
++  HERE
+ #ifdef XTHREADS
+ 	    if (xthread_have_id(self))
+ 		xthread_clear_id(dpy->lock->reading_thread);
+@@ -988,6 +1009,7 @@
+ 	    }
+ #endif /* XTHREADS */
+ 
++  HERE
+ 	    STARTITERATE(rep,xReply,buf.buf,len > 0) {
+ 		if (rep->generic.type == X_Reply) {
+ 		    pend = len;
+@@ -1006,6 +1028,7 @@
+ 	    } ENDITERATE;
+ 	} while (!_XNewerQueuedEvent(dpy, entry_event_serial_num));
+ 
++  HERE
+ 	UnlockNextEventReader(dpy);
+ 	/*return 0;*/
+ }
+@@ -1024,17 +1047,19 @@
+ 	int original_size = size;
+ #endif
+ 
++  HERE
+ 	if ((dpy->flags & XlibDisplayIOError) || size == 0)
+ 	    return 0;
+ 	ESET(0);
+ 	while ((bytes_read = _X11TransRead(dpy->trans_conn, data, (int)size))
+ 		!= size) {
+-
++  HERE
+ 	    	if (bytes_read > 0) {
+ 		    size -= bytes_read;
+ 		    data += bytes_read;
+ 		    }
+ 		else if (ETEST()) {
++  HERE
+ 		    if (_XWaitForReadable(dpy) == -2)
+ 			return -2; /* internal connection did XPutBackEvent */
+ 		    ESET(0);
+@@ -1046,6 +1071,7 @@
+ 		}
+ #endif
+ 		else if (bytes_read == 0) {
++  HERE
+ 		    /* Read failed because of end of file! */
+ 		    ESET(EPIPE);
+ 		    _XIOError(dpy);
+@@ -1060,6 +1086,7 @@
+ #ifdef XTHREADS
+        if (dpy->lock && dpy->lock->reply_bytes_left > 0)
+        {
++  HERE
+            dpy->lock->reply_bytes_left -= original_size;
+            if (dpy->lock->reply_bytes_left == 0) {
+ 	       dpy->flags &= ~XlibDisplayReply;
+@@ -1067,6 +1094,7 @@
+ 	   }
+        }
+ #endif /* XTHREADS*/
++  HERE
+ 	return 0;
+ }
+ 
+@@ -2912,6 +2940,7 @@
+ int _XIOError (dpy)
+     Display *dpy;
+ {
++  HERE
+     dpy->flags |= XlibDisplayIOError;
+ 
+     if (_XIOErrorFunction != NULL)
+--- a/libxtrans/Xtrans.c	2024-07-22 14:37:21.467165699 +0200
++++ b/libxtrans/Xtrans.c	2024-07-25 10:00:54.118995666 +0200
+@@ -162,6 +162,8 @@
+     return NULL;
+ }
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
++
+ #ifndef TEST_t
+ static
+ #endif /* TEST_t */
+@@ -188,6 +190,7 @@
+     char	hostnamebuf[256];
+ 
+     PRMSG (3,"ParseAddress(%s)\n", address, 0, 0);
++    HERE
+ 
+     /* Copy the string so it can be changed */
+ 
+@@ -210,6 +213,7 @@
+ 	return 0;
+     }
+ 
++    HERE
+     if (*mybuf == ':')
+     {
+ 	/*
+@@ -234,6 +238,7 @@
+ 
+ 	*mybuf ++= '\0'; /* put a null at the end of the protocol */
+ 
++    HERE
+ 	if (strlen(_protocol) == 0)
+ 	{
+ 	    /*
+@@ -260,6 +265,7 @@
+ 	return 0;
+     }
+ 
++    HERE
+     *mybuf ++= '\0';
+ 
+     if (strlen(_host) == 0)
+@@ -276,6 +282,7 @@
+ 	mybuf++;
+     }
+ 
++    HERE
+     /* Get the port */
+ 
+     _port = mybuf;
+@@ -312,6 +319,7 @@
+     else
+         strcpy (*protocol, _protocol);
+ 
++    HERE
+     if ((*host = (char *) xalloc (strlen (_host) + 1)) == NULL)
+     {
+ 	/* Malloc failed */
+@@ -341,6 +349,7 @@
+ 
+     xfree (tmpptr);
+ 
++    HERE
+     return 1;
+ }
+ 
+--- a/libxtrans/Xtranssock.c	2024-07-22 14:37:21.467165699 +0200
++++ b/libxtrans/Xtranssock.c	2024-07-24 14:08:56.034387339 +0200
+@@ -56,6 +56,7 @@
+ #include <X11/Xthreads.h>
+ #endif
+ 
++#define HERE printf("%s:%d %s\n", __FILE__, __LINE__, __func__);
+ 
+ #if defined(TCPCONN) || defined(UNIXCONN)
+ #include <netinet/in.h>
+@@ -1479,14 +1480,16 @@
+     /*
+      * Do the connect()
+      */
+-
++    HERE
+     if (connect (ciptr->fd, (struct sockaddr *) &sockname, namelen) < 0)
+     {
++    HERE
+ 	int olderrno = errno;
+ 	int connected = 0;
+ 	
+ 	if (!connected)
+ 	{
++    HERE
+ 	    errno = olderrno;
+ 	    
+ 	    /*
+@@ -1533,6 +1536,7 @@
+     ciptr->peeraddrlen = namelen;
+     memcpy (ciptr->addr, &sockname, ciptr->addrlen);
+     memcpy (ciptr->peeraddr, &sockname, ciptr->peeraddrlen);
++    HERE
+     
+     return 0;
+ }

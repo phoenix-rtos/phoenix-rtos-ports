@@ -1,0 +1,111 @@
+diff -ruN a/src/builtins/dir.c b/src/builtins/dir.c
+--- a/src/builtins/dir.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/builtins/dir.c	2024-07-19 14:32:28.541767801 +0200
+@@ -26,6 +26,8 @@
+ #endif
+ #include "builtin.h"
+ 
++#define HERE printf("%s:%d %s", __FILE__, __LINE__, __func__);
++
+ static BuiltinDirPtr
+ BuiltinDirsDup (const BuiltinDirPtr a_dirs,
+                 int a_dirs_len)
+@@ -150,6 +152,7 @@
+ int
+ BuiltinReadDirectory (const char *directory, FontDirectoryPtr *pdir)
+ {
++  HERE
+     FontDirectoryPtr	dir;
+     int			i;
+ 
+@@ -160,34 +163,40 @@
+ 
+     if (saved_builtin_dir)
+     {
++  HERE
+         BuiltinDirsRestore ((BuiltinDirPtr) builtin_dir,
+                             saved_builtin_dir,
+                             builtin_dir_count) ;
+     }
+     else
+     {
++  HERE
+         saved_builtin_dir = BuiltinDirsDup ((const BuiltinDirPtr) builtin_dir,
+                                             builtin_dir_count) ;
+     }
+ 
+     if (saved_builtin_alias)
+     {
++  HERE
+         BuiltinAliasesRestore ((BuiltinAliasPtr) builtin_alias,
+                                saved_builtin_alias,
+                                builtin_alias_count) ;
+     }
+     else
+     {
++  HERE
+         saved_builtin_alias = BuiltinAliasesDup ((const BuiltinAliasPtr) builtin_alias,
+                                                  builtin_alias_count) ;
+     }
+ 
+     for (i = 0; i < builtin_dir_count; i++)
+     {
++  HERE
+ 	if (!FontFileAddFontFile (dir,
+ 				  (char *) builtin_dir[i].font_name,
+ 				  (char *) builtin_dir[i].file_name))
+ 	{
++  HERE
+ 	    FontFileFreeDir (dir);
+ 	    return BadFontPath;
+ 	}
+@@ -198,11 +207,13 @@
+ 				   (char *) builtin_alias[i].alias_name,
+ 				   (char *) builtin_alias[i].font_name))
+ 	{
++  HERE
+ 	    FontFileFreeDir (dir);
+ 	    return BadFontPath;
+ 	}
+     }
+     FontFileSortDir (dir);
++  HERE
+     *pdir = dir;
+     return Successful;
+ }
+diff -ruN a/src/builtins/fpe.c b/src/builtins/fpe.c
+--- a/src/builtins/fpe.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/builtins/fpe.c	2024-07-19 14:32:51.841082177 +0200
+@@ -27,6 +27,8 @@
+ #include    <X11/fonts/fntfilst.h>
+ #include "builtin.h"
+ 
++#define HERE printf("%s:%d %s", __FILE__, __LINE__, __func__);
++
+ static int  font_file_type;
+ 
+ static const char builtin_fonts[] = "built-ins";
+@@ -40,12 +42,14 @@
+ static int
+ BuiltinInitFPE (FontPathElementPtr fpe)
+ {
++  HERE
+     int			status;
+     FontDirectoryPtr	dir;
+ 
+     status = BuiltinReadDirectory (fpe->name, &dir);
+ 
+     if (status == Successful)
++  HERE
+ 	fpe->private = (pointer) dir;
+     return status;
+ }
+@@ -68,6 +72,8 @@
+ void
+ BuiltinRegisterFpeFunctions(void)
+ {
++
++  HERE
+     BuiltinRegisterFontFileFunctions ();
+ 
+     font_file_type = RegisterFPEFunctions(BuiltinNameCheck,

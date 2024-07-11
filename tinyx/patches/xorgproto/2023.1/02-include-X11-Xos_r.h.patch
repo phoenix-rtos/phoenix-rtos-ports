@@ -1,0 +1,13 @@
+diff -ruN a/include/X11/Xos_r.h b/include/X11/Xos_r.h
+--- a/include/X11/Xos_r.h       2024-07-11 11:23:02.195783567 +0200
++++ b/include/X11/Xos_r.h       2024-07-12 09:03:48.026294638 +0200
+@@ -318,7 +318,7 @@
+   (_Xos_processUnlock), \
+   (p).pwp )
+
+-#elif !defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(__APPLE__)
++#elif !defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(__APPLE__) && !defined(__phoenix__)
+ # define X_NEEDS_PWPARAMS
+ typedef struct {
+   struct passwd pws;
+
