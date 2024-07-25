@@ -7,31 +7,28 @@ OPENIKED="openiked-portable-${OPENIKED_VER}"
 PKG_URL="https://github.com/openiked/openiked-portable/archive/refs/tags/v${OPENIKED_VER}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENIKED}.tar.gz"
 
-b_log "Building openiked"
-PREFIX_OPENIKED="${PREFIX_PROJECT}/phoenix-rtos-ports/openiked"
-PREFIX_OPENIKED_BUILD=${PREFIX_BUILD}/openiked
-PREFIX_OPENIKED_SRC="${PREFIX_OPENIKED_BUILD}/${OPENIKED}"
-PREFIX_OPENIKED_MARKERS="${PREFIX_OPENIKED_BUILD}/markers"
-PREFIX_OPENIKED_INSTALL="${PREFIX_OPENIKED_BUILD}/install"
+PREFIX_OPENIKED_SRC="${PREFIX_PORT_BUILD}/${OPENIKED}"
+PREFIX_OPENIKED_MARKERS="${PREFIX_PORT_BUILD}/markers"
+PREFIX_OPENIKED_INSTALL="${PREFIX_PORT_BUILD}/install"
 
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_OPENIKED_BUILD"
+mkdir -p "$PREFIX_PORT_BUILD"
 
-if [ ! -f "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" ]; then
-	if ! wget "$PKG_URL" -O "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" --no-check-certificate; then
-		wget "$PKG_MIRROR_URL" -P "${PREFIX_OPENIKED}" --no-check-certificate
+if [ ! -f "${PREFIX_PORT}/${OPENIKED}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -O "${PREFIX_PORT}/${OPENIKED}.tar.gz" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
 	fi
 fi
-[ -d "$PREFIX_OPENIKED_SRC" ] || tar zxf "${PREFIX_OPENIKED}/${OPENIKED}.tar.gz" -C "$PREFIX_OPENIKED_BUILD"
+[ -d "$PREFIX_OPENIKED_SRC" ] || tar zxf "${PREFIX_PORT}/${OPENIKED}.tar.gz" -C "$PREFIX_PORT_BUILD"
 
 #
 # Apply patches
 #
 mkdir -p "$PREFIX_OPENIKED_MARKERS"
 
-for patchfile in "${PREFIX_OPENIKED}"/patches/*.patch; do
+for patchfile in "${PREFIX_PORT}"/patches/*.patch; do
     if [ ! -f "${PREFIX_OPENIKED_MARKERS}/$(basename "$patchfile").applied" ]; then
         echo "applying patch: $patchfile"
         patch -d "$PREFIX_OPENIKED_SRC" -p1 < "$patchfile"

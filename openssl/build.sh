@@ -6,28 +6,25 @@ OPENSSL=openssl-1.1.1a
 PKG_URL="https://www.openssl.org/source/${OPENSSL}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENSSL}.tar.gz"
 
-b_log "Building openssl"
-PREFIX_OPENSSL="${PREFIX_PROJECT}/phoenix-rtos-ports/openssl"
-PREFIX_OPENSSL_BUILD="${PREFIX_BUILD}/openssl"
-PREFIX_OPENSSL_SRC="${PREFIX_OPENSSL_BUILD}/${OPENSSL}"
-PREFIX_OPENSSL_INSTALL="$PREFIX_OPENSSL_BUILD/install"
-PREFIX_OPENSSL_MARKERS="$PREFIX_OPENSSL_BUILD/markers/"
+PREFIX_OPENSSL_SRC="${PREFIX_PORT_BUILD}/${OPENSSL}"
+PREFIX_OPENSSL_INSTALL="$PREFIX_PORT_BUILD/install"
+PREFIX_OPENSSL_MARKERS="$PREFIX_PORT_BUILD/markers/"
 
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_OPENSSL_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS"
-if [ ! -f "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" ]; then
-	if ! wget "$PKG_URL" -P "${PREFIX_OPENSSL}" --no-check-certificate; then
-		wget "$PKG_MIRROR_URL" -P "${PREFIX_OPENSSL}" --no-check-certificate
+mkdir -p "$PREFIX_PORT_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS"
+if [ ! -f "$PREFIX_PORT/${OPENSSL}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_PORT}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
 	fi
 fi
-[ -d "$PREFIX_OPENSSL_SRC" ] || tar zxf "$PREFIX_OPENSSL/${OPENSSL}.tar.gz" -C "$PREFIX_OPENSSL_BUILD"
+[ -d "$PREFIX_OPENSSL_SRC" ] || tar zxf "$PREFIX_PORT/${OPENSSL}.tar.gz" -C "$PREFIX_PORT_BUILD"
 
 #
 # Apply patches
 #
-for patchfile in "$PREFIX_OPENSSL"/*.patch; do
+for patchfile in "$PREFIX_PORT"/*.patch; do
 	if [ ! -f "$PREFIX_OPENSSL_MARKERS/$(basename "$patchfile").applied" ]; then
 		echo "applying patch: $patchfile"
 		patch -d "$PREFIX_OPENSSL_SRC" -p1 < "$patchfile"
@@ -38,17 +35,17 @@ done
 #
 # Configure
 #
-if [ ! -f "${PREFIX_OPENSSL_BUILD}/Makefile" ]; then
-	cp "$PREFIX_OPENSSL/30-phoenix.conf" "$PREFIX_OPENSSL_SRC/Configurations/"
-	(cd "${PREFIX_OPENSSL_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
+if [ ! -f "${PREFIX_PORT_BUILD}/Makefile" ]; then
+	cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_OPENSSL_SRC/Configurations/"
+	(cd "${PREFIX_PORT_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
 fi
 
 
 #
 # Make
 #
-make -C "$PREFIX_OPENSSL_BUILD" all
-make -C "$PREFIX_OPENSSL_BUILD" install_sw
+make -C "$PREFIX_PORT_BUILD" all
+make -C "$PREFIX_PORT_BUILD" install_sw
 
 cp -a "$PREFIX_OPENSSL_INSTALL/include/openssl" "$PREFIX_H"
 cp -a "$PREFIX_OPENSSL_INSTALL/lib/libcrypto.a" "$PREFIX_A"
