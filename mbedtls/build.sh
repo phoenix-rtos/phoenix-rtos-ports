@@ -8,32 +8,29 @@ MBEDTLS="mbedtls-${MBEDTLS_VER}"
 PKG_URL="https://github.com/Mbed-TLS/mbedtls/archive/v${MBEDTLS_VER}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${MBEDTLS}.tar.gz"
 
-PREFIX_MBEDTLS="${PREFIX_PROJECT}/phoenix-rtos-ports/mbedtls"
-PREFIX_MBEDTLS_BUILD="${PREFIX_BUILD}/mbedtls"
-PREFIX_MBEDTLS_SRC="${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}"
-PREFIX_MBEDTLS_PATCHES="${PREFIX_MBEDTLS}/patches"
-PREFIX_MBEDTLS_MARKERS="${PREFIX_MBEDTLS_BUILD}/markers/"
-PREFIX_MBEDTLS_DESTDIR="${PREFIX_MBEDTLS_BUILD}/root/"
+PREFIX_MBEDTLS_SRC="${PREFIX_PORT_BUILD}/${MBEDTLS}"
+PREFIX_MBEDTLS_PATCHES="${PREFIX_PORT}/patches"
+PREFIX_MBEDTLS_MARKERS="${PREFIX_PORT_BUILD}/markers/"
+PREFIX_MBEDTLS_DESTDIR="${PREFIX_PORT_BUILD}/root/"
 PREFIX_MBEDTLS_TESTS="${PREFIX_MBEDTLS_SRC}/tests"
-b_log "Building mbedtls"
 
 # Download and unpack
-mkdir -p "${PREFIX_MBEDTLS_BUILD}" "${PREFIX_MBEDTLS_MARKERS}"
-if ! [ -f "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" ]; then
-	if ! wget "$PKG_URL" -O "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" --no-check-certificate; then
-		wget "$PKG_MIRROR_URL" -P "${PREFIX_MBEDTLS}" --no-check-certificate
+mkdir -p "${PREFIX_PORT_BUILD}" "${PREFIX_MBEDTLS_MARKERS}"
+if ! [ -f "${PREFIX_PORT}/${MBEDTLS}.tar.gz" ]; then
+	if ! wget "$PKG_URL" -O "${PREFIX_PORT}/${MBEDTLS}.tar.gz" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
 	fi
 fi
 
 if ! [ -d "${PREFIX_MBEDTLS_SRC}" ]; then
-	tar xf "${PREFIX_MBEDTLS}/${MBEDTLS}.tar.gz" -C "${PREFIX_MBEDTLS_BUILD}"
+	tar xf "${PREFIX_PORT}/${MBEDTLS}.tar.gz" -C "${PREFIX_PORT_BUILD}"
 fi
 
 # Apply patches
 for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
 	if ! [ -f "${PREFIX_MBEDTLS_MARKERS}/$(basename "${patchfile}").applied" ]; then
 		echo "applying patch: ${patchfile}"
-		patch -d "${PREFIX_MBEDTLS_BUILD}" -p0 -i "${patchfile}" && touch "${PREFIX_MBEDTLS_MARKERS}/$(basename "${patchfile}").applied"
+		patch -d "${PREFIX_PORT_BUILD}" -p0 -i "${patchfile}" && touch "${PREFIX_MBEDTLS_MARKERS}/$(basename "${patchfile}").applied"
 	fi
 done
 
@@ -41,11 +38,11 @@ done
 export phoenix=1
 
 # Build mbedtls without tests
-(cd "${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}" && make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR")
+(cd "${PREFIX_PORT_BUILD}/${MBEDTLS}" && make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR")
 
 # Build and install tests if needed
 if [ "${LONG_TEST}" = "y" ]; then
-	(cd "${PREFIX_MBEDTLS_BUILD}/${MBEDTLS}" && make tests)
+	(cd "${PREFIX_PORT_BUILD}/${MBEDTLS}" && make tests)
 
 	mkdir -p "${PREFIX_FS}/root/mbedtls_test_configs/"
 

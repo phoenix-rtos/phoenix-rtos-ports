@@ -13,16 +13,12 @@ install_binary () {
 AZURE_VER="lts_01_2022"
 AZURE="azure-iot-sdk-c"
 
-PREFIX_AZURE="${PREFIX_PROJECT}/phoenix-rtos-ports/azure_sdk"
-PREFIX_AZURE_BUILD="${PREFIX_BUILD}/azure_sdk"
-PREFIX_AZURE_SRC="${PREFIX_AZURE_BUILD}/${AZURE}-${AZURE_VER}"
-PREFIX_AZURE_MARKERS="${PREFIX_AZURE_BUILD}/markers"
-PREFIX_AZURE_ROOT="${PREFIX_AZURE_BUILD}/root"
+PREFIX_AZURE_SRC="${PREFIX_PORT_BUILD}/${AZURE}-${AZURE_VER}"
+PREFIX_AZURE_MARKERS="${PREFIX_PORT_BUILD}/markers"
+PREFIX_AZURE_ROOT="${PREFIX_PORT_BUILD}/root"
 PREFIX_AZURE_LIB="${PREFIX_AZURE_ROOT}/lib"
 PREFIX_AZURE_INC="${PREFIX_AZURE_ROOT}/include"
-PREFIX_AZURE_PATCHES="${PREFIX_AZURE}/patches"
-
-b_log "Building azure iot sdk"
+PREFIX_AZURE_PATCHES="${PREFIX_PORT}/patches"
 
 update_options=(--init)
 if [ "${LONG_TEST}" = "y" ]; then
@@ -30,7 +26,7 @@ if [ "${LONG_TEST}" = "y" ]; then
 fi
 
 # Download in the specified version, it can't be done via wget, because tar.gz does not include submodules
-mkdir -p "${PREFIX_AZURE_BUILD}" "${PREFIX_AZURE_MARKERS}"
+mkdir -p "${PREFIX_PORT_BUILD}" "${PREFIX_AZURE_MARKERS}"
 if ! [ -d "${PREFIX_AZURE_SRC}" ]; then
 	git clone -b "${AZURE_VER}" https://github.com/Azure/azure-iot-sdk-c.git "${PREFIX_AZURE_SRC}"
 	# Get the extended version only if the LONG_TEST option was set
@@ -47,7 +43,7 @@ for patchfile in "${PREFIX_AZURE_PATCHES}"/*.patch; do
 			grep -q "armv7m7-imxrt106x" <<< "${TARGET}" || continue
 		fi
 		echo "applying patch: $patchfile"
-		patch -d "${PREFIX_AZURE_BUILD}" -p0 -i "$patchfile" && touch "${PREFIX_AZURE_MARKERS}/${PATCH_NAME}.applied"
+		patch -d "${PREFIX_PORT_BUILD}" -p0 -i "$patchfile" && touch "${PREFIX_AZURE_MARKERS}/${PATCH_NAME}.applied"
 	fi
 	# There are some cpp sources, which is currently not supported in Phoenix-RTOS
 	[ "${LONG_TEST}" = "y" ] && rm -rf "${PREFIX_AZURE_SRC}/c-utility/testtools/micromock"
@@ -70,7 +66,7 @@ export PHOENIX_COMPILER_CMD PHOENIX_SYSROOT
 # Build (http and amqp protocols are currently not supported yet)
 # Treat Phoenix-RTOS as Linux and providing toolchain file was the most suitable solution
 (cd "${PREFIX_AZURE_SRC}/build_all/linux" && ./build.sh \
---toolchain-file "${PREFIX_AZURE}/toolchain-phoenix.cmake" -cl --sysroot="${PHOENIX_SYSROOT}" \
+--toolchain-file "${PREFIX_PORT}/toolchain-phoenix.cmake" -cl --sysroot="${PHOENIX_SYSROOT}" \
 --no-http --no-amqp)
 
 # Create azure root directory with provided libs, includes and binaries
