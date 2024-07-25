@@ -6,33 +6,30 @@ PCRE=pcre-8.42
 PKG_URL="http://ftp.exim.org/pub/pcre/${PCRE}.tar.bz2"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${PCRE}.tar.bz2"
 
-b_log "Building pcre"
-PREFIX_PCRE="${PREFIX_PROJECT}/phoenix-rtos-ports/pcre"
-PREFIX_PCRE_BUILD="${PREFIX_BUILD}/pcre"
-PREFIX_PCRE_SRC="${PREFIX_PCRE_BUILD}/${PCRE}"
+PREFIX_PCRE_SRC="${PREFIX_PORT_BUILD}/${PCRE}"
 
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_PCRE_BUILD"
-if [ ! -f "$PREFIX_PCRE/${PCRE}.tar.bz2" ]; then
-	if ! wget "$PKG_URL" -P "${PREFIX_PCRE}" --no-check-certificate; then
-		wget "$PKG_MIRROR_URL" -P "${PREFIX_PCRE}" --no-check-certificate
+mkdir -p "$PREFIX_PORT_BUILD"
+if [ ! -f "$PREFIX_PORT/${PCRE}.tar.bz2" ]; then
+	if ! wget "$PKG_URL" -P "${PREFIX_PORT}" --no-check-certificate; then
+		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
 	fi
 fi
-[ -d "$PREFIX_PCRE_SRC" ] || tar jxf "$PREFIX_PCRE/${PCRE}.tar.bz2" -C "$PREFIX_PCRE_BUILD"
+[ -d "$PREFIX_PCRE_SRC" ] || tar jxf "$PREFIX_PORT/${PCRE}.tar.bz2" -C "$PREFIX_PORT_BUILD"
 
 
 #
 # Configure
 #
-if [ ! -f "${PREFIX_PCRE_BUILD}/config.h" ]; then
-	( cd "${PREFIX_PCRE_BUILD}" && "${PREFIX_PCRE_SRC}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
-		--disable-cpp --prefix="${PREFIX_PCRE_BUILD}" --libdir="${PREFIX_A}"  \
+if [ ! -f "${PREFIX_PORT_BUILD}/config.h" ]; then
+	( cd "${PREFIX_PORT_BUILD}" && "${PREFIX_PCRE_SRC}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
+		--disable-cpp --prefix="${PREFIX_PORT_BUILD}" --libdir="${PREFIX_A}"  \
 		--includedir="${PREFIX_H}" )
 fi
 
 #
 # Make
 #
-make -C "$PREFIX_PCRE_BUILD" install
+make -C "$PREFIX_PORT_BUILD" install
