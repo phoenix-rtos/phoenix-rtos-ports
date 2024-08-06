@@ -48,7 +48,7 @@ port_cleanup() {
 
 # TODO: add dependency rebuild on patch change, i.e. tinyxlib rebuild -> tinyx,
 #  ico rebuild
-should_rebuild() {
+should_reconfigure() {
   patch_subdir="${1}"
   marker_dir="${PREFIX_PORT_BUILD}/markers/${patch_subdir}"
   patch_dir="${PREFIX_PORT}/patches/${patch_subdir}"
@@ -75,7 +75,7 @@ should_rebuild() {
   fi
 }
 
-mark_as_built() {
+mark_as_configured() {
   patch_subdir="${1}"
   marker_dir="${PREFIX_PORT_BUILD}/markers/${patch_subdir}"
   mkdir -p "${marker_dir}"
@@ -121,7 +121,8 @@ build_tinyxlib() {
   PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinyxlib/${short_ref}"
   b_port_download "https://github.com/idunham/tinyxlib/archive/" "${archive_filename}"
 
-  if should_rebuild "tinyxlib/${short_ref}"; then
+  # FIXME
+  if should_reconfigure "tinyxlib/${short_ref}"; then
     extract_sources
 
     b_port_apply_patches "${PREFIX_PORT_SRC}" "tinyxlib/${short_ref}"
@@ -142,7 +143,7 @@ build_tinyxlib() {
 
     _build_xorgproto
 
-    mark_as_built "tinyxlib/${short_ref}"
+    mark_as_configured "tinyxlib/${short_ref}"
   fi
 }
 
@@ -159,7 +160,7 @@ build_a_lib() {
 
   b_port_download "https://www.x.org/archive/individual/lib/" "${archive_filename}"
 
-  if should_rebuild "${libname}/${version}"; then
+  if should_reconfigure "${libname}/${version}"; then
     extract_sources
 
     b_port_apply_patches "${PREFIX_PORT_SRC}" "${libname}/${version}"
@@ -168,11 +169,11 @@ build_a_lib() {
       exec_configure "${configure_opts}"
     fi
 
-    make -C "${PREFIX_PORT_SRC}"
-    make -C "${PREFIX_PORT_SRC}" install
-
-    mark_as_built "${libname}/${version}"
+    mark_as_configured "${libname}/${version}"
   fi
+
+  make -C "${PREFIX_PORT_SRC}"
+  make -C "${PREFIX_PORT_SRC}" install
 }
 
 build_tinyx() {
@@ -185,7 +186,7 @@ build_tinyx() {
   PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinyx/${short_ref}"
   b_port_download "https://github.com/tinycorelinux/tinyx/archive/" "${archive_filename}"
 
-  if should_rebuild "tinyx/${short_ref}"; then
+  if should_reconfigure "tinyx/${short_ref}"; then
     extract_sources
 
     if [ ! -d "${PREFIX_PORT_SRC}/kdrive/phoenix/" ]; then
@@ -205,16 +206,15 @@ build_tinyx() {
       # FIXME do it properly by patching configure.ac instead?
       find . -name 'Makefile' -print0 | xargs -0 sed -i 's/ -lz/ -l:libz.a/g;s/ -lXfont/ -l:libXfont.a/g;s/ -lfontenc/ -l:libfontenc.a/g;s/-lm//g'
     fi
-
-    make -C "${PREFIX_PORT_SRC}"
-
-    ${STRIP} -o "${PREFIX_PROG_STRIPPED}/Xfbdev" "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev"
-    cp -a "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev" "${PREFIX_PROG}/Xfbdev"
-
-    b_install "${PREFIX_PORTS_INSTALL}/Xfbdev" /bin
-
-    mark_as_built "tinyx/${short_ref}"
+    mark_as_configured "tinyx/${short_ref}"
   fi
+
+  make -C "${PREFIX_PORT_SRC}"
+
+  ${STRIP} -o "${PREFIX_PROG_STRIPPED}/Xfbdev" "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev"
+  cp -a "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev" "${PREFIX_PROG}/Xfbdev"
+
+  b_install "${PREFIX_PORTS_INSTALL}/Xfbdev" /bin
 }
 
 # building ico requires gettext
@@ -227,7 +227,7 @@ build_ico() {
 
   b_port_download "https://www.x.org/archive/individual/app/" "${archive_filename}"
 
-  if should_rebuild "ico/${version}"; then
+  if should_reconfigure "ico/${version}"; then
     extract_sources
 
     b_port_apply_patches "${PREFIX_PORT_SRC}" "ico/${version}"
@@ -235,26 +235,47 @@ build_ico() {
     if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
       exec_configure
     fi
-
-    make -C "${PREFIX_PORT_SRC}"
-
-    $STRIP -o "${PREFIX_PROG_STRIPPED}/ico" "${PREFIX_PORT_SRC}/ico"
-
-    b_install "${PREFIX_PORTS_INSTALL}/ico" /bin
-
-    mark_as_built "ico/${version}"
+    mark_as_configured "ico/${version}"
   fi
+
+  make -C "${PREFIX_PORT_SRC}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/ico" "${PREFIX_PORT_SRC}/ico"
+
+  b_install "${PREFIX_PORTS_INSTALL}/ico" /bin
+}
+
+build_tinywm() {
+  b_log "tinyx: building tinywm"
+
+  ref="9d05612f41fdb8bc359f1fd9cc930bf16315abb1"
+  short_ref=$(echo ${ref} | cut -c -6)
+  archive_filename="${ref}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinywm/${short_ref}"
+  b_port_download "https://github.com/mackstann/tinywm/archive/" "${archive_filename}"
+
+  extract_sources
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "tinywm/${short_ref}"
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_A}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/tinywm" "${PREFIX_PORT_SRC}/tinywm"
+
+  b_install "${PREFIX_PORTS_INSTALL}/tinywm" /bin
 }
 
 
 # Call ordering is important here
-build_tinyxlib
-build_a_lib libfontenc 1.1.8
-
-# libXfont depends on libfontenc and headers from xorgproto/tinyxlib
-build_a_lib libXfont 1.5.4 --disable-freetype
-build_ico
+# build_tinyxlib
+# build_a_lib libfontenc 1.1.8
+#
+# # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
+# build_a_lib libXfont 1.5.4 --disable-freetype
+# build_ico
 
 build_tinyx
+# build_tinywm
 
 rm -rf "$TMP_DIR"
