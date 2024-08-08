@@ -266,16 +266,47 @@ build_tinywm() {
   b_install "${PREFIX_PORTS_INSTALL}/tinywm" /bin
 }
 
+build_xmessage() {
+  b_log "tinyx: building xmessage"
+
+  version="1.0.7"
+  archive_filename="xmessage-${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/xmessage/${version}"
+
+  b_port_download "https://www.x.org/archive/individual/app/" "${archive_filename}"
+
+  if should_reconfigure "xmessage/${version}"; then
+    extract_sources
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "xmessage/${version}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure
+    fi
+
+    find . -name 'Makefile' -print0 | xargs -0 sed -i 's/ -lXaw7/ -l:libXaw.a/g;s/ -lXt/ -l:libXt.a/g;s/ -lX11/ -l:libXmu.a -l:libXext.a -l:libSM.a -l:libICE.a -l:libXdmcp.a -l:libXpm.a -l:libX11.a/g'
+
+    mark_as_configured "xmessage/${version}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/xmessage" "${PREFIX_PORT_SRC}/xmessage"
+
+  b_install "${PREFIX_PORTS_INSTALL}/xmessage" /bin
+}
+
 
 # Call ordering is important here
-# build_tinyxlib
-# build_a_lib libfontenc 1.1.8
-#
-# # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
-# build_a_lib libXfont 1.5.4 --disable-freetype
-# build_ico
+build_tinyxlib
+build_a_lib libfontenc 1.1.8
+
+# libXfont depends on libfontenc and headers from xorgproto/tinyxlib
+build_a_lib libXfont 1.5.4 --disable-freetype
+build_ico
 
 build_tinyx
-# build_tinywm
+build_tinywm
+build_xmessage
 
 rm -rf "$TMP_DIR"
