@@ -1,0 +1,12 @@
+diff -ruN a/Makefile b/Makefile
+--- a/Makefile	2014-04-23 00:58:39.000000000 +0200
++++ b/Makefile	2024-08-05 10:17:06.808673515 +0200
+@@ -2,7 +2,7 @@
+ CFLAGS?=-Os -pedantic -Wall
+ 
+ all:
+-	$(CC) $(CFLAGS) -I$(PREFIX)/include tinywm.c -L$(PREFIX)/lib -lX11 -o tinywm
++	$(CC) $(CFLAGS) -I$(PREFIX)/include tinywm.c -L$(PREFIX) -l:libX11.a -o tinywm
+ 
+ clean:
+ 	rm -f tinywm

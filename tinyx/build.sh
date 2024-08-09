@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# TODO: there's loads of redundancy here. This is intentional for now, as
+#  I don't know yet how custom some of these builds will be
+# Some notes:
+# - x libs are mostly built the same way
+# - suckless stuff has the same build process
+# - xmessage and ico build process is mostly the same, except the rough makefile regex in xmessage
+
 set -e
 
 PREFIX_SHARE="${PREFIX_A}/share/"
@@ -7,9 +14,11 @@ PREFIX_SHARE="${PREFIX_A}/share/"
 # FIXME there *should* be a clean way to disable doc building via autotools config
 TMP_DIR=$(mktemp -d)
 
+
 inner_log() {
   echo -e "$1"
 }
+
 
 extract_sources() {
   if [ ! -d "${PREFIX_PORT_SRC}" ]; then
@@ -18,6 +27,7 @@ extract_sources() {
     tar -axf "${PREFIX_PORT}/${archive_filename}" --strip-components 1 -C "${PREFIX_PORT_SRC}"
   fi
 }
+
 
 exec_configure() {
   (cd "${PREFIX_PORT_SRC}" &&
@@ -30,6 +40,7 @@ exec_configure() {
   )
 }
 
+
 md5_checksum() {
   if [ ! -d "$1" ]; then
     echo "no patches"
@@ -37,6 +48,7 @@ md5_checksum() {
     tar cfP - "$1" | md5sum
   fi
 }
+
 
 port_cleanup() {
   if [ -z "${1}" ]; then
@@ -46,8 +58,7 @@ port_cleanup() {
   rm -rf "${PREFIX_PORT_BUILD}/markers/${1}"
 }
 
-# TODO: add dependency rebuild on patch change, i.e. tinyxlib rebuild -> tinyx,
-#  ico rebuild
+
 should_reconfigure() {
   patch_subdir="${1}"
   marker_dir="${PREFIX_PORT_BUILD}/markers/${patch_subdir}"
@@ -56,24 +67,25 @@ should_reconfigure() {
   built_md5_path="${marker_dir}/built.md5"
 
   if [ ! -f "${built_md5_path}" ]; then
-    inner_log "Patch and build ${patch_subdir} from scratch"
+    inner_log "Patch and reconfigure ${patch_subdir} from scratch"
     port_cleanup "${patch_subdir}"
 
     true
   else
     patch_md5=$(md5_checksum "${patch_dir}")
     if [ "${patch_md5}" = "$(cat "${built_md5_path}")" ]; then
-      inner_log "${patch_subdir} up-to-date, not rebuilding"
+      inner_log "${patch_subdir} up-to-date, not reconfiguring"
       false
     else
       inner_log "Cleaning ${patch_subdir} up after previous patch set"
       port_cleanup "${patch_subdir}"
 
-      inner_log "Patch and build ${patch_subdir} from scratch"
+      inner_log "Patch and reconfigure ${patch_subdir} from scratch"
       true
     fi
   fi
 }
+
 
 mark_as_configured() {
   patch_subdir="${1}"
@@ -111,6 +123,7 @@ _build_xorgproto() {
   rm -rf "${PREFIX_H}/GL" # GL headers (possibly) unnecessary for now
 }
 
+
 build_tinyxlib() {
   b_log "tinyx: building tinyxlib"
 
@@ -121,7 +134,6 @@ build_tinyxlib() {
   PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinyxlib/${short_ref}"
   b_port_download "https://github.com/idunham/tinyxlib/archive/" "${archive_filename}"
 
-  # FIXME
   if should_reconfigure "tinyxlib/${short_ref}"; then
     extract_sources
 
@@ -146,6 +158,7 @@ build_tinyxlib() {
     mark_as_configured "tinyxlib/${short_ref}"
   fi
 }
+
 
 build_a_lib() {
   libname="$1"
@@ -176,6 +189,7 @@ build_a_lib() {
   make -C "${PREFIX_PORT_SRC}" install
 }
 
+
 build_tinyx() {
   b_log "tinyx: building xserver"
 
@@ -203,7 +217,7 @@ build_tinyx() {
         --with-default-font-path="built-ins" # otherwise won't find 'fixed'. libxfont/src/fontfile.c:FontFileNameCheck()
 
       # (brutally) force static compilation in generated Makefiles
-      # FIXME do it properly by patching configure.ac instead?
+      # FIXME: do it properly by patching configure.ac instead?
       find . -name 'Makefile' -print0 | xargs -0 sed -i 's/ -lz/ -l:libz.a/g;s/ -lXfont/ -l:libXfont.a/g;s/ -lfontenc/ -l:libfontenc.a/g;s/-lm//g'
     fi
     mark_as_configured "tinyx/${short_ref}"
@@ -216,6 +230,7 @@ build_tinyx() {
 
   b_install "${PREFIX_PORTS_INSTALL}/Xfbdev" /bin
 }
+
 
 # building ico requires gettext
 build_ico() {
@@ -245,6 +260,7 @@ build_ico() {
   b_install "${PREFIX_PORTS_INSTALL}/ico" /bin
 }
 
+
 build_tinywm() {
   b_log "tinyx: building tinywm"
 
@@ -266,6 +282,7 @@ build_tinywm() {
   b_install "${PREFIX_PORTS_INSTALL}/tinywm" /bin
 }
 
+
 build_xmessage() {
   b_log "tinyx: building xmessage"
 
@@ -284,6 +301,7 @@ build_xmessage() {
       exec_configure
     fi
 
+    # FIXME: this is brutal, see build_tinyx note
     find . -name 'Makefile' -print0 | xargs -0 sed -i 's/ -lXaw7/ -l:libXaw.a/g;s/ -lXt/ -l:libXt.a/g;s/ -lX11/ -l:libXmu.a -l:libXext.a -l:libSM.a -l:libICE.a -l:libXdmcp.a -l:libXpm.a -l:libX11.a/g'
 
     mark_as_configured "xmessage/${version}"
@@ -297,16 +315,42 @@ build_xmessage() {
 }
 
 
+build_suckless() {
+  appname="$1"
+  version="$2"
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${appname}-${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "https://dl.suckless.org/${appname}/" "${archive_filename}"
+
+  extract_sources
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/${appname}" "${PREFIX_PORT_SRC}/${appname}"
+
+  b_install "${PREFIX_PORTS_INSTALL}/${appname}" /bin
+}
+
+
 # Call ordering is important here
 build_tinyxlib
 build_a_lib libfontenc 1.1.8
 
 # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
 build_a_lib libXfont 1.5.4 --disable-freetype
-build_ico
 
 build_tinyx
+
 build_tinywm
+build_ico
 build_xmessage
+build_suckless st 0.2 # st compiles, but doesn't work yet
+build_suckless dwm 5.1
 
 rm -rf "$TMP_DIR"
