@@ -1,0 +1,78 @@
+# This patch is crucial for lively client-server connection. 
+#
+# Caution:
+# 
+# This uses recv(MSG_PEEK) that emulates ioctl/FIONREAD under Linux -- it
+# returns the bytes available to read from the socket, and depends on ability of
+# recv() to detect broken connections. With such BytesReadable() behaviour,
+# it's important to NOT define XCONN_CHECK_FREQ. Otherwise expect connection
+# deadlocks for absurd reasons.
+#
+# So, if BytesReadable()/recv behaviour changes, it is important to revisit
+# XCONN_CHECK_FREQ.
+
+--- a/libxtrans/Xtranssock.c	2024-07-22 14:37:21.467165699 +0200
++++ b/libxtrans/Xtranssock.c	2024-07-24 14:08:56.034387339 +0200
+@@ -1541,14 +1541,18 @@
+ 
+ #endif /* TRANS_CLIENT */
+ 
+-
+ static int
+ TRANS(SocketBytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
+ 
+ {
+-    PRMSG (2,"SocketBytesReadable(%x,%d,%x)\n",
+-	ciptr, ciptr->fd, pend);
+-    return ioctl (ciptr->fd, FIONREAD, (char *) pend);
++/* this bufsize doesn't really matter, but using recv() as a replacement
++ * for ioctl/FIONREAD is quite slow 
++ * TODO implement ioctl/FIONREAD in phoenix kernel */
++#define BUFSIZE 64
++static char buf[BUFSIZE];
++  *pend = recv(ciptr->fd, buf, BUFSIZE, MSG_PEEK);
++  if (pend < 0) return -1;
++  return 0;
+ }
+ 
+ 
+diff -ruN a/include/X11/Xlibint.h b/include/X11/Xlibint.h
+--- a/include/X11/Xlibint.h	2024-07-25 15:04:02.350699330 +0200
++++ b/include/X11/Xlibint.h	2024-07-29 14:49:08.729362429 +0200
+@@ -50,9 +50,9 @@
+  * If your BytesReadable correctly detects broken connections, then
+  * you should NOT define XCONN_CHECK_FREQ.
+  */
+-#ifndef XCONN_CHECK_FREQ
+-#define XCONN_CHECK_FREQ 256
+-#endif
++// #ifndef XCONN_CHECK_FREQ
++// #define XCONN_CHECK_FREQ 256
++// #endif
+ 
+ struct _XGC
+ {
+diff -ruN a/include/X11/Xpoll.h b/include/X11/Xpoll.h
+--- a/include/X11/Xpoll.h	2024-07-25 15:04:02.351699987 +0200
++++ b/include/X11/Xpoll.h	2024-07-29 14:37:45.800784463 +0200
+@@ -146,7 +146,7 @@
+ 		(dst)->fds_bits[7] &= ~((b1)->fds_bits[7]);
+ 
+ #else /* USE_POLL */
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif /* USE_POLL */
+ 
+ #endif /* _XPOLL_H_ */
+diff -ruN a/standard_definitions.mk b/standard_definitions.mk
+--- a/standard_definitions.mk	2024-07-25 15:04:02.434754552 +0200
++++ b/standard_definitions.mk	2024-07-29 14:34:16.832826259 +0200
+@@ -4,7 +4,7 @@
+ #CC=/opt/musl/bin/musl-gcc
+ 
+ #compilerflags
+-COMPFLAGS=-pipe -static -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
++COMPFLAGS=-pipe -static -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -DUSE_POLL -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
+ 
+ COMMONDEFS=$(COMPFLAGS) -D_BSD_SOURCE -D_GNU_SOURCE -DUSECMS
+ 

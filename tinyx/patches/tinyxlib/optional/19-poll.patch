@@ -1,0 +1,55 @@
+# Optional poll patch for timeout limiting. xserver-ico conn works fine without
+# it.
+
+diff -ruN a/libtinyX11/XlibInt.c b/libtinyX11/XlibInt.c
+--- a/libtinyX11/XlibInt.c	2024-07-25 15:04:02.404734830 +0200
++++ b/libtinyX11/XlibInt.c	2024-07-29 14:44:00.085469285 +0200
+@@ -160,6 +160,21 @@
+ static void _XProcessInternalConnection();
+ #define SEQLIMIT (65535 - (BUFSIZE / SIZEOF(xReq)) - 10)
+ 
++/* Limits poll timeout to 1s to enable signal reception */
++static int phoenix_poll(struct pollfd *fds, nfds_t nfds, int timeout)
++{
++	int err, msec;
++
++	do {
++		msec = timeout >= 0 && timeout < 1000 ? timeout : 1000;
++		err = poll(fds, nfds, msec);
++		if (timeout > 0)
++			timeout -= msec;
++	} while (err == 0 && timeout != 0);
++
++	return err;
++}
++
+ /*
+  * The following routines are internal routines used by Xlib for protocol
+  * packet transmission and reception.
+@@ -258,7 +273,7 @@
+ 	do {
+ 	    UnlockDisplay(dpy);
+ #ifdef USE_POLL
+-	    nfound = poll (&filedes, 1, -1);
++	    nfound = phoenix_poll (&filedes, 1, -1);
+ #else
+ 	    nfound = Select (dpy->fd + 1, &r_mask, &w_mask, NULL, NULL);
+ #endif
+@@ -473,7 +488,7 @@
+ #endif
+ 	UnlockDisplay(dpy);
+ #ifdef USE_POLL
+-	result = poll(filedes,
++	result = phoenix_poll(filedes,
+ 		      (dpy->flags & XlibDisplayProcConni) ? 1 : 1+dpy->im_fd_length,
+ 		      -1);
+ #else
+@@ -767,7 +782,7 @@
+ #ifdef USE_POLL
+ 	    filedes.fd = dpy->fd;
+ 	    filedes.events = POLLIN;
+-	    if (pend = poll(&filedes, 1, 0))
++	    if (pend = phoenix_poll(&filedes, 1, 0))
+ #else
+ 	    FD_ZERO(&r_mask);
+ 	    FD_SET(dpy->fd, &r_mask);

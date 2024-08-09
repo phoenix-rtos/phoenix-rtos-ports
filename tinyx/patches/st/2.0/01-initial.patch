@@ -1,0 +1,91 @@
+diff -ruN a/config.mk b/config.mk
+--- a/config.mk	2012-01-21 23:43:03.000000000 +0100
++++ b/config.mk	2024-08-09 12:42:47.327759078 +0200
+@@ -1,18 +1,15 @@
+ # st version
+-VERSION = 0.1.1
++VERSION = 0.2
+ 
+ # Customize below to fit your system
+ 
+ # paths
+-PREFIX = /usr/local
++PREFIX ?= /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+ 
+-X11INC = /usr/X11R6/include
+-X11LIB = /usr/X11R6/lib
+-
+ # includes and libs
+-INCS = -I. -I/usr/include -I${X11INC}
+-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil
++INCS = -I. -I${PREFIX_H}
++LIBS = -L${PREFIX_A} -lc -l:libX11.a -l:libphoenix.a
+ 
+ # flags
+ CPPFLAGS = -DVERSION=\"${VERSION}\"
+diff -ruN a/st.c b/st.c
+--- a/st.c	2012-01-21 23:43:03.000000000 +0100
++++ b/st.c	2024-08-09 12:42:47.328758453 +0200
+@@ -686,9 +686,9 @@
+ 	int m, s;
+ 	
+ 	/* seems to work fine on linux, openbsd and freebsd */
+-	struct winsize w = {term.row, term.col, 0, 0};
+-	if(openpty(&m, &s, NULL, NULL, &w) < 0)
+-		die("openpty failed: %s\n", SERRNO);
++	// struct winsize w = {term.row, term.col, 0, 0};
++	// if(openpty(&m, &s, NULL, NULL, &w) < 0)
++	// 	die("openpty failed: %s\n", SERRNO);
+ 
+ 	switch(pid = fork()) {
+ 	case -1:
+@@ -696,18 +696,18 @@
+ 		break;
+ 	case 0:
+ 		setsid(); /* create a new process group */
+-		dup2(s, STDIN_FILENO);
+-		dup2(s, STDOUT_FILENO);
+-		dup2(s, STDERR_FILENO);
+-		if(ioctl(s, TIOCSCTTY, NULL) < 0)
+-			die("ioctl TIOCSCTTY failed: %s\n", SERRNO);
+-		close(s);
+-		close(m);
++		// dup2(s, STDIN_FILENO);
++		// dup2(s, STDOUT_FILENO);
++		// dup2(s, STDERR_FILENO);
++		// if(ioctl(s, TIOCSCTTY, NULL) < 0)
++		// 	die("ioctl TIOCSCTTY failed: %s\n", SERRNO);
++		// close(s);
++		// close(m);
+ 		execsh();
+ 		break;
+ 	default:
+-		close(s);
+-		cmdfd = m;
++		// close(s);
++		// cmdfd = m;
+ 		signal(SIGCHLD, sigchld);
+ 	}
+ }
+@@ -757,13 +757,13 @@
+ 
+ void
+ ttyresize(int x, int y) {
+-	struct winsize w;
+-
+-	w.ws_row = term.row;
+-	w.ws_col = term.col;
+-	w.ws_xpixel = w.ws_ypixel = 0;
+-	if(ioctl(cmdfd, TIOCSWINSZ, &w) < 0)
+-		fprintf(stderr, "Couldn't set window size: %s\n", SERRNO);
++	// struct winsize w;
++	//
++	// w.ws_row = term.row;
++	// w.ws_col = term.col;
++	// w.ws_xpixel = w.ws_ypixel = 0;
++	// if(ioctl(cmdfd, TIOCSWINSZ, &w) < 0)
++	// 	fprintf(stderr, "Couldn't set window size: %s\n", SERRNO);
+ }
+ 
+ void
