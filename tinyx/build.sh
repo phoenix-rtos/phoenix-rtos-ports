@@ -315,5 +315,9 @@ build_x11_app   ico         1.0.4 # requires gettext
 build_x11_app   xmessage    1.0.7
 build_x11_app   xclock      1.1.1 --without-xft --without-xkb
 build_x11_app   xeyes       1.1.1 --without-xrender
+build_x11_app   xsetroot    1.1.1
+build_x11_app   xinit       1.3.3
+build_x11_app   xrdb        1.2.2
+build_x11_app   xgc         1.0.6
 
 rm -rf "$TMP_DIR"
