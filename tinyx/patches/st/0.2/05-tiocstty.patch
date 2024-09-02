@@ -1,0 +1,12 @@
+diff -ruN a/st.c b/st.c
+--- a/st.c	2024-09-02 10:01:36.967676919 +0200
++++ b/st.c	2024-09-02 11:46:12.263350519 +0200
+@@ -708,6 +709,8 @@
+ 		dup2(s, STDIN_FILENO);
+ 		dup2(s, STDOUT_FILENO);
+ 		dup2(s, STDERR_FILENO);
++    if(ioctl(s, TIOCSCTTY, NULL) < 0)
++      die("ioctl TIOCSCTTY failed: %s\n", SERRNO);
+ 		close(s);
+ 		close(m);
+ 		execsh();
