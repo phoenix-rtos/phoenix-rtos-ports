@@ -1,0 +1,15 @@
+--- x264_org/common/base.c	2024-08-30 14:07:49.183495538 +0200
++++ x264/common/base.c	2024-08-30 14:14:26.584633533 +0200
+@@ -37,6 +37,12 @@
+ 
+ #define X264_ISDIGIT(x) isdigit((unsigned char)(x))
+ 
++/* PHOENIX-RTOS patch: memalign is not supported by Phoenix-RTOS, use malloc as placeholder */
++void *memalign(size_t alignment, size_t size)
++{
++    return malloc(size);
++}
++
+ /****************************************************************************
+  * x264_reduce_fraction:
+  ****************************************************************************/

@@ -78,4 +78,6 @@ fi
 
 [ "${PORTS_COREMARK}" = "y" ] && ./phoenix-rtos-ports/coremark/build.sh
 
+[ "${PORTS_X264}" = "y" ] && ./phoenix-rtos-ports/x264/build.sh
+
 exit 0
