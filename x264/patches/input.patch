@@ -1,0 +1,47 @@
+
+--- x264_org/input/input.c	2024-09-05 11:57:22.943594154 +0200
++++ x264/input/input.c	2024-09-05 11:57:41.344630765 +0200
+@@ -227,6 +227,15 @@
+     }
+ #else
+     size_t padded_size = size + MMAP_PADDING;
++    /**
++     * PHOENIX-RTOS PATCH
++     * 
++     * Phoenix implementation of mmap() fails if `size` is not aligned to page size
++     * It is important to remove this patch when this issue is resolved.
++     * 
++     * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1155
++     */
++    padded_size = (1 + padded_size / SIZE_PAGE) * SIZE_PAGE;
+     if( (base = mmap( NULL, padded_size, PROT_READ, MAP_PRIVATE, h->fd, offset )) != MAP_FAILED )
+     {
+         /* Ask the OS to readahead pages. This improves performance whereas
+@@ -241,9 +250,19 @@
+         /* Remap the file mapping of any padding that crosses a page boundary past the end of
+          * the file into a copy of the last valid page to prevent reads from invalid memory. */
+         size_t aligned_size = (padded_size - 1) & ~h->align_mask;
+-        if( offset + aligned_size >= h->file_size )
+-            mmap( base + aligned_size, padded_size - aligned_size, PROT_READ, MAP_PRIVATE|MAP_FIXED, h->fd, (offset + size - 1) & ~h->align_mask );
+-
++        /**
++         * PHOENIX-RTOS PATCH
++         * 
++         * Phoenix implementation of mmap() fails if `size` is not aligned to page size
++         * It is important to remove this patch when this issue is resolved.
++         * 
++         * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1155
++         */
++        if( offset + aligned_size >= h->file_size ) {
++            size_t paddedMinusAligned_aligned = (padded_size - aligned_size);
++            paddedMinusAligned_aligned = (1 + paddedMinusAligned_aligned / SIZE_PAGE) * SIZE_PAGE;
++            mmap( base + aligned_size, paddedMinusAligned_aligned, PROT_READ, MAP_PRIVATE|MAP_FIXED, h->fd, (offset + size - 1) & ~h->align_mask );
++        }
+         return base + align;
+     }
+ #endif
+@@ -272,3 +291,4 @@
+     CloseHandle( h->map_handle );
+ #endif
+ }
++
