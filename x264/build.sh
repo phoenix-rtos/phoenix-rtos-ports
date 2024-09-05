@@ -5,20 +5,30 @@ set -e
 PREFIX_X264="${PREFIX_PROJECT}/phoenix-rtos-ports/x264"
 PREFIX_X264_BUILD="${PREFIX_BUILD}/x264"
 PREFIX_X264_CONFIG="${PREFIX_X264}/patches"
-PREFIX_X264_MARKERS="$PREFIX_X264_BUILD/markers"
+PREFIX_X264_MARKERS="${PREFIX_X264_BUILD}/markers"
+
+PKG_NAME="x264-master.tar.bz2"
+PKG_URL="https://code.videolan.org/videolan/x264/-/archive/master"
 
 b_log "Building x264"
 
 #
-# Download and unpack
+# Download archived source code
 #
-if [ ! -d "$PREFIX_X264_BUILD" ]; then
-	if ! git clone https://code.videolan.org/videolan/x264.git "$PREFIX_X264_BUILD"; then
-        echo "No mirror available"
-        exit 1
+if [ ! -f "$PREFIX_X264/${PKG_NAME}" ]; then
+	if ! wget "${PKG_URL}/${PKG_NAME}" -O "${PREFIX_X264}/${PKG_NAME}" --no-check-certificate; then
+		echo "Mirror unavailable"
+		exit 1
 	fi
-    (cd "$PREFIX_X264_BUILD" && git checkout master && git reset --hard 4613ac3c15fd75cebc4b9f65b7fb95e70a3acce1)
-    mkdir -p "$PREFIX_X264_MARKERS"
+fi
+
+#
+# Unpack source code
+#
+if [ ! -d "${PREFIX_X264_BUILD}" ]; then
+	tar -xjf "${PREFIX_X264}/${PKG_NAME}" -C "${PREFIX_BUILD}"
+	(cd "${PREFIX_BUILD}" && mv x264-master x264)
+	mkdir -p "${PREFIX_X264_MARKERS}"
 fi
 
 #
