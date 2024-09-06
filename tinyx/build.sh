@@ -227,6 +227,44 @@ build_tinyx() {
   b_install "${PREFIX_PORTS_INSTALL}/Xfbdev" /usr/bin
 }
 
+
+build_x11_app() {
+  appname="$1"
+  version="$2"
+  configure_opts=${@:3}
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${appname}-${version}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "https://www.x.org/archive/individual/app/" "${archive_filename}"
+
+  if should_reconfigure "${appname}/${version}"; then
+    extract_sources
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure ${configure_opts}
+    fi
+
+    mark_as_configured "${appname}/${version}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}"
+
+  binpath="${PREFIX_PORT_SRC}/${appname}"
+  if [ ! -f "${binpath}" ]; then
+    binpath="${PREFIX_PORT_SRC}/src/${appname}"
+  fi
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/${appname}" "${binpath}"
+
+  b_install "${PREFIX_PORTS_INSTALL}/${appname}" /usr/bin
+}
+
+
 # Build xlib and xserver (call ordering is important here)
 
 build_tinyxlib
@@ -234,5 +272,9 @@ build_a_lib     libfontenc  1.1.8
 build_a_lib     libXfont    1.5.4 --disable-freetype # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
 
 build_tinyx
+
+# Build client apps
+
+build_x11_app   ico         1.0.4 # requires gettext
 
 rm -rf "$TMP_DIR"
