@@ -1,0 +1,37 @@
+diff -ruN a/standard_definitions.mk b/standard_definitions.mk
+--- a/standard_definitions.mk	2014-11-08 16:38:44.000000000 +0100
++++ b/standard_definitions.mk	2024-07-12 10:30:28.175542021 +0200
+@@ -1,26 +1,23 @@
+ 
+ #compiler
+-CC=/usr/bin/gcc
++# CC=/usr/bin/gcc
+ #CC=/opt/musl/bin/musl-gcc
+ 
+ #compilerflags
+-COMPFLAGS=-pipe -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
++COMPFLAGS=-pipe -static -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
+ 
+ COMMONDEFS=$(COMPFLAGS) -D_BSD_SOURCE -D_GNU_SOURCE -DUSECMS
+ 
+-LDFLAGS=-Wl,--gc-sections,--sort-common,-s
++# LDFLAGS=-Wl,--gc-sections,--sort-common,-s,-static
+ 
+ #LINKDIR=-L/opt/musl/lib
+-LINKDIR=-L/usr/lib
++LINKDIR=-L/lib
+ 
+-#PREDIR=/opt/musl
+-PREDIR=/usr
++# LIBDIR=/lib
+ 
+-LIBDIR=${PREDIR}/lib
+-
+-INCDIR=${PREDIR}/include
++# INCDIR=/include
+ 
+ #If you do not have setlocale, set this:
+ #COMMONDEFS+= -DX_LOCALE -DXLOCALEDIR=\"/usr/share/locale\" 
+ #KEYSYMDB=/usr/X11R7/lib/X11/XKeysymDB
+-KEYSYMDB=${PREDIR}/share/X11/XKeysymDB
++KEYSYMDB=$(LIBDIR)/share/X11/XKeysymDB

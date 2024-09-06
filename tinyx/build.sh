@@ -93,4 +93,146 @@ mark_as_configured() {
 }
 
 
+_build_xorgproto() {
+  b_log "tinyx: building xorgproto"
+
+  version="2023.1"
+  archive_filename="xorgproto-${version}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/xorgproto/${version}"
+  b_port_download "https://www.x.org/archive/individual/proto/" "${archive_filename}"
+
+  port_cleanup "xorgproto/${version}"
+
+  extract_sources
+
+  if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+    exec_configure --disable-specs --docdir="${TMP_DIR}/doc"
+  fi
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "xorgproto/${version}"
+
+  make -C "${PREFIX_PORT_SRC}"
+  make -C "${PREFIX_PORT_SRC}" install
+
+  rm -rf "${PREFIX_H}/GL" # GL headers (possibly) unnecessary for now
+}
+
+
+build_tinyxlib() {
+  b_log "tinyx: building tinyxlib"
+
+  ref="9862f359a745be8ee8f6505571e09c38e2439c6d"
+  short_ref=$(echo ${ref} | cut -c -6)
+  archive_filename="${ref}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinyxlib/${short_ref}"
+  b_port_download "https://github.com/idunham/tinyxlib/archive/" "${archive_filename}"
+
+  # TODO move make outside of reconfigure block
+  if should_reconfigure "tinyxlib/${short_ref}"; then
+    extract_sources
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "tinyxlib/${short_ref}"
+
+    # set up a dir for X11 files (currently just for XKeysymDB)
+    mkdir -p "$PREFIX_SHARE/X11" # FIXME path chosen arbitrarily
+
+    make -C "${PREFIX_PORT_SRC}"
+    make -C "${PREFIX_PORT_SRC}" LIBDIR="${PREFIX_A}" INCDIR="${PREFIX_H}" install
+
+    # Install libxtrans
+    cp -ar "${PREFIX_PORT_SRC}/libxtrans/." "${PREFIX_H}/X11/Xtrans"
+    ln -sf "${PREFIX_H}/X11/Xtrans.h" "${PREFIX_H}/X11/Xtrans/Xtrans.h"
+
+    # remove sync.h, syncstr.h to avoid conflict with xorgproto
+    rm "${PREFIX_H}/X11/extensions/sync.h"
+    rm "${PREFIX_H}/X11/extensions/syncstr.h"
+
+    _build_xorgproto
+
+    mark_as_configured "tinyxlib/${short_ref}"
+  fi
+}
+
+
+build_a_lib() {
+  libname="$1"
+  version="$2"
+  configure_opts=${@:3}
+
+  b_log "tinyx: building ${libname}"
+
+  archive_filename="${libname}-${version}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${libname}/${version}"
+
+  b_port_download "https://www.x.org/archive/individual/lib/" "${archive_filename}"
+
+  if should_reconfigure "${libname}/${version}"; then
+    extract_sources
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "${libname}/${version}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure ${configure_opts}
+    fi
+
+    mark_as_configured "${libname}/${version}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}"
+  make -C "${PREFIX_PORT_SRC}" install
+}
+
+
+build_tinyx() {
+  b_log "tinyx: building xserver"
+
+  ref="eed4902840732f170a7020cedb381017de99f2e6"
+  short_ref=$(echo ${ref} | cut -c -6)
+  archive_filename="${ref}.tar.gz"
+
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/tinyx/${short_ref}"
+  b_port_download "https://github.com/tinycorelinux/tinyx/archive/" "${archive_filename}"
+
+  if should_reconfigure "tinyx/${short_ref}"; then
+    extract_sources
+
+    if [ ! -d "${PREFIX_PORT_SRC}/kdrive/phoenix/" ]; then
+      mkdir -p "${PREFIX_PORT_SRC}/kdrive/phoenix/"
+      cp "${PREFIX_PORT_SRC}/kdrive/linux/mouse.c" "${PREFIX_PORT_SRC}/kdrive/phoenix/mouse.c"
+    fi
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "tinyx/${short_ref}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure --disable-xres --disable-screensaver --disable-xdmcp \
+        --disable-dpms --disable-xf86bigfont --disable-xdm-auth-1 \
+        --disable-dbe --host="${HOST}" \
+        --with-default-font-path="built-ins" # otherwise won't find 'fixed'. libxfont/src/fontfile.c:FontFileNameCheck()
+
+      # (brutally) force static compilation in generated Makefiles
+      # FIXME do it properly by patching configure.ac instead?
+      find . -name 'Makefile' -print0 | xargs -0 sed -i 's/ -lz/ -l:libz.a/g;s/ -lXfont/ -l:libXfont.a/g;s/ -lfontenc/ -l:libfontenc.a/g;s/-lm//g'
+    fi
+    mark_as_configured "tinyx/${short_ref}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}"
+
+  ${STRIP} -o "${PREFIX_PROG_STRIPPED}/Xfbdev" "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev"
+  cp -a "${PREFIX_PORT_SRC}/kdrive/fbdev/Xfbdev" "${PREFIX_PROG}/Xfbdev"
+
+  b_install "${PREFIX_PORTS_INSTALL}/Xfbdev" /usr/bin
+}
+
+# Build xlib and xserver (call ordering is important here)
+
+build_tinyxlib
+build_a_lib     libfontenc  1.1.8
+build_a_lib     libXfont    1.5.4 --disable-freetype # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
+
+build_tinyx
+
 rm -rf "$TMP_DIR"
