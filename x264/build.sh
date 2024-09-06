@@ -45,7 +45,7 @@ done
 #
 # Prepare CFLAGS and LDFLAGS for x264 configure & Makefile
 # 
-export LDFLAGS_EXTRA="${CFLAGS} ${LDFLAGS}"
+export LDFLAGS_EXTRA="${CFLAGS} ${LDFLAGS} -Wl,-z,stack-size=65536"
 export CFLAGS_EXTRA="${CFLAGS}"
 export LDFLAGS=""
 export CFLAGS=""
