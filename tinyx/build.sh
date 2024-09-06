@@ -303,5 +303,6 @@ build_suckless  dwm         5.1
 # Build client apps
 
 build_x11_app   ico         1.0.4 # requires gettext
+build_suckless  st          0.2
 
 rm -rf "$TMP_DIR"

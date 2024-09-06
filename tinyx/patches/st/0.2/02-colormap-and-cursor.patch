@@ -1,0 +1,145 @@
+diff -ruN a/config.def.h b/config.def.h
+--- a/config.def.h	2024-08-28 16:09:41.718025427 +0200
++++ b/config.def.h	2024-08-29 15:01:53.329920739 +0200
+@@ -8,17 +8,18 @@
+ /* Terminal colors (16 first used in escape sequence) */
+ static const char *colorname[] = {
+ 	"black",
+-	"red3",
++	"wheat",
++	"gray90",
++	"LightSteelBlue4",
++	"yellow",
++	"#5c5cff",
+ 	"green3",
+ 	"yellow3",
+ 	"blue2",
+ 	"magenta3",
+ 	"cyan3",
+-	"gray90",
+ 	"gray50",
+-	"red",
+ 	"green",
+-	"yellow",
+ 	"#5c5cff",
+ 	"magenta",
+ 	"cyan",
+@@ -27,9 +28,9 @@
+ 
+ /* Default colors (colorname index)
+    foreground, background, cursor   */
+-#define DefaultFG 15
+-#define DefaultBG 0
+-#define DefaultCS 1
++#define DefaultFG 3
++#define DefaultBG 2
++#define DefaultCS 3
+ 
+ /* Special keys (change & recompile st.info accordingly)
+    Keep in mind that kpress() in st.c hardcodes some keys.
+diff -ruN a/st.c b/st.c
+--- a/st.c	2024-08-28 16:09:41.719025474 +0200
++++ b/st.c	2024-08-30 13:45:22.624877365 +0200
+@@ -1610,6 +1610,7 @@
+ 	for(r = 0; r < 6; r++)
+ 		for(g = 0; g < 6; g++)
+ 			for(b = 0; b < 6; b++) {
++#if 0
+ 				color.red = r == 0 ? 0 : 0x3737 + 0x2828 * r;
+ 				color.green = g == 0 ? 0 : 0x3737 + 0x2828 * g;
+ 				color.blue = b == 0 ? 0 : 0x3737 + 0x2828 * b;
+@@ -1618,16 +1619,21 @@
+ 					fprintf(stderr, "Could not allocate color %d\n", i);
+ 				} else
+ 					dc.col[i] = color.pixel;
++#endif
++        dc.col[i] = white;
+ 				i++;
+ 			}
+ 
+ 	for(r = 0; r < 24; r++, i++) {
++#if 0
+ 		color.red = color.green = color.blue = 0x0808 + 0x0a0a * r;
+ 		if (!XAllocColor(xw.dpy, xw.cmap, &color)) {
+ 			dc.col[i] = white;
+ 			fprintf(stderr, "Could not allocate color %d\n", i);
+ 		} else
+ 			dc.col[i] = color.pixel;
++#endif
++        dc.col[i] = white;
+ 	}
+ }
+ 
+@@ -1816,6 +1822,32 @@
+ 		XDrawLine(xw.dpy, xw.buf, dc.gc, winx, winy+1, winx+width-1, winy+1);
+ }
+ 
++void
++xdrawu(char *s, Glyph base, int x, int y) {
++	ulong xfg = dc.col[base.fg], xbg = dc.col[base.bg], temp;
++	int winx = x*xw.cw, winy = (y + 1) * xw.ch - 2;
++	int i;
++	
++	/* only switch default fg/bg if term is in RV mode */
++	if(IS_SET(MODE_REVERSE)) {
++		if(base.fg == DefaultFG)
++			xfg = dc.col[DefaultBG];
++		if(base.bg == DefaultBG)
++			xbg = dc.col[DefaultFG];
++	}
++
++	if(base.mode & ATTR_REVERSE)
++		temp = xfg, xfg = xbg, xbg = temp;
++
++	XSetBackground(xw.dpy, dc.gc, xbg);
++	XSetForeground(xw.dpy, dc.gc, xfg);
++
++	XDrawRectangle(xw.dpy, xw.buf, dc.gc, winx+1, winy, xw.cw-2, 1);
++
++	XSetBackground(xw.dpy, dc.gc, xfg);
++	XSetForeground(xw.dpy, dc.gc, xbg);
++}
++
+ /* copy buffer pixmap to screen pixmap */
+ void
+ xcopy(int x, int y, int cols, int rows) {
+@@ -1829,7 +1861,7 @@
+ 	static int oldx = 0;
+ 	static int oldy = 0;
+ 	int sl;
+-	Glyph g = {{' '}, ATTR_NULL, DefaultBG, DefaultCS, 0};
++	Glyph g = {{'_'}, ATTR_NULL, DefaultCS, DefaultCS, 0};
+ 	
+ 	LIMIT(oldx, 0, term.col-1);
+ 	LIMIT(oldy, 0, term.row-1);
+@@ -1838,24 +1870,25 @@
+ 		memcpy(g.c, term.line[term.c.y][term.c.x].c, UTF_SIZ);
+ 
+ 	/* remove the old cursor */
++  xclear(oldx, oldy, oldx, oldy);
+ 	if(term.line[oldy][oldx].state & GLYPH_SET) {
+ 		sl = utf8size(term.line[oldy][oldx].c);
+ 		xdraws(term.line[oldy][oldx].c, term.line[oldy][oldx], oldx, oldy, 1, sl);
+-	} else
+-		xclear(oldx, oldy, oldx, oldy);
++	}
+ 
+-	xcopy(oldx, oldy, 1, 1);
++	xcopy(oldx-1, oldy-1, 3, 3);
+ 
+ 	/* draw the new one */
+ 	if(!(term.c.state & CURSOR_HIDE) && (xw.state & WIN_FOCUSED)) {
+ 		sl = utf8size(g.c);
+ 		if(IS_SET(MODE_REVERSE))
+ 			g.mode |= ATTR_REVERSE, g.fg = DefaultCS, g.bg = DefaultFG;
+-		xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
++		xdrawu(g.c, g, term.c.x, term.c.y);
++
+ 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+ 
+-	xcopy(term.c.x, term.c.y, 1, 1);
++	xcopy(term.c.x-1, term.c.y-1, 3, 3);
+ }
+ 
+ void
