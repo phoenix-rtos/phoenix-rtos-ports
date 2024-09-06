@@ -60,6 +60,7 @@ ports=(
 	"picocom"
 	"fs_mark"
 	"coremark"
+	"tinyx"
 )
 
 
