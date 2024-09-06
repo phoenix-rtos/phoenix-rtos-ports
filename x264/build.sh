@@ -7,8 +7,9 @@ PREFIX_X264_BUILD="${PREFIX_BUILD}/x264"
 PREFIX_X264_CONFIG="${PREFIX_X264}/patches"
 PREFIX_X264_MARKERS="${PREFIX_X264_BUILD}/markers"
 
-PKG_NAME="x264-master.tar.bz2"
-PKG_URL="https://code.videolan.org/videolan/x264/-/archive/master"
+PKG_COMMIT="31e19f92f00c7003fa115047ce50978bc98c3a0d"
+PKG_NAME="x264-${PKG_COMMIT}.tar.gz"
+PKG_URL="https://code.videolan.org/videolan/x264/-/archive/${PKG_COMMIT}"
 
 b_log "Building x264"
 
@@ -26,8 +27,8 @@ fi
 # Unpack source code
 #
 if [ ! -d "${PREFIX_X264_BUILD}" ]; then
-	tar -xjf "${PREFIX_X264}/${PKG_NAME}" -C "${PREFIX_BUILD}"
-	(cd "${PREFIX_BUILD}" && mv x264-master x264)
+	tar -xf "${PREFIX_X264}/${PKG_NAME}" -C "${PREFIX_BUILD}"
+	(cd "${PREFIX_BUILD}" && mv "${PKG_NAME%.tar.gz}" x264)
 	mkdir -p "${PREFIX_X264_MARKERS}"
 fi
 
