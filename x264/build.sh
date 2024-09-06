@@ -53,7 +53,7 @@ export CFLAGS=""
 #
 # Build and install x264 binary
 #
-(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" --host=arm-linux --disable-asm --disable-avs --disable-lavf --enable-pic --enable-static --disable-opencl)
+(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" --disable-thread --host=arm-linux --disable-asm --disable-avs --disable-lavf --enable-pic --enable-static --disable-opencl)
 (cd "$PREFIX_X264_BUILD" && make)
 
 cp -a "${PREFIX_X264_BUILD}/x264" "$PREFIX_PROG_STRIPPED"
