@@ -52,9 +52,24 @@ export LDFLAGS=""
 export CFLAGS=""
 
 #
+# Run configuration script
+# 
+CFG_OPT="--host=arm-linux --enable-pic --enable-static "   # mimic linux platform, enable position independent code, and generate libx264.a
+CFG_OPT+="--disable-avs --disable-lavf  --disable-opencl " # these options force dynamic linking, thus they're disabled.
+
+#TODO: rewrite parts of x264/common/cpu.c to support Phoenix-RTOS multithreading
+# x264 implementation uses GNU specific processor counting method for multithreading.
+# Remove this flag and see where compilation stops to start working on it.
+CFG_OPT+="--disable-thread " 
+
+# TODO: enable platform specific assembly optimization code 
+# asm optimization code generation causes build script to silent-crash. This was not investigated in-depth.
+CFG_OPT+="--disable-asm "
+(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" $CFG_OPT)
+
+#
 # Build and install x264 binary
 #
-(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" --disable-thread --host=arm-linux --disable-asm --disable-avs --disable-lavf --enable-pic --enable-static --disable-opencl)
 (cd "$PREFIX_X264_BUILD" && make)
 
 cp -a "${PREFIX_X264_BUILD}/x264" "$PREFIX_PROG_STRIPPED"
