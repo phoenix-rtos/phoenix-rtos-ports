@@ -250,6 +250,13 @@ build_x11_app() {
       exec_configure ${configure_opts}
     fi
 
+    # FIXME: this is brutal, see build_tinyx note
+    sedexpr='s/ -lXaw7/ -l:libXaw.a/g;s/ -lXt/ -l:libXt.a/g;'
+    sedexpr+='s/ -lX11/ -l:libXmu.a -l:libXext.a -l:libSM.a -l:libICE.a -l:libXdmcp.a -l:libXpm.a -l:libX11.a/g;'
+    sedexpr+='s/ -lXmuu/ -l:libXmuu.a -l:libXcursor.a -l:libXrender.a/g;s/ -lXcursor//g'
+
+    find . -name 'Makefile' -print0 | xargs -0 sed -i "${sedexpr}"
+
     mark_as_configured "${appname}/${version}"
   fi
 
@@ -299,10 +306,14 @@ build_tinyx
 # Build window managers
 
 build_suckless  dwm         5.1
+build_x11_app   twm         1.0.12 # requires yacc
 
 # Build client apps
 
-build_x11_app   ico         1.0.4 # requires gettext
 build_suckless  st          0.2
+build_x11_app   ico         1.0.4 # requires gettext
+build_x11_app   xmessage    1.0.7
+build_x11_app   xclock      1.1.1 --without-xft --without-xkb
+build_x11_app   xeyes       1.1.1 --without-xrender
 
 rm -rf "$TMP_DIR"
