@@ -265,6 +265,29 @@ build_x11_app() {
 }
 
 
+build_suckless() {
+  appname="$1"
+  version="$2"
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${appname}-${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "https://dl.suckless.org/${appname}/" "${archive_filename}"
+
+  extract_sources
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/${appname}" "${PREFIX_PORT_SRC}/${appname}"
+
+  b_install "${PREFIX_PORTS_INSTALL}/${appname}" /usr/bin
+}
+
+
 # Build xlib and xserver (call ordering is important here)
 
 build_tinyxlib
@@ -272,6 +295,10 @@ build_a_lib     libfontenc  1.1.8
 build_a_lib     libXfont    1.5.4 --disable-freetype # libXfont depends on libfontenc and headers from xorgproto/tinyxlib
 
 build_tinyx
+
+# Build window managers
+
+build_suckless  dwm         5.1
 
 # Build client apps
 
