@@ -1,0 +1,14 @@
+diff -ruN a/include/X11/Xtrans.h b/include/X11/Xtrans.h
+--- a/include/X11/Xtrans.h	2024-07-22 14:37:21.413166323 +0200
++++ b/include/X11/Xtrans.h	2024-07-25 09:36:20.427950290 +0200
+@@ -54,8 +54,8 @@
+ #ifndef _XTRANS_H_
+ #define _XTRANS_H_
+ 
+-#include "Xfuncproto.h"
+-#include "Xos.h"
++#include <X11/Xfuncproto.h>
++#include <X11/Xos.h>
+ 
+ 
+ /*

@@ -1,0 +1,194 @@
+diff -ruN a/kdrive/fbdev/fbinit.c b/kdrive/fbdev/fbinit.c
+--- a/kdrive/fbdev/fbinit.c	2022-11-07 07:44:53.000000000 +0100
++++ b/kdrive/fbdev/fbinit.c	2024-08-02 10:34:26.846387927 +0200
+@@ -67,7 +67,7 @@
+ 
+ void InitInput(int argc, char **argv)
+ {
+-	KdInitInput(&LinuxMouseFuncs, &LinuxKeyboardFuncs);
++	KdInitInput(&PhoenixMouseFuncs, &PhoenixKeyboardFuncs);
+ }
+ 
+ void ddxUseMsg(void)
+diff -ruN a/kdrive/Makefile.am b/kdrive/Makefile.am
+--- a/kdrive/Makefile.am	2022-11-07 07:44:53.000000000 +0100
++++ b/kdrive/Makefile.am	2024-08-02 10:34:26.850387370 +0200
+@@ -1,19 +1,3 @@
+-if KDRIVEVESA
+-VESA_SUBDIRS = vesa
+-endif
++SUBDIRS = src phoenix fbdev
+ 
+-if KDRIVEFBDEV
+-FBDEV_SUBDIRS = fbdev
+-endif
+-
+-if KDRIVELINUX
+-LINUX_SUBDIRS = linux
+-endif
+-
+-SUBDIRS =			\
+-	src			\
+-	$(LINUX_SUBDIRS)	\
+-	$(FBDEV_SUBDIRS)	\
+-	$(VESA_SUBDIRS)
+-
+-DIST_SUBDIRS = vesa fbdev src linux
++DIST_SUBDIRS = fbdev src phoenix
+diff -ruN a/kdrive/phoenix/keyboard.c b/kdrive/phoenix/keyboard.c
+--- a/kdrive/phoenix/keyboard.c	1970-01-01 01:00:00.000000000 +0100
++++ b/kdrive/phoenix/keyboard.c	2024-08-02 10:34:26.855386674 +0200
+@@ -0,0 +1,37 @@
++#ifdef HAVE_CONFIG_H
++#include <kdrive-config.h>
++#endif
++#include "kdrive.h"
++#include "kkeymap.h"
++#define XK_PUBLISHING
++#include <termios.h>
++#include <sys/ioctl.h>
++
++static void PhoenixKeyboardLoad(void)
++{
++}
++
++static int PhoenixKeyboardInit(void)
++{
++}
++
++static void PhoenixKeyboardFini(void)
++{
++}
++
++static void PhoenixKeyboardLeds(int leds)
++{
++}
++
++static void PhoenixKeyboardBell(int volume, int pitch, int duration)
++{
++}
++
++const KdKeyboardFuncs PhoenixKeyboardFuncs = {
++	PhoenixKeyboardLoad,
++	PhoenixKeyboardInit,
++	PhoenixKeyboardLeds,
++	PhoenixKeyboardBell,
++	PhoenixKeyboardFini,
++	3,
++};
+Binary files a/kdrive/phoenix/libphoenix.a and b/kdrive/phoenix/libphoenix.a differ
+diff -ruN a/kdrive/phoenix/Makefile.am b/kdrive/phoenix/Makefile.am
+--- a/kdrive/phoenix/Makefile.am	1970-01-01 01:00:00.000000000 +0100
++++ b/kdrive/phoenix/Makefile.am	2024-08-02 10:34:26.855386674 +0200
+@@ -0,0 +1,20 @@
++AM_CPPFLAGS = 					\
++	@KDRIVE_INCS@				\
++	@KDRIVE_CFLAGS@
++
++AM_CFLAGS = -DHAVE_DIX_CONFIG_H
++
++noinst_LIBRARIES = libphoenix.a
++
++KDRIVE_HW_SOURCES =	\
++	keyboard.c	\
++	phoenix.c
++
++libphoenix_a_SOURCES = 	\
++	mouse.c		\
++	$(KDRIVE_HW_SOURCES)
++
++libphoenix_a_DEPENDENCIES = \
++	keyboard.c	\
++	phoenix.c		\
++	mouse.c
+diff -ruN a/kdrive/phoenix/mouse.c b/kdrive/phoenix/mouse.c
+--- a/kdrive/phoenix/mouse.c	2024-07-18 09:24:38.856484124 +0200
++++ b/kdrive/phoenix/mouse.c	2024-07-18 09:24:38.839485490 +0200
+@@ -937,7 +937,7 @@
+ 	}
+ }
+ 
+-const KdMouseFuncs LinuxMouseFuncs = {
++const KdMouseFuncs PhoenixMouseFuncs = {
+ 	MouseInit,
+ 	MouseFini,
+ };
+diff -ruN a/kdrive/phoenix/phoenix.c b/kdrive/phoenix/phoenix.c
+--- a/kdrive/phoenix/phoenix.c	1970-01-01 01:00:00.000000000 +0100
++++ b/kdrive/phoenix/phoenix.c	2024-08-02 10:34:26.855386674 +0200
+@@ -0,0 +1,45 @@
++#ifdef HAVE_CONFIG_H
++#include <kdrive-config.h>
++#endif
++#include "kdrive.h"
++#include <errno.h>
++#include <signal.h>
++#include <sys/stat.h>
++#include <sys/ioctl.h>
++#include <X11/keysym.h>
++
++static int PhoenixInit(void)
++{
++	return 1;
++}
++
++static void PhoenixEnable(void)
++{
++}
++
++static Bool PhoenixSpecialKey(KeySym sym)
++{
++  return FALSE;
++}
++
++static void PhoenixDisable(void)
++{
++}
++
++static void PhoenixFini(void)
++{
++}
++
++static const KdOsFuncs PhoenixFuncs = {
++	PhoenixInit,
++	PhoenixEnable,
++	PhoenixSpecialKey,
++	PhoenixDisable,
++	PhoenixFini,
++	0
++};
++
++void OsVendorInit(void)
++{
++	KdOsInit(&PhoenixFuncs);
++}
+diff -ruN a/kdrive/src/kdrive.h b/kdrive/src/kdrive.h
+--- a/kdrive/src/kdrive.h	2022-11-07 07:44:53.000000000 +0100
++++ b/kdrive/src/kdrive.h	2024-08-02 10:34:26.852387092 +0200
+@@ -381,8 +381,8 @@
+ 
+ void ProcessInputEvents(void);
+ 
+-extern const KdMouseFuncs LinuxMouseFuncs;
+-extern const KdKeyboardFuncs LinuxKeyboardFuncs;
++extern const KdMouseFuncs PhoenixMouseFuncs;
++extern const KdKeyboardFuncs PhoenixKeyboardFuncs;
+ 
+ /* kmap.c */
+ 
+diff -ruN a/kdrive/src/kinput.c b/kdrive/src/kinput.c
+--- a/kdrive/src/kinput.c	2022-11-07 07:44:53.000000000 +0100
++++ b/kdrive/src/kinput.c	2024-08-02 10:34:26.852387092 +0200
+@@ -145,6 +145,12 @@
+ 
+ static int kdnFds;
+ 
++#ifdef __phoenix__
++/* FASYNC/O_ASYNC is Linux/BSD specific, ignore it */
++#define FASYNC 0
++#define FNDELAY O_NDELAY
++#endif
++
+ #ifdef FNONBLOCK
+ #define NOBLOCK FNONBLOCK
+ #else
