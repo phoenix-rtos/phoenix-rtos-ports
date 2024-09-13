@@ -51,21 +51,38 @@ export CFLAGS_EXTRA="${CFLAGS}"
 export LDFLAGS=""
 export CFLAGS=""
 
+
 #
-# Run configuration script
+# Prepare configuration options
 # 
-CFG_OPT="--host=arm-linux --enable-pic --enable-static "   # mimic linux platform, enable position independent code, and generate libx264.a
-CFG_OPT+="--disable-avs --disable-lavf  --disable-opencl " # these options force dynamic linking, thus they're disabled.
+if [ "${TARGET_FAMILY}" = "armv7a9" ]; then
+	CFG_OPT=("--host=arm-linux")
+	export AS=$CC
+elif [ "${TARGET_FAMILY}" = "ia32" ]; then
+	# Assembly optimization for i386 platform is done using nasm and is not compatible with our toolchain
+	CFG_OPT=("--host=i386-linux" "--disable-asm")
+else
+	CFG_OPT=("--host=arm-linux" "--disable-asm")
+	b_log "Warning! Phoenix-RTOS for ${TARGET_FAMILY} does not support x264 compilation (yet!)"
+	b_log "The compilation attempt as for arm-linux will start in 5 seconds..."
+	sleep 5
+fi
+
+# mimic linux platform, enable position independent code, and generate libx264.a
+# avs, lavf and opencl force dynamic linking, thus they're disabled.
+CFG_OPT+=("--enable-pic" "--enable-static")   
+CFG_OPT+=("--disable-avs" "--disable-lavf"  "--disable-opencl") 
 
 #TODO: rewrite parts of x264/common/cpu.c to support Phoenix-RTOS multithreading
 # x264 implementation uses GNU specific processor counting method for multithreading.
 # Remove this flag and see where compilation stops to start working on it.
-CFG_OPT+="--disable-thread " 
+CFG_OPT+=("--disable-thread") 
 
-# TODO: enable platform specific assembly optimization code 
-# asm optimization code generation causes build script to silent-crash. This was not investigated in-depth.
-CFG_OPT+="--disable-asm "
-(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" $CFG_OPT)
+
+#
+# Run configuration script
+# 
+(cd "$PREFIX_X264_BUILD" && ./configure --extra-cflags="$CFLAGS_EXTRA" --extra-ldflags="$LDFLAGS_EXTRA" --cross-prefix="$CROSS" --sysroot="$PREFIX_BUILD/sysroot/" "${CFG_OPT[@]}")
 
 #
 # Build and install x264 binary
