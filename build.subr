@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+#
+# Shell script for building Phoenix-RTOS ports
+#
+# Common functions
+#
+# Copyright 2024 Phoenix Systems
+# Author: Daniel Sawka
+#
+
+# b_port_download(baseurl, filename, [url_filename])
+b_port_download() {
+	local baseurl="$1"
+	local filename="$2"
+	local url_filename="${3:-$filename}"
+
+	if [ ! -f "${PREFIX_PORT}/${filename}" ]; then
+		if ! wget "${baseurl}${url_filename}" -O "${PREFIX_PORT}/${filename}.part" --no-check-certificate; then
+			wget "${PORTS_MIRROR_BASEURL}${filename}" -O "${PREFIX_PORT}/${filename}.part" --no-check-certificate
+		fi
+
+		if [ -f "${PREFIX_PORT}/checksums.sha256" ]; then
+			while read -r line; do
+				local expected_checksum="${line%% *}"
+				local line_file="${line#*\*}" # shasum binary mode (*) expected
+
+				if [ -n "${expected_checksum}" ] && [ "${line_file}" = "${filename}" ]; then
+					local actual_checksum="$(shasum -b -a 256 "${PREFIX_PORT}/${filename}.part")"
+					actual_checksum="${actual_checksum%% *}"
+
+					if [ "${expected_checksum}" = "${actual_checksum}" ]; then
+						echo "Checksum OK for \"${filename}\""
+					else
+						b_die "Checksum INVALID for \"${filename}\": expected \"${expected_checksum}\", got \"${actual_checksum}\""
+					fi
+				fi
+			done < "${PREFIX_PORT}/checksums.sha256"
+		fi
+
+		mv -f "${PREFIX_PORT}/${filename}.part" "${PREFIX_PORT}/${filename}"
+	fi
+}
+
+# b_port_apply_patches(srcdir, [patch_subdir])
+b_port_apply_patches() {
+	local srcdir="$1"
+	local patch_subdir="${2:-.}"
+
+	local patch_dir="${PREFIX_PORT}/patches/${patch_subdir}"
+	local marker_dir="${PREFIX_PORT_BUILD}/markers/${patch_subdir}"
+	if [ -d "${patch_dir}" ]; then
+		mkdir -p "${marker_dir}"
+	fi
+
+	# Restores the initial value of nullglob option upon function return
+	trap "$(shopt -p nullglob)" RETURN
+	shopt -s nullglob
+
+	for patchfile in "${patch_dir}"/*.patch; do
+		if [ ! -f "${marker_dir}/$(basename "${patchfile}").applied" ]; then
+			echo "applying patch: ${patchfile}"
+			patch -d "${srcdir}" -p1 < "${patchfile}"
+			touch "${marker_dir}/$(basename "${patchfile}").applied"
+		fi
+	done
+}
+
+export -f b_port_download b_port_apply_patches

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+COREMQTT_VERSION="2.3.0"
+COREMQTT="coreMQTT-${COREMQTT_VERSION}"
+PKG_URL="https://github.com/FreeRTOS/coreMQTT/archive/refs/tags/"
+
+b_log "Building coreMQTT"
+PREFIX_COREMQTT="${PREFIX_PROJECT}/phoenix-rtos-ports/coreMQTT"
+PREFIX_COREMQTT_BUILD="${PREFIX_BUILD}/coreMQTT"
+PREFIX_COREMQTT_SRC="${PREFIX_COREMQTT_BUILD}/${COREMQTT}/source"
+PREFIX_COREMQTT_INSTALL="${PREFIX_COREMQTT_BUILD}/install"
+
+mkdir -p "${PREFIX_COREMQTT_BUILD}" "${PREFIX_COREMQTT_INSTALL}"
+
+b_port_download "${PKG_URL}" "v${COREMQTT_VERSION}.tar.gz"
+
+[ -d "${PREFIX_COREMQTT_SRC}" ] || tar zxf "${PREFIX_COREMQTT}/v${COREMQTT_VERSION}.tar.gz" -C "$PREFIX_COREMQTT_BUILD"
+
+cp -a "${PREFIX_COREMQTT}/CMakeLists.txt" "${PREFIX_COREMQTT_BUILD}/CMakeLists.txt"
+
+cmake -S "${PREFIX_COREMQTT_BUILD}" -B "${PREFIX_COREMQTT_BUILD}"
+make -C "${PREFIX_COREMQTT_BUILD}" -j 9
+
+cmake --install "$PREFIX_COREMQTT_BUILD" --prefix "$PREFIX_BUILD"
