@@ -2,8 +2,8 @@
 #
 # Shell script for building Phoenix-RTOS ports
 #
-# Copyright 2019 Phoenix Systems
-# Author: Pawel Pisarczyk
+# Copyright 2019, 2024 Phoenix Systems
+# Author: Pawel Pisarczyk, Daniel Sawka
 #
 
 set -e
@@ -29,6 +29,7 @@ LDFLAGS="$EXPORT_LDFLAGS"
 STRIP="$EXPORT_STRIP"
 export CFLAGS LDFLAGS STRIP
 
+export PORTS_MIRROR_BASEURL="https://files.phoesys.com/ports/"
 
 if [ -n "$PORTS_INSTALL_STRIPPED" ] && [ "$PORTS_INSTALL_STRIPPED" = "n" ]; then
 	export PREFIX_PORTS_INSTALL="$PREFIX_PROG"
@@ -36,46 +37,47 @@ else
 	export PREFIX_PORTS_INSTALL="$PREFIX_PROG_STRIPPED"
 fi
 
-[ "${PORTS_MBEDTLS}" = "y" ] && ./phoenix-rtos-ports/mbedtls/build.sh
+# List of directories with ports. Built in this order
+ports=(
+	"mbedtls"
+	"busybox"
+	"pcre"
+	"openssl"
+	"zlib"
+	"lighttpd"
+	"dropbear"
+	"lua"
+	"lzo"
+	"openvpn"
+	"curl"
+	"jansson"
+	"micropython"
+	"sscep"
+	"wpa_supplicant"
+	"libevent"
+	"openiked"
+	"azure_sdk"
+	"picocom"
+	"fs_mark"
+	"coremark"
+)
 
-[ "${PORTS_BUSYBOX}" = "y" ] && ./phoenix-rtos-ports/busybox/build.sh
 
-[ "${PORTS_PCRE}" = "y" ] && ./phoenix-rtos-ports/pcre/build.sh
+for port in "${ports[@]}"; do
+(
+	port_env_name="PORTS_${port^^}"
+	if [ "${!port_env_name}" = "y" ]; then
+		export PREFIX_PORT="${PREFIX_PROJECT}/phoenix-rtos-ports/${port}"
+		# TODO: Maybe "${PREFIX_BUILD}/ports/${port}" to avoid any potential name clashes?
+		export PREFIX_PORT_BUILD="${PREFIX_BUILD}/${port}"
 
-[ "${PORTS_OPENSSL}" = "y" ] && ./phoenix-rtos-ports/openssl/build.sh
+		source "${PREFIX_PROJECT}/phoenix-rtos-ports/build.subr"
 
-[ "${PORTS_ZLIB}" = "y" ] && ./phoenix-rtos-ports/zlib/build.sh
-
-[ "${PORTS_LIGHTTPD}" = "y" ] && ./phoenix-rtos-ports/lighttpd/build.sh
-
-[ "${PORTS_DROPBEAR}" = "y" ] && ./phoenix-rtos-ports/dropbear/build.sh
-
-[ "${PORTS_LUA}" = "y" ] && ./phoenix-rtos-ports/lua/build.sh
-
-[ "${PORTS_LZO}" = "y" ] && ./phoenix-rtos-ports/lzo/build.sh
-
-[ "${PORTS_OPENVPN}" = "y" ] && ./phoenix-rtos-ports/openvpn/build.sh
-
-[ "${PORTS_CURL}" = "y" ] && ./phoenix-rtos-ports/curl/build.sh
-
-[ "${PORTS_JANSSON}" = "y" ] && ./phoenix-rtos-ports/jansson/build.sh
-
-[ "${PORTS_MICROPYTHON}" = "y" ] && ./phoenix-rtos-ports/micropython/build.sh
-
-[ "${PORTS_SSCEP}" = "y" ] && ./phoenix-rtos-ports/sscep/build.sh
-
-[ "${PORTS_WPA_SUPPLICANT}" = "y" ] && ./phoenix-rtos-ports/wpa_supplicant/build.sh
-
-[ "${PORTS_LIBEVENT}" = "y" ] && ./phoenix-rtos-ports/libevent/build.sh
-
-[ "${PORTS_OPENIKED}" = "y" ] && ./phoenix-rtos-ports/openiked/build.sh
-
-[ "${PORTS_AZURE_SDK}" = "y" ] && ./phoenix-rtos-ports/azure_sdk/build.sh
-
-[ "${PORTS_PICOCOM}" = "y" ] && ./phoenix-rtos-ports/picocom/build.sh
-
-[ "${PORTS_FS_MARK}" = "y" ] && ./phoenix-rtos-ports/fs_mark/build.sh
-
-[ "${PORTS_COREMARK}" = "y" ] && ./phoenix-rtos-ports/coremark/build.sh
+		b_log "Building ${port}"
+		mkdir -p "${PREFIX_PORT_BUILD}"
+		./phoenix-rtos-ports/"${port}"/build.sh
+	fi
+)
+done
 
 exit 0
