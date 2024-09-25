@@ -42,7 +42,8 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	CONFIGFILE=$(find "${PREFIX_ROOTFS:?PREFIX_ROOTFS not set!}/etc" -name "lighttpd.conf")
 	grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_LIGHTTPD_SRC"/src/plugin-static.h
 
-	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
+	# FIXME: -Wno-error=implicit-function-declaration as lighthttp for some reason doesn't include arpa/inet.h when ntohs is used.
+	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX -Wno-error=implicit-function-declaration"
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
 	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \

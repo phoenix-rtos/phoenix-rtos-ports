@@ -38,7 +38,8 @@ done
 export phoenix=1
 
 # Build mbedtls without tests
-(cd "${PREFIX_PORT_BUILD}/${MBEDTLS}" && make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR")
+# FIXME: -Wno-error=incompatible-pointer-types is needed as mbedtls doesn't recognise phoenix definition of socklen_t
+(cd "${PREFIX_PORT_BUILD}/${MBEDTLS}" && make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR" CFLAGS="-Wno-error=incompatible-pointer-types")
 
 # Build and install tests if needed
 if [ "${LONG_TEST}" = "y" ]; then
