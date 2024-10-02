@@ -44,7 +44,7 @@ export phoenix=1
 if [ "${LONG_TEST}" = "y" ]; then
 	(cd "${PREFIX_PORT_BUILD}/${MBEDTLS}" && make tests)
 
-	mkdir -p "${PREFIX_FS}/root/mbedtls_test_configs/"
+	mkdir -p "${PREFIX_ROOTFS}/mbedtls_test_configs/"
 
 	for file in "${PREFIX_MBEDTLS_TESTS}"/*; do
 		# Each .datax file is related to a test with the same name
@@ -53,13 +53,16 @@ if [ "${LONG_TEST}" = "y" ]; then
 			test_executable=${config_filename::-6}
 			# test_suite_asn1parse have cases that assume `long` type is 64bit long, which isn't True for some Phoenix-RTOS targets
 			if ! [ "${test_executable}" = "test_suite_asn1parse" ]; then
-				cp "${file}" "${PREFIX_FS}/root/mbedtls_test_configs/"
-				b_install "${PREFIX_MBEDTLS_TESTS}/${test_executable}" /bin/
+				cp -a "${file}" "${PREFIX_ROOTFS}/mbedtls_test_configs/"
+				# use intermediate dir for stripped binaries to use b_install
+				$STRIP -o "${PREFIX_MBEDTLS_DESTDIR}/bin/${test_executable}" "$PREFIX_MBEDTLS_TESTS/${test_executable}"
+				b_install "${PREFIX_MBEDTLS_DESTDIR}/bin/${test_executable}" /bin/
+
 			fi
 		fi
 	done
 	# Files required for some tests
-	cp -r "${PREFIX_MBEDTLS_SRC}/tests/data_files" "${PREFIX_FS}/root/"
+	cp -ar "${PREFIX_MBEDTLS_SRC}/tests/data_files" "${PREFIX_ROOTFS}"
 fi
 
 # Copy built libraries and mbedtls header files to `lib` and `include` dirs
