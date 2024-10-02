@@ -8,6 +8,9 @@
 
 set -e
 
+# unset phoenix-rtos DEBUG variable as it changes how ports are compiled
+unset DEBUG
+
 if [ "$TARGET_FAMILY" = "ia32" ]; then
 	HOST_TARGET="i386"
 	HOST="i386-pc-phoenix"
