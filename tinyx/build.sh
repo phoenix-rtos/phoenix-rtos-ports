@@ -295,6 +295,46 @@ build_suckless() {
 }
 
 
+build_xbill() {
+  appname="xbill"
+  version="2.1"
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${appname}-${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "http://www.xbill.org/download/" "${archive_filename}"
+
+  if should_reconfigure "${appname}/${version}"; then
+    extract_sources
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure --datadir="/usr/share/"
+    fi
+
+    # FIXME: this is brutal, see build_tinyx note
+    sedexpr='s/ -lXaw/ -l:libXaw.a/g;s/ -lXt/ -l:libXt.a/g;'
+    sedexpr+='s/ -lX11/ -l:libXmu.a -l:libXext.a -l:libSM.a -l:libICE.a -l:libXdmcp.a -l:libXpm.a -l:libX11.a/g;'
+    sedexpr+='s/ -lXmuu/ -l:libXmuu.a -l:libXcursor.a -l:libXrender.a/g;s/ -lXcursor//g'
+
+    find . -name 'Makefile' -print0 | xargs -0 sed -i "${sedexpr}"
+
+    mark_as_configured "${appname}/${version}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}"
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/${appname}" "${PREFIX_PORT_SRC}/${appname}"
+
+  b_install "${PREFIX_PORT_SRC}/pixmaps"/* /usr/share/xbill/pixmaps/
+  b_install "${PREFIX_PORT_SRC}/bitmaps"/* /usr/share/xbill/bitmaps/
+  b_install "${PREFIX_PORTS_INSTALL}/${appname}" /usr/bin
+}
+
+
 # Build xlib and xserver (call ordering is important here)
 
 build_tinyxlib
@@ -319,5 +359,9 @@ build_x11_app   xsetroot    1.1.1
 build_x11_app   xinit       1.3.3
 build_x11_app   xrdb        1.2.2
 build_x11_app   xgc         1.0.6
+
+# Fun stuff
+
+build_xbill
 
 rm -rf "$TMP_DIR"
