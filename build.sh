@@ -83,4 +83,8 @@ for port in "${ports[@]}"; do
 )
 done
 
+[ "${PORTS_LSB_VSX}" = "y" ] && ./phoenix-rtos-ports/lsb_vsx/build.sh
+
+
+
 exit 0

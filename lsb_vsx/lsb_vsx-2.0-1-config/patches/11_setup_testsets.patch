@@ -1,0 +1,263 @@
+--- lsb_vsx_cp2/test_sets/setup_testsets.sh	2023-03-07 11:54:08.364161127 +0100
++++ lsb_vsx_cp/test_sets/setup_testsets.sh	2023-06-22 20:39:07.375329097 +0200
+@@ -51,49 +51,11 @@
+ 
+ INSTDIR=${TET_ROOT}/test_sets
+ PATH=$PATH:$INSTDIR/BIN
+-TOOLDIR=${TET_ROOT}/LSB.tools
+-export PATH TOOLDIR
+ VSXDIR="$HOME/SRC"
+ CURDIR=$VSXDIR
+ 
+ TESTSET_SCRIPT_DIR=${INSTDIR}/scripts
+ 
+-# Maybe need?
+-# DEFAULT=linux
+-
+-######################################################################
+-# Useful functions
+-
+-# Run testset specific config scripts
+-run_testset_config_script()
+-{
+-  # Test argument count
+-  if test $# -lt 1 
+-  then
+-    echo "$func_name: Missing argument"; return 1 # unresolved
+-  fi
+-
+-  for i in scripts/*; do
+-    if [ -x $i/$1.sh ]; 
+-      then $i/$1.sh $2;
+-      if [ $? -ne 0 ]; then
+-        echo "Aborting installation"
+-	exit 1
+-      fi
+-    fi;
+-  done;
+-}
+-
+-#####################################################################
+-# Common setup & checks
+-cat - <<!EOF
+-**********************************************************
+-**		   Verification Suite			**
+-**	Configuration Procedure for Linux		**
+-**********************************************************
+-!EOF
+-
+-# 
+ cd $INSTDIR
+ 
+ # Check VSX exists in the correct place
+@@ -103,92 +65,98 @@
+         exit 1
+ fi
+ 
+-# Locate extra header file include needed
+-printf "Locating header file #include directories...\n"
+-printf "Calling: gcc -print-file-name=include/stddef.h\n"
+-STDDEF=`gcc -print-file-name="include/stddef.h"`
+-if [  $? -eq 0 ]
+-then 
+-    INCDIR=`dirname $STDDEF`
+-    printf "INCDIRS=\"$INCDIR /usr/include\"\n"
+-#    printf "INCDIRS=\"$INCDIR /usr/include\"\n" >>SRC/vsxparams
+-# for vsthlite we need to find ndbm.h
+-    printf "INCDIRS=\"$INCDIR /usr/include/gdbm /usr/include\"\n" >>SRC/vsxparams
+-else
+-    printf "Defaulting to /usr/include\n"
+-fi
+-
+-# Set the default to be UNIX98 mode
+-echo "TEST_MODE=\"UNIX98\"" >> SRC/vsxparams
+-# for vsthlite we need to find ndbm.h
+-echo "COPTS=\"-ansi -I/usr/include/gdbm\"" >> SRC/vsxparams
+-
+-#----------------------------------------------------------------------
+-# Cleanup
+-# Create/Clean lock areas
+-if test ! -d "scripts/locks"
+-then
+-    mkdir scripts/locks
+-else
+-    rm -f scripts/locks/*
+-fi
+-
+-#---------------------------------------------------------------------
+-# Pre Configure testset scripts
+-run_testset_config_script pre-config
+-
+-######################################################################
+-# Run config script
+-printf "Run config.sh ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-	config.sh
+-fi
+-printf "\n----------------------------------------------------------\n"
+-
+-# Common cleanup needed
+-# Fixup NSIG to _NSIG which common to all Linux's (and CLK_TCK)
+-sed -e 's/NSIG	(-1)/NSIG	(_NSIG)/' -e 's/#define	CLK_TCK	(-1)//' -e '/symbol matching/d' SRC/vsxconfig.h >SRC/vsxconfig.h.new
+-mv SRC/vsxconfig.h.new SRC/vsxconfig.h
+-
+-# Update userint.c file
+-echo "Updating userintf.c to support features needed by all of the"
+-echo "test suites supported."
+-cp $TOOLDIR/userintf.c SRC/userintf.c
+-
+-#---------------------------------------------------------------------
+-# Post Configure testset scripts
+-run_testset_config_script post-config
++cp $PREFIX_LSB_VSX/lsb_vsx-2.0-1-config/files/vsxparams.mk $INSTDIR/SRC/vsxparams
++echo "\nDetermining missing #defines and #includes ...\n"
++TGTDIR="$VSXDIR"
++export PATH INCDIRS TGTDIR
++$VSXDIR/install/scripts/incrpt.sh -c
++
++if [ "$PLATFORM" = "HOST" ] ; then
++  # Fixup NSIG to _NSIG which common to all Linux's
++  sed -e 's/NSIG	(-1)/NSIG	(_NSIG)/' -e 's/#define	CLK_TCK	(-1)//' -e '/symbol matching/d' SRC/vsxconfig.h >SRC/vsxconfig.h.new
++  mv SRC/vsxconfig.h.new SRC/vsxconfig.h
++fi
++
++ulist=$VSXDIR/common/vport/userintf.top
++for subset in $SUBSETS
++do
++	INSTALL_USERINTF=""
++	. $VSXDIR/subsets/$subset/install_info
++	for i in $INSTALL_USERINTF
++	do
++		case " $ulist " in
++		*" $i "*) ;; # already in list
++		*) ulist="$ulist $i" ;;
++		esac
++	done
++done
++( cd $VSXDIR/install/userintf && cat $ulist ) > "$TGTDIR"/userintf.c
++
++# create the install_info file (contents are mode-dependent)
++
++# INSTALL_LIBS="tsetlib"
++# INSTALL_USERINTF="gen_mnt gen_termios gen_newroot gen_setlimit gen_pathres"
++# INSTALL_USERINTF="$INSTALL_USERINTF base_setgrps base_cputime"
++# INSTALL_USER_TARGETS="dirgid filldisc"
++
++# case $TEST_XNFS:$TEST_MODE in
++# [yY]:*)
++#   INSTALL_LIBS="tsetlib xnfslib"
++#   INSTALL_UTILS=""
++#   INSTALL_USER_TARGETS=""
++#   INSTALL_USERINTF="gen_nfsmnt gen_newroot gen_setlimit gen_pathres base_setgrps"
++#   ;;
++# *:POSIX*)
++#   INSTALL_UTILS="drivers"
++#   INSTALL_USER_TARGETS="filldisc"
++#   ;;
++# *:FIPS*)
++#   INSTALL_UTILS="drivers"
++#   ;;
++# *:XPG3)
++#   INSTALL_UTILS="drivers purefile"
++#   INSTALL_USER_TARGETS="filldisc"
++#   ;;
++# *:XPG4)
++#   INSTALL_UTILS="drivers purefile wchars"
++#   INSTALL_USERINTF="$INSTALL_USERINTF base_ftok"
++#   ;;
++# *:*) # UNIX98 and later - non XNFS
++#   INSTALL_UTILS="drivers purefile wchars"
++#   ;;
++# esac
++
++echo > "$VSXDIR"/subsets/base/install_info \
++"INSTALL_LIBS=\"$INSTALL_LIBS\"
++INSTALL_UTILS=\"$INSTALL_UTILS\"
++INSTALL_USER_TARGETS=\"$INSTALL_USER_TARGETS\"
++INSTALL_FIXED_TARGETS=\"\"
++INSTALL_USERINTF=\"$INSTALL_USERINTF\"
++"
+ 
+ ######################################################################
+ # Build the test framework
+-cd $INSTDIR
+-
+ printf "\n\n----------------------------------------------------------\n"
+-printf "Building the test framework ... enter the root password\n"
+-su root -c make
++printf "Building the test framework"
++
++HOME=`pwd` BIN/install.sh
++
+ if [ $? -ne 0 ]; then
+   echo "Test framework compilation failed. Aborting"
+   exit 1
+ fi
+ printf "\n----------------------------------------------------------\n"
+ 
+-# Load current vsxgen parameters
+-. $CURDIR/vsxparams
+-
+-export VSXDIR TEST_MODE TEST_XNFS SUBSETS INCDIRS CC COPTS THR_COPTS
+-export DEFINES LDFLAGS SYSLIBS CURDIR PATH TET_EXECUTE NOSPC_DEV
+-export VSX_OPER VSX_ORG VSX_SYS
+-
+-#---------------------------------------------------------------------
+-# Post build tetset scripts
+-run_testset_config_script post-build
++if [ "$PLATFORM" = "PHOENIX-RTOS" ] ; then
++  # Load current vsxgen parameters
++  . $CURDIR/vsxparams
++
++  export VSXDIR TEST_MODE TEST_XNFS SUBSETS INCDIRS CC COPTS THR_COPTS
++  export DEFINES LDFLAGS SYSLIBS CURDIR PATH TET_EXECUTE NOSPC_DEV
++  export VSX_OPER VSX_ORG VSX_SYS
+ 
+-######################################################################
+-# Parameterisation
+-printf "Install tetexec.cfg ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++  ######################################################################
++  # Parameterisation
+ 
+   echo "Parameterizing the $TET_EXECUTE/tetexec.cfg file"
+ 
+@@ -203,27 +171,18 @@
+   echo "VSX_CFLAGS=\"$COPTS\"" >> .newparams
+   echo "VSX_LIBS=\"$MLIB $SYSLIBS $LDFLAGS\"" >> .newparams
+ 
+-#---------------------------------------------------------------------
+-# Test set specific parameterisations
+-  run_testset_config_script parameterisations .newparams
+-
+-######################################################################
+-# Finish parameterisation
+-  cp  $TET_EXECUTE/tetexec.cfg $TET_EXECUTE/tetexec.cfg.old
++  #---------------------------------------------------------------------
++  # Test set specific parameterisations
++  $INSTDIR/scripts/vsx-pcts/parameterisations.sh .newparams
++
++  ######################################################################
++  # Finish parameterisation
++  cp $TET_EXECUTE/tetexec.cfg $TET_EXECUTE/tetexec.cfg.old
+   cat $TET_EXECUTE/tetexec.cfg.old|$VSXDIR/install/scripts/editcfg.sh .newparams > $TET_EXECUTE/tetexec.cfg
+   rm -f .newparams
+ 
+-fi
+-
+-######################################################################
+-# Build & Execute testsets
+-printf "Build and Execute testsets ..? [y]"
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
++  ######################################################################
++  # Build & Execute testsets
+   sh run_testsets.sh
+ fi
+ 
+-echo 
+-echo "In order to re run the test suites at a later date run the"
+-echo "rerun_tests program in vsx0's home directory as the vsx0 user"
+-echo

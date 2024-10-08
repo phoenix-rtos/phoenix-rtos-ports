@@ -1,0 +1,33 @@
+--- lsb_vsx_cp2/src/defines.mk	2023-03-07 11:54:08.344141538 +0100
++++ lsb_vsx_cp/src/defines.mk	2023-06-27 17:21:12.861230811 +0200
+@@ -88,10 +88,10 @@
+ DTET_CDEFS = -DINETD
+ 
+ # CC - the name of the C compiler
+-CC = gcc
++CC ?= gcc
+ #
+ # LD_R - the program that performs partial linking
+-LD_R = ld -r
++LD_R = $(LD) -r
+ #
+ # CDEFS and COPTS - options that are always passed to cc when compiling
+ # program and "ordinary" library files
+@@ -153,7 +153,7 @@
+ # Set SHLIB_COPTS to SHLIB_NOT_SUPPORTED if shared libraries are not supported
+ # on your system or if you don't want to build the shared versions of the
+ # API libraries.
+-SHLIB_COPTS = -fPIC
++SHLIB_COPTS = SHLIB_NOT_SUPPORTED
+ #
+ # SHLIB_CC names the compiler that is used when generating the object files
+ # that are to be put in a shared library.
+@@ -179,7 +179,7 @@
+ #
+ # C_PLUS - the name of the C++ compiler
+ # To disable C++ support, set C_PLUS = CPLUSPLUS_NOT_SUPPORTED.
+-C_PLUS = g++
++C_PLUS = CPLUSPLUS_NOT_SUPPORTED
+ # C_SUFFIX - suffix for C++ source files
+ # (without an initial dot; e.g: C, cpp etc.)
+ C_SUFFIX = C
