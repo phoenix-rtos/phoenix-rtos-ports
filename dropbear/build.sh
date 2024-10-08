@@ -42,7 +42,8 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	ENABLE_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && ENABLE_ZLIB="yes"
 	export OLDCFLAGS="-v"  # HACKISH: fix ./configure script not detecting externally-provided CFLAGS
 
-	( cd "${PREFIX_PORT_BUILD}" && "${PREFIX_DROPBEAR_SRC}/configure" CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS}" \
+	# FIXME: -Wno-error=incompatible-pointer-types needed as dropbear uses uint* instead of enum* in cli-kex.c:117.
+	( cd "${PREFIX_PORT_BUILD}" && "${PREFIX_DROPBEAR_SRC}/configure" CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS} -Wno-error=incompatible-pointer-types" \
 		LDFLAGS="${CFLAGS} ${LDFLAGS} ${DROPBEAR_LDFLAGS}" ARFLAGS="-r" \
 		--host="${HOST}" --includedir="${PREFIX_H}"  \
 		--prefix="${PREFIX_PROG}" --program-prefix="${PREFIX_PROG}" --libdir="${PREFIX_A}" --bindir="${PREFIX_PROG}" --enable-zlib="$ENABLE_ZLIB" --enable-static \
