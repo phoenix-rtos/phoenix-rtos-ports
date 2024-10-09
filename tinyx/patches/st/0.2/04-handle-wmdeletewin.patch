@@ -1,0 +1,59 @@
+diff -ruN a/st.c b/st.c
+--- a/st.c	2024-09-02 10:01:36.967676919 +0200
++++ b/st.c	2024-10-07 16:14:10.351915872 +0200
+@@ -134,7 +134,7 @@
+ 	Colormap cmap;
+ 	Window win;
+ 	Pixmap buf;
+-	Atom xembed;
++	Atom xembed, wmdeletewin;
+ 	XIM xim;
+ 	XIC xic;
+ 	int scr;
+@@ -219,6 +219,7 @@
+ static void ttyread(void);
+ static void ttyresize(int, int);
+ static void ttywrite(const char *, size_t);
++static void ttyhangup(void);
+ 
+ static void xdraws(char *, Glyph, int, int, int, int);
+ static void xhints(void);
+@@ -772,6 +773,13 @@
+ 	w.ws_xpixel = w.ws_ypixel = 0;
+ 	if(ioctl(cmdfd, TIOCSWINSZ, &w) < 0)
+ 		fprintf(stderr, "Couldn't set window size: %s\n", SERRNO);
++}
++
++void
++ttyhangup(void)
++{
++	/* Send SIGHUP to shell */
++	kill(pid, SIGHUP);
+ }
+ 
+ void
+@@ -1779,6 +1787,8 @@
+ 		&(XColor){.red = 0x0000, .green = 0x0000, .blue = 0x0000});
+ 
+ 	xw.xembed = XInternAtom(xw.dpy, "_XEMBED", False);
++	xw.wmdeletewin = XInternAtom(xw.dpy, "WM_DELETE_WINDOW", False);
++ XSetWMProtocols(xw.dpy, xw.win, &xw.wmdeletewin, 1);
+ 
+ 	XStoreName(xw.dpy, xw.win, opt_title ? opt_title : "st");
+ 	XMapWindow(xw.dpy, xw.win);
+@@ -2060,11 +2070,14 @@
+ 			xw.state &= ~WIN_FOCUSED;
+ 		}
+ 		draw();
+-	}
++	} else if (e->xclient.data.l[0] == xw.wmdeletewin) {
++    ttyhangup();
++    exit(0);
++  }
+ }
+ 
+ void
+ resize(XEvent *e) {
+ 	int col, row;
+ 	
+ 	if(e->xconfigure.width == xw.w && e->xconfigure.height == xw.h)

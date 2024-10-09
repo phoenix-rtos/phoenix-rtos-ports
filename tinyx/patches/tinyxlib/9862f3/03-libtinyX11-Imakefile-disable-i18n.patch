@@ -1,0 +1,61 @@
+diff -ruN a/libtinyX11/Imakefile b/libtinyX11/Imakefile
+--- a/libtinyX11/Imakefile	2024-10-07 10:28:11.915322364 +0200
++++ b/libtinyX11/Imakefile	2024-10-07 13:07:15.859526298 +0200
+@@ -34,7 +34,7 @@
+ #define IncSubdir X11
+ 
+ #if BuildLoadableXlibI18n
+-SUBDIRS = xlibi18n
++# SUBDIRS = xlibi18n
+ #endif
+ 
+ #include <Threads.tmpl>
+@@ -47,7 +47,7 @@
+ REQUIREDX11LIBS = SharedX11Reqs
+ #endif
+ #if BuildLoadableXlibI18n
+-REQUIREDI18NLIBS = DlLibrary
++# REQUIREDI18NLIBS = DlLibrary
+ #endif
+ #ifdef cygwinArchitecture
+ EXCLUDE_SYMBOL = -Wl,--exclude-symbol,XdmcpWrap:_XdmcpWrapperToOddParity
+@@ -151,7 +151,7 @@
+        LINTLIBS =
+ 
+ #if BuildLoadableXlibI18n && DoSharedLib
+-EXTRASHAREDSRC = $(SHAREDLCSRCS)
++# EXTRASHAREDSRC = $(SHAREDLCSRCS)
+ #endif
+ #if !BuildLoadableXlibI18n || DoNormalLib
+ EXTRASTATICSRC = $(STATICLCSRCS)
+@@ -833,7 +833,7 @@
+ 	$(XKBOBJS) $(LCOBJS) $(MISCOBJS)
+ 
+ #if BuildLoadableXlibI18n
+-LC_DYNDEFINES = -DUSE_DYNAMIC_LC
++# LC_DYNDEFINES = -DUSE_DYNAMIC_LC
+ #endif
+ 
+ SHAREDLCDEPSYMSRCS = XlcDL.c XlcSL.c
+@@ -1000,7 +1000,7 @@
+ EXTRAUNSHAREDOBJS = $(STATICLCOBJS)
+ 
+ #if BuildLoadableXlibI18n
+-EXTRASHAREDOBJS = $(SHAREDLCOBJS)
++# EXTRASHAREDOBJS = $(SHAREDLCOBJS)
+ # else
+ EXTRASHAREDOBJS = $(STATICLCOBJS)
+ #endif
+@@ -1036,9 +1036,9 @@
+ SpecialCLibObjectRule(k5encode,$(_NOOP_),$(K5INCL))
+ #endif
+ #if BuildLoadableXlibI18n
+-SpecialCLibObjectRuleSeparateOpts(lcInit,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
+-SpecialCLibObjectRuleSeparateOpts(lcGeneric,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
+-SpecialCLibObjectRuleSeparateOpts(lcPublic,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
++# SpecialCLibObjectRuleSeparateOpts(lcInit,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
++# SpecialCLibObjectRuleSeparateOpts(lcGeneric,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
++# SpecialCLibObjectRuleSeparateOpts(lcPublic,$(ICONFIGFILES),$(_NOOP_),$(LC_DYNDEFINES))
+ #endif
+ #if BuildLoadableXlibXcursor
+ SpecialCLibObjectRuleSeparateOpts(CrCursor,$(ICONFIGFILES),$(_NOOP_),$(XCURSOR_DEFINES))

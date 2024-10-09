@@ -1,0 +1,119 @@
+diff -ruN a/libXcursor/Makefile b/libXcursor/Makefile
+--- a/libXcursor/Makefile	2024-08-26 13:20:10.616454141 +0200
++++ b/libXcursor/Makefile	2024-08-30 08:32:08.333724292 +0200
+@@ -8,10 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXcursor.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXcursor.so.6.0~ -shared -Wl,-soname,libXcursor.so.6 $(OBJS:.c=.o)
+-	mv -f libXcursor.so.6.0~ libXcursor.so.6.0
+-	ln -s libXcursor.so.6.0 libXcursor.so.6
+-	ln -s libXcursor.so.6.0 libXcursor.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > xcursor.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xcursor.pc
+@@ -32,9 +28,6 @@
+ 	
+ install:	
+ 	cp -af libXcursor.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXcursor.so.6.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libXcursor.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libXcursor.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libXmuu/Makefile b/libXmuu/Makefile
+--- a/libXmuu/Makefile	2024-08-26 13:20:10.634452382 +0200
++++ b/libXmuu/Makefile	2024-08-30 08:31:47.436732683 +0200
+@@ -8,10 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXmuu.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXmuu.so.1.0~ -shared -Wl,-soname,libXmuu.so.1 $(OBJS:.c=.o)
+-	mv -f libXmuu.so.1.0~ libXmuu.so.1.0
+-	ln -s libXmuu.so.1.0 libXmuu.so.1
+-	ln -s libXmuu.so.1.0 libXmuu.so	
+ 	
+ 	@echo "prefix=$(PREDIR)" > xmuu.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xmuu.pc
+@@ -32,9 +28,6 @@
+ 	
+ install:
+ 	cp -af libXmuu.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXmuu.so.1.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libXmuu.so.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXmuu.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libXrender/Makefile b/libXrender/Makefile
+--- a/libXrender/Makefile	2024-08-26 13:20:10.638451991 +0200
++++ b/libXrender/Makefile	2024-08-30 08:42:13.960234209 +0200
+@@ -9,10 +9,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXrender.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXrender.so.1.1~ -shared -Wl,-soname,libXrender.so.1 $(OBJS:.c=.o) 
+-	mv -f libXrender.so.1.1~ libXrender.so.1.1
+-	ln -s libXrender.so.1.1 libXrender.so.1
+-	ln -s libXrender.so.1.1 libXrender.so	
+ 	
+ 	@echo "prefix=$(PREDIR)" > xrender.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xrender.pc
+@@ -33,9 +29,6 @@
+ 	
+ install:
+ 	cp -af libXrender.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXrender.so.1.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXrender.so.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXrender.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/Makefile b/Makefile
+--- a/Makefile	2024-08-26 13:20:10.647451111 +0200
++++ b/Makefile	2024-08-30 08:42:00.167211711 +0200
+@@ -4,26 +4,33 @@
+ 	cd libICE; make
+ 	cd libXt; make
+ 	cd libXmu; make
++	cd libXcursor; make
+ 	cd libXaw; make
+ 	cd libXext; make
+ 	cd libtinyX11; make
+ 	cd libXpm; make
+ 	cd libXdmcp; make
++	cd libXmuu; make
++	cd libXrender; make
+ 	mkdir -p include/pkgconfig && cd include/pkgconfig && ln -sf ../../lib*/*.pc ./
+ clean:
+ 	cd libtinyX11; make clean
+ 	cd libXext; make clean
+ 	cd libXau; make clean
+ 	cd libXmu; make clean
++	cd libXmuu; make clean
++	cd libXcursor; make clean
+ 	cd libSM; make clean
+ 	cd libICE; make clean
+ 	cd libXaw; make clean
+ 	cd libXt; make clean
+ 	cd libXpm; make clean
+ 	cd libXdmcp; make clean
++	cd libXrender; make clean
+ install:
+ 	cd libXau; make install
+ 	cd libXmu; make install
++	cd libXcursor; make install
+ 	cd libSM; make install
+ 	cd libICE; make install
+ 	cd libXaw; make install
+@@ -31,7 +38,9 @@
+ 	cd libXext; make install
+ 	cd libXt; make install
+ 	cd libXdmcp; make install
++	cd libXmuu; make install
+ 	cd libXpm; make install
++	cd libXrender; make install
+ 	cd include; make install
+ tarball:	clean
+ 	./make-tarball.sh

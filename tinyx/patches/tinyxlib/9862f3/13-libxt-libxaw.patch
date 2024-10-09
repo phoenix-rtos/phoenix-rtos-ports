@@ -1,0 +1,424 @@
+diff -ruN a/include/X11/Xos_r.h b/include/X11/Xos_r.h
+--- a/include/X11/Xos_r.h	2024-08-05 09:04:38.582732562 +0200
++++ b/include/X11/Xos_r.h	2024-08-08 14:48:50.035850395 +0200
+@@ -320,6 +320,10 @@
+ ((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf)) == -1) ? NULL : &(p).pws)
+ 
+ #else /* _POSIX_THREAD_SAFE_FUNCTIONS */
++#ifdef __phoenix__
++# define _XGetpwuid(u,p)	getpwuid((u))
++# define _XGetpwnam(u,p)	getpwnam((u))
++#else
+ /* Digital UNIX 4.0, but not (beta) T4.0-1 */
+ # define X_NEEDS_PWPARAMS
+ typedef struct {
+@@ -334,6 +338,7 @@
+ # define _XGetpwnam(u,p) \
+ ((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf),&(p).pwp) == -1) ? \
+  NULL : (p).pwp)
++#endif
+ #endif /* X_INCLUDE_PWD_H */
+ 
+ #if defined(X_INCLUDE_PWD_H) && !defined(_XOS_INCLUDED_PWD_H)
+diff -ruN a/libICE/iceauth.c b/libICE/iceauth.c
+--- a/libICE/iceauth.c	2024-08-05 09:04:38.583732565 +0200
++++ b/libICE/iceauth.c	2024-08-08 13:36:23.677995326 +0200
+@@ -69,7 +69,6 @@
+     }
+ #else
+     {
+-	long    time ();
+ 	ldata[0] = time ((long *) 0);
+ 	ldata[1] = getpid ();
+     }
+diff -ruN a/libICE/Makefile b/libICE/Makefile
+--- a/libICE/Makefile	2024-08-05 09:04:38.583732565 +0200
++++ b/libICE/Makefile	2024-08-08 15:17:59.543419943 +0200
+@@ -10,10 +10,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libICE.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libICE.so.6.3~ -shared -Wl,-soname,libICE.so.6 $(OBJS:.c=.o) 
+-	mv -f libICE.so.6.3~ libICE.so.6.3
+-	ln -s libICE.so.6.3 libICE.so.6
+-	ln -s libICE.so.6.3 libICE.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > ice.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> ice.pc
+@@ -34,9 +30,6 @@
+ 	
+ install:
+ 	cp -af libICE.a $(DESTDIR)$(LIBDIR)
+-	cp -af libICE.so.6.3 $(DESTDIR)$(LIBDIR)
+-	cp -af libICE.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libICE.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+-	gccmakedep -- $(CFLAGS) -- *.c
+\ No newline at end of file
++	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libSM/Makefile b/libSM/Makefile
+--- a/libSM/Makefile	2024-08-05 09:04:38.584732568 +0200
++++ b/libSM/Makefile	2024-08-08 15:18:09.088441165 +0200
+@@ -8,10 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libSM.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libSM.so.6.0~ -shared -Wl,-soname,libSM.so.6 $(OBJS:.c=.o) 
+-	mv -f libSM.so.6.0~ libSM.so.6.0
+-	ln -s libSM.so.6.0 libSM.so.6
+-	ln -s libSM.so.6.0 libSM.so	
+ 	
+ 	@echo "prefix=$(PREDIR)" > sm.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> sm.pc
+@@ -32,9 +28,6 @@
+ 	
+ install:
+ 	cp -af libSM.a $(DESTDIR)$(LIBDIR)
+-	cp -af libSM.so.6.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libSM.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libSM.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libtinyX11/Xlib.h b/libtinyX11/Xlib.h
+--- a/libtinyX11/Xlib.h	2024-08-05 09:04:38.628732696 +0200
++++ b/libtinyX11/Xlib.h	2024-08-08 14:06:02.954681025 +0200
+@@ -60,7 +60,7 @@
+ #if 1
+ //#define ISC
+ //#define USE_XMBTOWC
+-//#define USE_XWCHAR_STRING
++#define USE_XWCHAR_STRING
+ #define	MB_CUR_MAX	(__ctype_get_mb_cur_max ())
+ #define wctomb(a,b)	_Xwctomb(a,b)
+ #define mblen(a,b)	_Xmblen(a,b) 
+diff -ruN a/libXaw/Makefile b/libXaw/Makefile
+--- a/libXaw/Makefile	2024-08-05 09:04:38.587732577 +0200
++++ b/libXaw/Makefile	2024-08-08 15:17:48.776393292 +0200
+@@ -1,6 +1,6 @@
+ include	../standard_definitions.mk
+ 
+-DEFS=-DNOERROR -Dlinux -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DFUNCPROTO=15 -DNARROWPROTO -DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H -DPROJECT_ROOT=\"/usr\" -DXTHREADS -D_REENTRANT -DXUSE_MTSAFE_API -DUNIXCONN -DTCPCONN -DHAS_STICKY_DIR_BIT -DIPv6 -DICE_t 
++DEFS=-DNOERROR -Dlinux -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DFUNCPROTO=15 -DNARROWPROTO -DHAS_WCHAR_H -DNO_WIDEC_H -DPROJECT_ROOT=\"/usr\" -DXTHREADS -D_REENTRANT -DXUSE_MTSAFE_API -DUNIXCONN -DTCPCONN -DHAS_STICKY_DIR_BIT -DIPv6 -DICE_t 
+ 
+ CFLAGS= -I../include -I../include/X11 $(COMMONDEFS) $(DEFS)
+ 
+@@ -8,11 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXaw.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXaw.so.7.1~ -shared -Wl,-soname,libXaw.so.7 $(OBJS:.c=.o) \
+-	-L../libXpm -lXpm -L../libXmu -lXmu 
+-	mv -f libXaw.so.7.1~ libXaw.so.7.1
+-	ln -s libXaw.so.7.1 libXaw.so.7
+-	ln -s libXaw.so.7.1 libXaw.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > xaw7.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xaw7.pc
+@@ -33,9 +28,6 @@
+ 	
+ install:
+ 	cp -af libXaw.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXaw.so.7.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXaw.so.7 $(DESTDIR)$(LIBDIR)
+-	cp -af libXaw.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libXaw/XawI18n.c b/libXaw/XawI18n.c
+--- a/libXaw/XawI18n.c	2024-08-05 09:04:38.591732588 +0200
++++ b/libXaw/XawI18n.c	2024-08-08 15:00:51.314562865 +0200
+@@ -68,10 +68,10 @@
+     str[0] = c;
+     str[1] = '\0';
+ 
+-    mbtowc(&wc, str, 1);
++    // mbtowc(&wc, str, 1);
+ 
+-    return (wc);
+-}
++    return c; //shhh, will anybody notice?
++} 
+ 
+ 
+ int
+@@ -79,7 +79,40 @@
+ {
+     unsigned char mb[sizeof(wchar_t)];
+ 
+-    wctomb((char*)mb, ch);
++    return (isalnum(ch));
++}
++
++size_t
++wcslen (const wchar_t *s)
++{
++  size_t len = 0;
++
++  while (s[len] != L'\0')
++    {
++      if (s[++len] == L'\0')
++	return len;
++      if (s[++len] == L'\0')
++	return len;
++      if (s[++len] == L'\0')
++	return len;
++      ++len;
++    }
+ 
+-    return (isalnum(*mb));
++  return len;
++}
++
++wchar_t *
++wcscpy (wchar_t *dest, const wchar_t *src)
++{
++  size_t size = strlen (src);
++  return memcpy (dest, src, size);
++}
++
++wchar_t *
++wcsncpy (wchar_t *dest, const wchar_t *src, size_t n)
++{
++  size_t size = strnlen (src, n);
++  if (size != n)
++    memset (dest + size, L'\0', n - size);
++  return memcpy (dest, src, size);
+ }
+diff -ruN a/libXaw/XawI18n.h b/libXaw/XawI18n.h
+--- a/libXaw/XawI18n.h	2024-08-05 09:04:38.591732588 +0200
++++ b/libXaw/XawI18n.h	2024-08-08 14:24:32.431379921 +0200
+@@ -25,6 +25,7 @@
+ ********************************************************/
+ /* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.16 2005/03/28 02:50:59 dawes Exp $ */
+ 
++#include <string.h>
+ #ifdef HAS_WCTYPE_H
+ #include <wctype.h>
+ #ifndef NO_WIDEC_H
+@@ -35,9 +36,10 @@
+ #endif
+ #endif
+ 
+-#ifdef HAS_WCHAR_H
+-#include <wchar.h>
+-#endif
++// #ifdef HAS_WCHAR_H
++// #include <wchar.h>
++// #endif
++
+ 
+ 
+ 
+@@ -45,6 +47,13 @@
+ 
+ #include <stdlib.h>
+ 
++size_t
++wcslen (const wchar_t *s);
++
++wchar_t *
++wcsncpy (wchar_t *dest, const wchar_t *src, size_t n);
++
++
+ #ifdef USE_XWCHAR_STRING
+ int _Xwcslen
+ (
+diff -ruN a/libXmu/Makefile b/libXmu/Makefile
+--- a/libXmu/Makefile	2024-08-05 09:04:38.604732626 +0200
++++ b/libXmu/Makefile	2024-08-08 15:18:37.310492246 +0200
+@@ -1,6 +1,6 @@
+ include	../standard_definitions.mk
+ 
+-DEFS=-Dlinux -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DFUNCPROTO=15 -DNARROWPROTO -DXTHREADS -D_REENTRANT -DXUSE_MTSAFE_API -DXTSTRINGDEFINES -DUNIXCONN -DTCPCONN -DHAS_STICKY_DIR_BIT -DIPv6 -DBITMAPDIR=\"/usr/include/X11/bitmaps\" -DTINY
++DEFS=-Dlinux -D_POSIX_C_SOURCE=199309L -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DFUNCPROTO=15 -DNARROWPROTO -DXTHREADS -D_REENTRANT -DXUSE_MTSAFE_API -DXTSTRINGDEFINES -DUNIXCONN -DHAS_STICKY_DIR_BIT -DIPv6 -DBITMAPDIR=\"/usr/include/X11/bitmaps\" -DTINY
+ 
+ CFLAGS= -I../include -I../include/X11 $(COMMONDEFS) $(DEFS)
+ 
+@@ -8,11 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXmu.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXmu.so.6.2~ -shared -Wl,-soname,libXmu.so.6 $(OBJS:.c=.o) \
+-	-L../libXt -lXt
+-	mv -f libXmu.so.6.2~ libXmu.so.6.2
+-	ln -s libXmu.so.6.2 libXmu.so.6
+-	ln -s libXmu.so.6.2 libXmu.so	
+ 	
+ 	@echo "prefix=$(PREDIR)" > xmu.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xmu.pc
+@@ -33,9 +28,6 @@
+ 	
+ install:
+ 	cp -af libXmu.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXmu.so.6.2 $(DESTDIR)$(LIBDIR)
+-	cp -af libXmu.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libXmu.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libXpm/Makefile b/libXpm/Makefile
+--- a/libXpm/Makefile	2024-08-05 09:04:38.607732635 +0200
++++ b/libXpm/Makefile	2024-08-08 14:36:39.861273294 +0200
+@@ -7,10 +7,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXpm.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXpm.so.1.0~ -shared -Wl,-soname,libXpm.so.1 $(OBJS:.c=.o) 
+-	mv -f libXpm.so.1.0~ libXpm.so.1.0
+-	ln -s libXpm.so.1.0 libXpm.so.1
+-	ln -s libXpm.so.1.0 libXpm.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > xpm.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xpm.pc
+@@ -31,9 +27,6 @@
+ 	
+ install:
+ 	cp -af libXpm.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXpm.so.1.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libXpm.so.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXpm.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+-	gccmakedep -- $(CFLAGS) -- *.c
+\ No newline at end of file
++	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/libXt/Makefile b/libXt/Makefile
+--- a/libXt/Makefile	2024-08-05 09:04:38.610732644 +0200
++++ b/libXt/Makefile	2024-08-08 13:33:58.740577856 +0200
+@@ -10,34 +10,12 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXt.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXt.so.6.1~ -shared -Wl,-soname,libXt.so.6 $(OBJS:.c=.o) \
+-	-L../libSM -lSM -L../libICE -lICE -L../libtinyX11 -lX11
+-	mv -f libXt.so.6.1~ libXt.so.6.1
+-	ln -s libXt.so.6.1 libXt.so.6
+-	ln -s libXt.so.6.1 libXt.so
+-	
+-	@echo "prefix=$(PREDIR)" > xt.pc
+-	@echo "exec_prefix=$(PREDIR)/bin" >> xt.pc
+-	@echo "libdir=$(PREDIR)/lib" >> xt.pc
+-	@echo "includedir=$(PREDIR)/include" >> xt.pc
+-	@echo "" >> xt.pc
+-	@echo "Name: Xt" >> xt.pc
+-	@echo "Description: X Toolkit Library" >> xt.pc
+-	@echo "Version: 1.0.5" >> xt.pc
+-	@echo "Requires: sm ice x11 xau xdmcp" >> xt.pc
+-	@echo "Requires.private: sm ice x11 xau xdmcp" >> xt.pc
+-	@echo "Cflags: -I$(PREDIR)/include" >> xt.pc
+-	@echo "Libs: -L$(PREDIR)/lib -lXt" >> xt.pc
+-	@echo "Libs.private: -L$(PREDIR)/lib -lXt" >> xt.pc
+ 	
+ clean:
+ 	rm -f *.o *.a *.so* xt.pc
+ 	
+ install:
+ 	cp -af libXt.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXt.so.6.1 $(DESTDIR)$(LIBDIR)
+-	cp -af libXt.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libXt.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
+diff -ruN a/Makefile b/Makefile
+--- a/Makefile	2024-08-05 09:04:38.631732705 +0200
++++ b/Makefile	2024-08-08 14:36:56.618114068 +0200
+@@ -1,19 +1,37 @@
+ all:
+ 	cd libXau; make
++	cd libSM; make
++	cd libICE; make
++	cd libXt; make
++	cd libXmu; make
++	cd libXaw; make
+ 	cd libXext; make
+ 	cd libtinyX11; make
++	cd libXpm; make
+ 	cd libXdmcp; make
+ 	mkdir -p include/pkgconfig && cd include/pkgconfig && ln -sf ../../lib*/*.pc ./
+ clean:
+ 	cd libtinyX11; make clean
+ 	cd libXext; make clean
+ 	cd libXau; make clean
++	cd libXmu; make clean
++	cd libSM; make clean
++	cd libICE; make clean
++	cd libXaw; make clean
++	cd libXt; make clean
++	cd libXpm; make clean
+ 	cd libXdmcp; make clean
+ install:
+ 	cd libXau; make install
++	cd libXmu; make install
++	cd libSM; make install
++	cd libICE; make install
++	cd libXaw; make install
+ 	cd libtinyX11; make install
+ 	cd libXext; make install
++	cd libXt; make install
+ 	cd libXdmcp; make install
++	cd libXpm; make install
+ 	cd include; make install
+ tarball:	clean
+ 	./make-tarball.sh
+diff -ruN a/libXaw/TextTr.c b/libXaw/TextTr.c
+--- a/libXaw/TextTr.c	2024-10-07 10:28:11.853320915 +0200
++++ b/libXaw/TextTr.c	2024-10-07 13:13:04.171028209 +0200
+@@ -125,7 +125,6 @@
+ "<Key>Return:"		"newline()\n"
+ ":<Key>KP_Enter:"	"newline()\n"
+ "c<Key>backslash:"	"reconnect-im()\n"
+-"<Key>Kanji:"		"reconnect-im()\n"
+ #ifndef OLDXAW
+ ":<Key>0:"		"numeric(0)\n"
+ ":<Key>1:"		"numeric(1)\n"
+diff -ruN a/libXaw/XawIm.c b/libXaw/XawIm.c
+--- a/libXaw/XawIm.c	2024-10-07 10:28:11.855320961 +0200
++++ b/libXaw/XawIm.c	2024-10-07 13:22:39.892551306 +0200
+@@ -1256,6 +1256,7 @@
+ static void
+ Register(Widget inwidg, XawVendorShellExtPart* ve)
+ {
++  return;
+     if (ve->im.xim == NULL)
+ 	{
+ 	    OpenIM(ve);
+@@ -1284,6 +1285,7 @@
+ static void
+ Unregister(Widget inwidg, XawVendorShellExtPart *ve)
+ {
++  return;
+     if (!IsRegistered(inwidg, ve)) return;
+ 
+     DestroyIC(inwidg, ve);
+@@ -1327,6 +1329,7 @@
+ static void
+ Reconnect(XawVendorShellExtPart *ve)
+ {
++  return;
+     XawIcTableList	p;
+ 
+     ve->im.open_im = True;
+diff -ruN a/libXt/Initialize.c b/libXt/Initialize.c
+--- a/libXt/Initialize.c	2024-10-07 13:41:24.958653758 +0200
++++ b/libXt/Initialize.c	2024-10-07 15:32:19.579428509 +0200
+@@ -328,6 +328,8 @@
+     String     xnl,
+     XtPointer  closure)	/* unused */
+ {
++	return setlocale(LC_ALL, "C"); /* we don't need more than C locale */
++
+     if (! setlocale(LC_ALL, xnl))
+ 	XtWarning("locale not supported by C library, locale unchanged");
+ 
+@@ -348,6 +350,8 @@
+ {
+     XtLanguageProc    old;
+ 
++    return _XtDefaultLanguageProc; /* we don't need i18n */
++
+     if (!proc) {
+ 	proc = _XtDefaultLanguageProc;
+ 	closure = NULL;

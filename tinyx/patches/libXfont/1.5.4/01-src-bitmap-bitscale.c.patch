@@ -1,0 +1,14 @@
+diff -ruN a/src/bitmap/bitscale.c b/src/bitmap/bitscale.c
+--- a/src/bitmap/bitscale.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/bitmap/bitscale.c	2024-07-16 16:49:46.936913990 +0200
+@@ -39,6 +39,10 @@
+ #include <X11/fonts/fontutil.h>
+ #include <math.h>
+ 
++#ifdef __phoenix__
++#define hypot(x,y) sqrt(((x)*(x))+((y)*(y)))
++#endif
++
+ #ifndef MAX
+ #define   MAX(a,b)    (((a)>(b)) ? a : b)
+ #endif
