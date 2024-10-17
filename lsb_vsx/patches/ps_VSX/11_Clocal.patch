@@ -1,0 +1,43 @@
+--- lsb_vsx/test_sets/SRC/common/drivers/Clocal.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/drivers/Clocal.c	2024-10-16 15:22:06.485884602 +0200
+@@ -94,7 +94,12 @@
+ #define	QUOTE		7
+ 
+ private	int	getstring();
+-private int	getline();
++/* 
++ * Since getline() is POSIX extension function and Phoenix-RTOS standard library
++ * declares that function without respecting `_POSIX_SOURCE` define we have to rename
++ * it to avoid compilation error
++ */
++private int	vsx_getline();
+ 
+ private int	clinno;
+ private int     state;
+@@ -169,7 +174,7 @@
+ 		in_rpt("Test Code:");
+ 		state = START;
+ 		do {
+-			n = getline(fd, str);
++			n = vsx_getline(fd, str);
+ 			if (str[0] != NUL)
+ 				in_rpt("%2d:  %s", clinno, str);
+ 			clinno++;
+@@ -186,7 +191,7 @@
+ 			in_rpt("Test Code for file %s:", filname);
+ 			state = START;
+ 			do {
+-				n = getline(fd, str);
++				n = vsx_getline(fd, str);
+ 				if (str[0] != NUL)
+ 					in_rpt("%2d:  %s", clinno, str);
+ 				clinno++;
+@@ -353,7 +358,7 @@
+  *	function to read a line of code from file descripor fd.
+  */
+ private int
+-getline(fd, str)
++vsx_getline(fd, str)
+ 	int     fd;
+ 	char    *str;
+ {
