@@ -1,0 +1,17 @@
+--- lsb_vsx/test_sets/SRC/common/vtools/tree.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/vtools/tree.c	2024-10-16 15:22:06.485884602 +0200
+@@ -58,6 +58,14 @@
+    are used also for allocating many other kinds of objects
+    by all passes of the compiler.  */
+ 
++/*
++ * This file include macros from obstack.h, which invoke bcopy() using extern,
++ * bcopy in libphoenix is marked as static and always inline so this function
++ * will not yield symbol in libphoenix.a library causing linking error, in 
++ * order to prevent that include string.h with bcopy()
++ */
++#include <string.h>
++
+ #include <std.h>
+ #include <stdlib.h>
+ #include <stdio.h>
