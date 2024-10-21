@@ -1,0 +1,15 @@
+diff -ruN a/libxtrans/Xtransint.h b/libxtrans/Xtransint.h
+--- a/libxtrans/Xtransint.h	2024-07-11 17:36:05.740203908 +0200
++++ b/libxtrans/Xtransint.h	2024-07-12 09:30:23.087290981 +0200
+@@ -97,6 +97,11 @@
+ #endif
+ #include <sys/utsname.h>
+ 
++#ifdef __phoenix__
++#include <sys/resource.h>
++#define NOFILES_MAX RLIMIT_NOFILE
++#endif
++
+ /*
+  * makedepend screws up on #undef OPEN_MAX, so we define a new symbol
+  */

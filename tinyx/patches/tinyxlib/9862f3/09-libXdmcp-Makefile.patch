@@ -1,0 +1,27 @@
+diff -ruN a/libXdmcp/Makefile b/libXdmcp/Makefile
+--- a/libXdmcp/Makefile	2014-11-08 16:38:44.000000000 +0100
++++ b/libXdmcp/Makefile	2024-07-12 10:33:56.034993396 +0200
+@@ -8,10 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXdmcp.a $(OBJS:.c=.o)
+-	$(CC) $(LDFLAGS) -o libXdmcp.so.6.0~ -shared -Wl,-soname,libXdmcp.so.6 $(OBJS:.c=.o)
+-	mv -f libXdmcp.so.6.0~ libXdmcp.so.6.0
+-	ln -s libXdmcp.so.6.0 libXdmcp.so.6
+-	ln -s libXdmcp.so.6.0 libXdmcp.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > xdmcp.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xdmcp.pc
+@@ -30,11 +26,8 @@
+ clean:
+ 	rm -f *.o *.a *.so* xdmcp.pc
+ 	
+-install:	libXdmcp.a libXdmcp.so.6.0 libXdmcp.so.6 libXdmcp.so
++install:	libXdmcp.a
+ 	cp -af libXdmcp.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXdmcp.so.6.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libXdmcp.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libXdmcp.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c

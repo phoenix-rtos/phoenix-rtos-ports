@@ -1,0 +1,14 @@
+diff -ruN a/include/X11/Xpoll.h b/include/X11/Xpoll.h
+--- a/include/X11/Xpoll.h	2024-07-11 11:23:02.195783567 +0200
++++ b/include/X11/Xpoll.h	2024-07-15 13:02:02.865217689 +0200
+@@ -60,6 +60,10 @@
+ 
+ #include <X11/Xmd.h>
+ 
++#ifdef __phoenix__
++typedef uint32_t fd_mask;
++#endif
++
+ #ifdef CSRG_BASED
+ #include <sys/param.h>
+ # if BSD < 199103

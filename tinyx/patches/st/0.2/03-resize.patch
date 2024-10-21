@@ -1,0 +1,43 @@
+diff -ruN a/st.c b/st.c
+--- a/st.c	2024-09-02 10:01:36.967676919 +0200
++++ b/st.c	2024-09-02 10:15:15.834559610 +0200
+@@ -18,6 +18,7 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <time.h>
++#include <termios.h>
+ #include <unistd.h>
+ #include <X11/Xatom.h>
+ #include <X11/Xlib.h>
+@@ -764,7 +765,6 @@
+ 
+ void
+ ttyresize(int x, int y) {
+-#if 0
+ 	struct winsize w;
+ 
+ 	w.ws_row = term.row;
+@@ -772,7 +772,6 @@
+ 	w.ws_xpixel = w.ws_ypixel = 0;
+ 	if(ioctl(cmdfd, TIOCSWINSZ, &w) < 0)
+ 		fprintf(stderr, "Couldn't set window size: %s\n", SERRNO);
+-#endif
+ }
+ 
+ void
+@@ -2065,7 +2064,6 @@
+ 
+ void
+ resize(XEvent *e) {
+-#if 0
+ 	int col, row;
+ 	
+ 	if(e->xconfigure.width == xw.w && e->xconfigure.height == xw.h)
+@@ -2081,7 +2079,6 @@
+ 		draw();
+ 	ttyresize(col, row);
+ 	xresize(col, row);
+-#endif
+ }
+ 
+ bool

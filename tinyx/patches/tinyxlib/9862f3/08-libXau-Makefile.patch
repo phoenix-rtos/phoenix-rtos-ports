@@ -1,0 +1,24 @@
+diff -ruN a/libXau/Makefile b/libXau/Makefile
+--- a/libXau/Makefile	2014-11-08 16:38:44.000000000 +0100
++++ b/libXau/Makefile	2024-07-12 10:36:54.639804045 +0200
+@@ -8,10 +8,6 @@
+ 
+ all:	$(OBJS:.c=.o) 
+ 	ar cr libXau.a $(OBJS:.c=.o) 
+-	$(CC) $(LDFLAGS) -o libXau.so.6.0~ -shared -Wl,-soname,libXau.so.6 $(OBJS:.c=.o)
+-	mv -f libXau.so.6.0~ libXau.so.6.0
+-	ln -s libXau.so.6.0 libXau.so.6
+-	ln -s libXau.so.6.0 libXau.so
+ 	
+ 	@echo "prefix=$(PREDIR)" > xau.pc
+ 	@echo "exec_prefix=$(PREDIR)/bin" >> xau.pc
+@@ -32,9 +28,6 @@
+ 	
+ install:	
+ 	cp -af libXau.a $(DESTDIR)$(LIBDIR)
+-	cp -af libXau.so.6.0 $(DESTDIR)$(LIBDIR)
+-	cp -af libXau.so.6 $(DESTDIR)$(LIBDIR)
+-	cp -af libXau.so $(DESTDIR)$(LIBDIR)
+ 	
+ depend:
+ 	gccmakedep -- $(CFLAGS) -- *.c
