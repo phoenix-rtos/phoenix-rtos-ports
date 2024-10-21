@@ -25,7 +25,7 @@ exec_configure() {
   (cd "${PREFIX_PORT_SRC}" &&
     autoreconf -vfi && # reconf, as there may be patches to configure.ac
     "${PREFIX_PORT_SRC}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" \
-    --host="${HOST%phoenix}linux" --sbindir="${PREFIX_PROG}" \
+    --host="${HOST%phoenix}linux" --bindir="${PREFIX_PROG}" --sbindir="${PREFIX_PROG}" \
     --libdir="${PREFIX_A}" --includedir="${PREFIX_H}" \
     --prefix="${PREFIX_PORT_INSTALL}" --datarootdir="${PREFIX_A}" "${@}" \
     --disable-shared --enable-static --enable-silent-rules
@@ -335,6 +335,91 @@ build_xbill() {
 }
 
 
+build_freetype() {
+  appname="freetype"
+  version="2.13.3"
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${appname}-${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "https://download.savannah.gnu.org/releases/${appname}/" "${archive_filename}"
+
+  extract_sources
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}" PLATFORM="unix" \
+    CFG="--host="${HOST%phoenix}linux" --bindir="${PREFIX_PROG}" --sbindir="${PREFIX_PROG}" \
+     --libdir="${PREFIX_A}" --includedir="${PREFIX_H}" \
+     --prefix="${PREFIX_PORT_INSTALL}" --datarootdir="${PREFIX_A}" "${@}" \
+     --disable-shared --enable-static --enable-silent-rules --without-brotli --without-harfbuzz" \
+    CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}" install
+}
+
+
+build_imlib2() {
+  appname="imlib2"
+  version="1.12.3"
+
+  b_log "tinyx: building ${appname}"
+
+  archive_filename="${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  # TODO find a more legit source/mirror - wanted to use git.enlightement.org, but their
+  # tar.gz downloading seems to be dead :(
+  b_port_download "https://github.com/gijsbers/imlib2/archive/refs/tags/" "${archive_filename}"
+
+  if should_reconfigure "${appname}/${version}"; then
+    extract_sources
+
+    # This is a workaround that adds the contents of png loader module to the
+    # loaders.c that is then patched with 02-loaders-no-dl.patch. It is here
+    # until dynamic library support gets merged
+    cat "${PREFIX_PORT_SRC}/src/modules/loaders/loader_png.c" >> "${PREFIX_PORT_SRC}/src/lib/loaders.c"
+
+    b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+    if [ ! -f "${PREFIX_PORT_SRC}/config.status" ]; then
+      exec_configure
+    fi
+
+    mark_as_configured "${appname}/${version}"
+  fi
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}"
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_BUILD}" install
+}
+
+
+build_feh() {
+  appname="feh"
+  version="3.10.3"
+
+  b_log "png: building ${appname}"
+
+  archive_filename="${version}.tar.gz"
+  PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${appname}/${version}"
+
+  b_port_download "https://github.com/derf/feh/archive/refs/tags/" "${archive_filename}"
+
+  extract_sources
+
+  b_port_apply_patches "${PREFIX_PORT_SRC}" "${appname}/${version}"
+
+  mkdir -p "${PREFIX_PORT_SRC}/out"
+
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_SRC}/out" xinerama=0 curl=0
+  make -C "${PREFIX_PORT_SRC}" PREFIX="${PREFIX_PORT_SRC}/out" install
+
+  $STRIP -o "${PREFIX_PROG_STRIPPED}/${appname}" "${PREFIX_PORT_SRC}/out/bin/${appname}"
+  b_install "${PREFIX_PORTS_INSTALL}/${appname}" /usr/bin
+}
+
+
 # Build xlib and xserver (call ordering is important here)
 
 build_tinyxlib
@@ -363,5 +448,11 @@ build_x11_app   xgc         1.0.6
 # Fun stuff
 
 build_xbill
+
+# Image viewer (requires libpng port)
+
+build_freetype
+build_imlib2
+build_feh
 
 rm -rf "$TMP_DIR"

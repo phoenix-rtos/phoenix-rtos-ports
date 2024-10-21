@@ -1,0 +1,12 @@
+diff -ruN a/src/winwidget.c b/src/winwidget.c
+--- a/src/winwidget.c	2024-10-18 11:22:12.326252314 +0200
++++ b/src/winwidget.c	2024-10-18 11:34:01.967793299 +0200
+@@ -39,6 +39,8 @@
+ static void winwidget_register(winwidget win);
+ static winwidget winwidget_allocate(void);
+ 
++#define lround(x)            ((long)round(x))
++
+ 
+ int window_num = 0;		/* For window list */
+ winwidget *windows = NULL;	/* List of windows to loop though */
