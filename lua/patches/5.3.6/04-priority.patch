@@ -1,0 +1,84 @@
+diff -ruN a/src/lua.c b/src/lua.c
+--- a/src/lua.c	2017-04-19 19:29:57.000000000 +0200
++++ b/src/lua.c	2024-11-22 16:57:30.871758164 +0100
+@@ -13,6 +13,8 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sys/time.h>
++#include <sys/resource.h>
+ 
+ #include "lua.h"
+ 
+@@ -129,13 +131,14 @@
+ 
+ static void print_usage (const char *badoption) {
+   lua_writestringerror("%s: ", progname);
+-  if (badoption[1] == 'e' || badoption[1] == 'l')
++  if (badoption[1] == 'p' || badoption[1] == 'e' || badoption[1] == 'l')
+     lua_writestringerror("'%s' needs argument\n", badoption);
+   else
+     lua_writestringerror("unrecognized option '%s'\n", badoption);
+   lua_writestringerror(
+   "usage: %s [options] [script [args]]\n"
+   "Available options are:\n"
++  "  -p prio  set priority 'prio'\n"
+   "  -e stat  execute string 'stat'\n"
+   "  -i       enter interactive mode after executing 'script'\n"
+   "  -l name  require library 'name' into global 'name'\n"
+@@ -455,6 +458,7 @@
+ #define has_v		4	/* -v */
+ #define has_e		8	/* -e */
+ #define has_E		16	/* -E */
++#define has_p   32  /* -p */
+ 
+ /*
+ ** Traverses all arguments from 'argv', returning a mask with those
+@@ -489,9 +493,11 @@
+           return has_error;  /* invalid option */
+         args |= has_v;
+         break;
++      case 'p':
++        args |= has_p;  /* FALLTHROUGH */
+       case 'e':
+         args |= has_e;  /* FALLTHROUGH */
+-      case 'l':  /* both options need an argument */
++      case 'l':  /* these options need an argument */
+         if (argv[i][2] == '\0') {  /* no concatenated argument? */
+           i++;  /* try next 'argv' */
+           if (argv[i] == NULL || argv[i][0] == '-')
+@@ -508,7 +514,7 @@
+ 
+ 
+ /*
+-** Processes options 'e' and 'l', which involve running Lua code.
++** Processes options 'p', 'e' and 'l', which involve running Lua code.
+ ** Returns 0 if some code raises an error.
+ */
+ static int runargs (lua_State *L, char **argv, int n) {
+@@ -516,15 +522,19 @@
+   for (i = 1; i < n; i++) {
+     int option = argv[i][1];
+     lua_assert(argv[i][0] == '-');  /* already checked */
+-    if (option == 'e' || option == 'l') {
++    if (option == 'p' || option == 'e' || option == 'l') {
+       int status;
+-      const char *extra = argv[i] + 2;  /* both options need an argument */
++      const char *extra = argv[i] + 2;  /* these options need an argument */
+       if (*extra == '\0') extra = argv[++i];
+       lua_assert(extra != NULL);
+-      status = (option == 'e')
+-               ? dostring(L, extra, "=(command line)")
+-               : dolibrary(L, extra);
+-      if (status != LUA_OK) return 0;
++      if (option == 'p') {
++        setpriority(PRIO_PROCESS, 0, atoi(extra));
++      } else {
++        status = (option == 'e')
++                 ? dostring(L, extra, "=(command line)")
++                 : dolibrary(L, extra);
++        if (status != LUA_OK) return 0;
++      }
+     }
+   }
+   return 1;
