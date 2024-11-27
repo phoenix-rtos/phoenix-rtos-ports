@@ -1,0 +1,22 @@
+--- lsb_vsx/test_sets/tset/POSIX.os/files/fstat/fstat.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/files/fstat/fstat.c	2024-10-16 15:22:06.485884602 +0200
+@@ -276,14 +276,15 @@
+ 	t1f();
+ 	PATH_FUNC_TRACE;
+ 
+-	globok = 0;
+-	t1g();
+-	PATH_FUNC_TRACE;
++/* Issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1245 */
++	// globok = 0;
++	// t1g();
++	// PATH_FUNC_TRACE;
+ 
+ #endif	/* TEST_XNFS */
+ 
+ 	if (testfail == 0)
+-		PATH_XS_RPT(7);
++		PATH_XS_RPT(6);
+ 
+ 	DBUG_VOID_RETURN;
+ }

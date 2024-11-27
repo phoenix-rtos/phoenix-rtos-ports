@@ -1,0 +1,148 @@
+--- lsb_vsx/test_sets/setup_testsets.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.host/test_sets/setup_testsets.sh	2024-10-16 15:22:06.485884602 +0200
+@@ -86,14 +86,6 @@
+ 
+ #####################################################################
+ # Common setup & checks
+-cat - <<!EOF
+-**********************************************************
+-**		   Verification Suite			**
+-**	Configuration Procedure for Linux		**
+-**********************************************************
+-!EOF
+-
+-# 
+ cd $INSTDIR
+ 
+ # Check VSX exists in the correct place
+@@ -103,27 +95,6 @@
+         exit 1
+ fi
+ 
+-# Locate extra header file include needed
+-printf "Locating header file #include directories...\n"
+-printf "Calling: gcc -print-file-name=include/stddef.h\n"
+-STDDEF=`gcc -print-file-name="include/stddef.h"`
+-if [  $? -eq 0 ]
+-then 
+-    INCDIR=`dirname $STDDEF`
+-    printf "INCDIRS=\"$INCDIR /usr/include\"\n"
+-#    printf "INCDIRS=\"$INCDIR /usr/include\"\n" >>SRC/vsxparams
+-# for vsthlite we need to find ndbm.h
+-    printf "INCDIRS=\"$INCDIR /usr/include/gdbm /usr/include\"\n" >>SRC/vsxparams
+-else
+-    printf "Defaulting to /usr/include\n"
+-fi
+-
+-# Set the default to be UNIX98 mode
+-echo "TEST_MODE=\"UNIX98\"" >> SRC/vsxparams
+-# for vsthlite we need to find ndbm.h
+-echo "COPTS=\"-ansi -I/usr/include/gdbm\"" >> SRC/vsxparams
+-
+-#----------------------------------------------------------------------
+ # Cleanup
+ # Create/Clean lock areas
+ if test ! -d "scripts/locks"
+@@ -133,18 +104,9 @@
+     rm -f scripts/locks/*
+ fi
+ 
+-#---------------------------------------------------------------------
+-# Pre Configure testset scripts
+-run_testset_config_script pre-config
+-
+-######################################################################
+-# Run config script
+-printf "Run config.sh ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-	config.sh
+-fi
+-printf "\n----------------------------------------------------------\n"
++echo "
++--- Running configuration script ---"
++config.sh
+ 
+ # Common cleanup needed
+ # Fixup NSIG to _NSIG which common to all Linux's (and CLK_TCK)
+@@ -152,78 +114,13 @@
+ mv SRC/vsxconfig.h.new SRC/vsxconfig.h
+ 
+ # Update userint.c file
+-echo "Updating userintf.c to support features needed by all of the"
+-echo "test suites supported."
++echo "Updating userintf.c to support features needed by all of the test suites supported."
+ cp $TOOLDIR/userintf.c SRC/userintf.c
+ 
+-#---------------------------------------------------------------------
+-# Post Configure testset scripts
+-run_testset_config_script post-config
+-
+ ######################################################################
+ # Build the test framework
+-cd $INSTDIR
+-
+-printf "\n\n----------------------------------------------------------\n"
+-printf "Building the test framework ... enter the root password\n"
+-su root -c make
++cd $INSTDIR && make
+ if [ $? -ne 0 ]; then
+   echo "Test framework compilation failed. Aborting"
+   exit 1
+ fi
+-printf "\n----------------------------------------------------------\n"
+-
+-# Load current vsxgen parameters
+-. $CURDIR/vsxparams
+-
+-export VSXDIR TEST_MODE TEST_XNFS SUBSETS INCDIRS CC COPTS THR_COPTS
+-export DEFINES LDFLAGS SYSLIBS CURDIR PATH TET_EXECUTE NOSPC_DEV
+-export VSX_OPER VSX_ORG VSX_SYS
+-
+-#---------------------------------------------------------------------
+-# Post build tetset scripts
+-run_testset_config_script post-build
+-
+-######################################################################
+-# Parameterisation
+-printf "Install tetexec.cfg ..? [y] "
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-
+-  echo "Parameterizing the $TET_EXECUTE/tetexec.cfg file"
+-
+-  # .newparams file is used for updating the tetexec.cfg file
+-  cp /dev/null .newparams
+-
+-  echo "VSX_OPER=\"$VSX_OPER\"" >>.newparams
+-  echo "VSX_ORG=\"$VSX_ORG\"" >>.newparams
+-  echo "VSX_SYS=\"$VSX_SYS\"" >>.newparams
+-  echo "TEST_MODE=\"$TEST_MODE\"" >>.newparams
+-  echo "VSX_CC=\"$CC\"" >> .newparams
+-  echo "VSX_CFLAGS=\"$COPTS\"" >> .newparams
+-  echo "VSX_LIBS=\"$MLIB $SYSLIBS $LDFLAGS\"" >> .newparams
+-
+-#---------------------------------------------------------------------
+-# Test set specific parameterisations
+-  run_testset_config_script parameterisations .newparams
+-
+-######################################################################
+-# Finish parameterisation
+-  cp  $TET_EXECUTE/tetexec.cfg $TET_EXECUTE/tetexec.cfg.old
+-  cat $TET_EXECUTE/tetexec.cfg.old|$VSXDIR/install/scripts/editcfg.sh .newparams > $TET_EXECUTE/tetexec.cfg
+-  rm -f .newparams
+-
+-fi
+-
+-######################################################################
+-# Build & Execute testsets
+-printf "Build and Execute testsets ..? [y]"
+-read cmd
+-if [ "$cmd" = "Y" -o "$cmd" = "y" -o "$cmd" = "" ] ; then
+-  sh run_testsets.sh
+-fi
+-
+-echo 
+-echo "In order to re run the test suites at a later date run the"
+-echo "rerun_tests program in vsx0's home directory as the vsx0 user"
+-echo

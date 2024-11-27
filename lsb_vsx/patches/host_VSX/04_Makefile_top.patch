@@ -1,0 +1,23 @@
+--- lsb_vsx/test_sets/SRC/install/Makefile.top	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.host/test_sets/SRC/install/Makefile.top	2024-10-16 15:22:06.485884602 +0200
+@@ -30,7 +30,7 @@
+ 
+ # Set PATH to include directories containing privileged commands
+ 
+-PATH = /bin:/usr/bin:/usr/sbin:/etc
++PATH := $(PATH):/bin:/usr/bin:/usr/sbin:/etc
+ 
+ # Check make is running with the necessary privileges
+ 
+@@ -40,10 +40,8 @@
+ 	    exit 1; \
+ 	fi
+ 
+-# Run install.sh as user vsx0, ensuring HOME is set to vsx0 home directory
+-
+ install:
+-	su vsx0 -c 'HOME=`pwd` BIN/install.sh'
++	@HOME=`pwd` ./BIN/install.sh
+ 
+ # Assign privileges to the chmog program
+ 

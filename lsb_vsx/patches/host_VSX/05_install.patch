@@ -1,0 +1,243 @@
+--- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.host/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
+@@ -46,36 +46,6 @@
+ export DEFINES LDFLAGS SYSLIBS CURDIR PATH TET_EXECUTE LORDER TSORT AR
+ echo "*** The VSX source directory is rooted at $VSXDIR"
+ 
+-#  Work out next journal file number
+-
+-JNLDIR="$HOME/results"
+-if test ! -d "$JNLDIR"
+-then
+-	echo "*** journal directory $JNLDIR does not exist"
+-	exit 1
+-fi
+-
+-num=`ls -r "$JNLDIR" | \
+-	awk '/^install\.[0-9]*$/ {
+-		n = index($0, ".")
+-		num = substr($0, n+1, 99) + 1
+-		printf "%4.4d\n", num
+-		exit
+-	    }
+-	    END { if (num == 0) print "0001" }'`
+-
+-if test -z "$num" -o 0 -eq "$num"
+-then
+-	echo "*** error searching journal directory: $JNLDIR"
+-	exit 1
+-fi
+-
+-JNLFILE="$JNLDIR/install.$num"
+-echo "*** Install journal file is: $JNLFILE"
+-
+-# all output from here to end is tee'd into journal file
+-(
+-
+ #########################################################################
+ #									#
+ # Update the file std.h with the system dependencies			#
+@@ -157,152 +127,6 @@
+ 
+ #########################################################################
+ #									#
+-# Check whether the directory search routines work			#
+-#									#
+-#########################################################################
+-
+-cat > $cdirfile << 'E_O_F'
+-#include <stdio.h>
+-#include <sys/types.h>
+-#include <dirent.h>
+-main()
+-{
+-	DIR	*d;
+-	struct	dirent	*dp;
+-	char	*i;
+-	int	c=0;
+-
+-	d = opendir(".");
+-	while ((dp = readdir(d)) != 0)
+-	{
+-		i = (char *) dp->d_name;
+-		c++;
+-	}
+-	closedir(d);
+-	printf("%d\n", c);
+-}
+-E_O_F
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS "$cdirfile" $SYSLIBS > $tfile 2>&1
+-
+-if test "$?" != "0"
+-then
+-	echo "
+-*** Could not compile test program for directory routines:
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS $cdirfile $SYSLIBS"
+-	cat $tfile
+-	echo "
+-Check SRC/SYSINC/dirent.h before re-running install.sh"
+-	exit 1
+-fi
+-
+-mkdir $tdir
+-touch $tdir/a $tdir/asjd $tdir/jsdhjas
+-touch $tdir/kajshdjas $tdir/JH
+-dir=`pwd`
+-export dir
+-(cd $tdir ; $dir/a.out > /tmp/ans 2>&1)
+-rm -rf $tdir
+-x=`cat /tmp/ans`
+-if test "$x" != 7 -a "$x" != 5
+-then
+-	echo "
+-*** Directory routines don't work!
+-Check SRC/SYSINC/dirent.h before re-running install.sh"
+-	exit 1
+-fi
+-
+-#########################################################################
+-#									#
+-# Check whether variable argument lists work				#
+-#									#
+-#########################################################################
+-
+-cat << 'E_O_F' >$cfile
+-#include <std.h>
+-#include <stdlib.h>
+-#if TEST_ANSI
+-#include <stdarg.h>
+-static int sub(char *, ...);
+-#else
+-#include <varargs.h>
+-static int sub();
+-#endif
+-
+-static char	arg1[] = "abc";
+-static int	arg2 = 12345;
+-static double	arg3 = 123.456;
+-static char	arg4[] = "xyz";
+-
+-main(c, v)
+-int c;
+-char *v[];
+-{
+-	exit(sub(arg1, arg2, arg3, arg4));
+-}
+-
+-static int
+-#if TEST_ANSI
+-sub(char *sarg1, ...)
+-#else
+-sub(sarg1, va_alist)
+-char *sarg1;
+-va_dcl
+-#endif
+-{
+-	va_list ap;
+-
+-	if (sarg1 != arg1)
+-		return 1;
+-	
+-#if TEST_ANSI
+-	va_start(ap, sarg1);
+-#else
+-	va_start(ap);
+-#endif
+-
+-	if (va_arg(ap, int) != arg2)
+-		return 2;
+-	
+-	if (va_arg(ap, double) != arg3)
+-		return 3;
+-	
+-	if (va_arg(ap, char *) != arg4)
+-		return 4;
+-	
+-	va_end(ap);
+-
+-	return 0;
+-}
+-E_O_F
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS "$cfile" $SYSLIBS > $tfile 2>&1
+-
+-if test "$?" != "0" || grep arg "$tfile" > /dev/null 2>&1
+-then
+-	echo "
+-*** Could not compile test program for variable argument lists
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS $cfile $SYSLIBS"
+-	cat $tfile
+-	echo "
+-Check <stdarg.h>/<varargs.h> before re-running install.sh"
+-	exit 1
+-fi
+-
+-./a.out
+-x=$?
+-if test "$x" -ne 0
+-then
+-	echo "
+-*** Variable argument lists don't work!  (test program exit code: $x)
+-Check <stdarg.h>/<varargs.h> before re-running install.sh"
+-	exit 1
+-fi
+-
+-#########################################################################
+-#									#
+ # Set up the testroot 							#
+ #									#
+ #########################################################################
+@@ -625,37 +449,9 @@
+ #									#
+ #########################################################################
+ 
+-libs="vport vlib genlib tet_startup"
++libs="vport vlib"
+ thrlibs=""
+-utils="vprog vtools"
+-for subset in $SUBSETS
+-do
+-	INSTALL_LIBS=""
+-	INSTALL_THRLIBS=""
+-	INSTALL_UTILS=""
+-	. $VSXDIR/subsets/$subset/install_info
+-	for i in $INSTALL_LIBS
+-	do
+-		case " $libs " in
+-		*" $i "*) ;; # already in list
+-		*) libs="$libs $i" ;;
+-		esac
+-	done
+-	for i in $INSTALL_THRLIBS
+-	do
+-		case " $thrlibs " in
+-		*" $i "*) ;; # already in list
+-		*) thrlibs="$thrlibs $i" ;;
+-		esac
+-	done
+-	for i in $INSTALL_UTILS
+-	do
+-		case " $utils " in
+-		*" $i "*) ;; # already in list
+-		*) utils="$utils $i" ;;
+-		esac
+-	done
+-done
++utils="vprog"
+ 
+ case $TEST_XNFS in
+ [Yy])
+@@ -685,10 +481,6 @@
+     )
+ done
+ 
+-# end of output tee'd to journal file
+-
+-) 2>&1 | tee "$JNLFILE"
+-
+ # clean up: remove temporary files
+ $rm_tmp1; $rm_tmp2
+ 

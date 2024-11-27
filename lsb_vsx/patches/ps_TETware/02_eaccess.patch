@@ -1,0 +1,12 @@
+--- lsb_vsx/src/tet3/dtet2lib/eaccess.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/src/tet3/dtet2lib/eaccess.c	2024-10-16 15:22:06.485884602 +0200
+@@ -184,7 +184,8 @@
+ 	** we only evaluate NGROUPS_MAX once because on some systems it
+ 	** can be a call to sysconf()
+ 	*/
+-	ngmax = (int) NGROUPS_MAX;
++	/* Groups and `NGROUPS_MAX` are not implemented on Phoenix-RTOS */
++	ngmax = (int) 0;
+ 	if (BUFCHK((char **) &gids, &lgids, ngmax * (int) sizeof *gidp) < 0) {
+ 		errno = ENOMEM;
+ 		return(-1);
