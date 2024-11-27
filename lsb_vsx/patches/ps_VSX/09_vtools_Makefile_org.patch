@@ -1,0 +1,22 @@
+--- lsb_vsx/test_sets/SRC/common/vtools/Makefile.org	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/vtools/Makefile.org	2024-10-16 15:22:06.485884602 +0200
+@@ -109,8 +109,9 @@
+ 		$(CC) -o $@ $(HA_OFILES) $(LIBS) $(SYSLIBS) $(LDFLAGS)
+ 		@echo " $@ made"
+ 
+-y.tab.c:	c-parse.y
+-		yacc -v $?
++# Target already exists, and it requires yacc program
++# y.tab.c:	c-parse.y
++#		yacc -v $?
+ 
+ 
+ $(VSXBIN)/cs_arc:	cs_arc
+@@ -263,6 +264,7 @@
+ 	../../SYSINC/limits.h  \
+ 	../../SYSINC/stdio.h  \
+ 	../../SYSINC/stdlib.h  \
++	../../SYSINC/string.h  \
+ 	../../SYSINC/sys/types.h  \
+ 	./config.h  \
+ 	./machmode.def  \

@@ -1,0 +1,46 @@
+--- lsb_vsx/test_sets/SRC/common/vport/nonposix.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/vport/nonposix.c	2024-10-16 15:22:06.485884602 +0200
+@@ -282,7 +282,11 @@
+ 
+ #endif /* __STDC__ */
+ 
+-#ifndef __linux__
++/*
++ * Phoenix-RTOS doesn't respect `_POSIX_SOURCE` define thus
++ * we have to change below condition to avoid compilation error
++ */
++#if !defined(__linux__) && !defined(__phoenix__)
+ 
+ public	int	opterr = 1;
+ public	int	optind = 1;
+@@ -350,7 +354,7 @@
+ 	return c;
+ }
+ 
+-#endif /* __linux__ */
++#endif
+ 
+ public int
+ isnan(x)
+@@ -359,7 +363,11 @@
+ 	return (x != x);
+ }
+ 
+-#ifndef __linux__
++/*
++ * Phoenix-RTOS doesn't respect `_POSIX_SOURCE` define thus
++ * we have to change below condition to avoid compilation error
++ */
++#if !defined(__linux__) && !defined(__phoenix__)
+ 
+ #define	tst(a, b) (*mode == 'r' ? (b) : (a))
+ 
+@@ -475,7 +483,7 @@
+ 	return status;
+ }
+ 
+-#endif /* __linux__ */
++#endif
+ 
+ #if !(__STDC__ > 0) && !ANSI_VPRINTF_FUNC 
+ 

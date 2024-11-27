@@ -1,0 +1,11 @@
+--- lsb_vsx/LSB.tools/userintf.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.host/LSB.tools/userintf.c	2024-10-16 15:22:06.485884602 +0200
+@@ -579,7 +579,7 @@
+ 
+ /* these defined on for Linux using UNIX98 pseudo ttys */
+ 
+-#ifdef __linux__
++#if 0
+ #define CLONE_MPTY
+ #define STREAMS_PTY
+ #endif

@@ -1,0 +1,35 @@
+--- lsb_vsx/test_sets/SRC/common/drivers/globals.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/drivers/globals.c	2024-10-16 15:22:06.485884602 +0200
+@@ -46,7 +46,7 @@
+ 
+ public	int	ntests;				/* number of tests */
+ public	int	test_index;			/* Index into tcnrl struct */
+-public	int	debug		= FALSE;	/* true for "-D" flag */
++public	int	vsx_debug		= FALSE;	/* true for "-D" flag */
+ public	int	cstatus;			/* child return status */
+ public	int	running		= FALSE;	/* testset is running */
+ public	struct tcntrl	**test;			/* test control array */
+
+--- lsb_vsx/test_sets/SRC/common/drivers/driver.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/drivers/driver.c	2024-10-16 15:22:06.485884602 +0200
+@@ -213,7 +213,7 @@
+ 			DBUG_PUSH(s);
+ 			DBUG_PRINTF("prolog", "malloc() for vg_dbug failed");
+ 		}
+-		debug = TRUE;
++		vsx_debug = TRUE;
+ 	}
+ 
+ 	s = tet_getvar("VSX_PATH" );
+
+--- lsb_vsx/test_sets/SRC/common/drivers/hdr.h	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/drivers/hdr.h	2024-10-16 15:22:06.485884602 +0200
+@@ -122,7 +122,7 @@
+ /* extern variable declarations - declared in globals.c */
+ 
+ extern	int	cstatus;	/* child process status */
+-extern	int	debug;		/* true for "-D" flag */
++extern	int	vsx_debug;	/* true for "-D" flag */
+ extern	int	ntests;		/* number of tests in testset */
+ extern	int	test_index; 		/* Index into test struct for current test */
+ #ifdef DELETING

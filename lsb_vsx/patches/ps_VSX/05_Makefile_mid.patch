@@ -1,0 +1,11 @@
+--- lsb_vsx/test_sets/SRC/install/Makefile.mid	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/install/Makefile.mid	2024-10-16 15:22:06.485884602 +0200
+@@ -16,7 +16,7 @@
+ 	    rm -rf $(TET_EXECUTE)/tset &&  \
+ 	    rm -rf $(TET_EXECUTE)/INC ;  \
+ 	}
+-	test -d $(TET_EXECUTE) || { \
++	@test -d $(TET_EXECUTE) || { \
+ 	    mkdir $(TET_EXECUTE) && \
+ 	    touch $(TET_EXECUTE)/.keepme && \
+ 	    $(CHOWN) vsx0 $(TET_EXECUTE) && \

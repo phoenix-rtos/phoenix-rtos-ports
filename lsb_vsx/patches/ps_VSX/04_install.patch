@@ -1,0 +1,173 @@
+--- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
+@@ -141,6 +141,17 @@
+ #########################################################################
+ echo "
+ Creating the system include files used by VSX in $VSXDIR/SYSINC"
++
++# Copy Phoenix-RTOS specific include directories
++cp -r "${INCDIRS}/phoenix" "${VSXDIR}/SYSINC/phoenix"
++cp -r "${INCDIRS}/posix" "${VSXDIR}/SYSINC/posix"
++cp -r "${INCDIRS}/arch" "${VSXDIR}/SYSINC/arch"
++cp "${INCDIRS}/arch.h" "${VSXDIR}/SYSINC/arch.h"
++# Many headers depend on that file, copy to prevent compiling errors
++cp "${INCDIRS}/sys/types.h" "${VSXDIR}/SYSINC/sys/types.h"
++# inccreat.sh don't check stdint.h, copy manually
++cp "${INCDIRS}/stdint.h" "${VSXDIR}/SYSINC/stdint.h"
++
+ $VSXDIR/install/scripts/inccreat.sh
+ 
+ # copy sample RPC headers into SYSINC/rpc if using sample RPC library
+@@ -157,152 +168,6 @@
+ 
+ #########################################################################
+ #									#
+-# Check whether the directory search routines work			#
+-#									#
+-#########################################################################
+-
+-cat > $cdirfile << 'E_O_F'
+-#include <stdio.h>
+-#include <sys/types.h>
+-#include <dirent.h>
+-main()
+-{
+-	DIR	*d;
+-	struct	dirent	*dp;
+-	char	*i;
+-	int	c=0;
+-
+-	d = opendir(".");
+-	while ((dp = readdir(d)) != 0)
+-	{
+-		i = (char *) dp->d_name;
+-		c++;
+-	}
+-	closedir(d);
+-	printf("%d\n", c);
+-}
+-E_O_F
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS "$cdirfile" $SYSLIBS > $tfile 2>&1
+-
+-if test "$?" != "0"
+-then
+-	echo "
+-*** Could not compile test program for directory routines:
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS $cdirfile $SYSLIBS"
+-	cat $tfile
+-	echo "
+-Check SRC/SYSINC/dirent.h before re-running install.sh"
+-	exit 1
+-fi
+-
+-mkdir $tdir
+-touch $tdir/a $tdir/asjd $tdir/jsdhjas
+-touch $tdir/kajshdjas $tdir/JH
+-dir=`pwd`
+-export dir
+-(cd $tdir ; $dir/a.out > /tmp/ans 2>&1)
+-rm -rf $tdir
+-x=`cat /tmp/ans`
+-if test "$x" != 7 -a "$x" != 5
+-then
+-	echo "
+-*** Directory routines don't work!
+-Check SRC/SYSINC/dirent.h before re-running install.sh"
+-	exit 1
+-fi
+-
+-#########################################################################
+-#									#
+-# Check whether variable argument lists work				#
+-#									#
+-#########################################################################
+-
+-cat << 'E_O_F' >$cfile
+-#include <std.h>
+-#include <stdlib.h>
+-#if TEST_ANSI
+-#include <stdarg.h>
+-static int sub(char *, ...);
+-#else
+-#include <varargs.h>
+-static int sub();
+-#endif
+-
+-static char	arg1[] = "abc";
+-static int	arg2 = 12345;
+-static double	arg3 = 123.456;
+-static char	arg4[] = "xyz";
+-
+-main(c, v)
+-int c;
+-char *v[];
+-{
+-	exit(sub(arg1, arg2, arg3, arg4));
+-}
+-
+-static int
+-#if TEST_ANSI
+-sub(char *sarg1, ...)
+-#else
+-sub(sarg1, va_alist)
+-char *sarg1;
+-va_dcl
+-#endif
+-{
+-	va_list ap;
+-
+-	if (sarg1 != arg1)
+-		return 1;
+-	
+-#if TEST_ANSI
+-	va_start(ap, sarg1);
+-#else
+-	va_start(ap);
+-#endif
+-
+-	if (va_arg(ap, int) != arg2)
+-		return 2;
+-	
+-	if (va_arg(ap, double) != arg3)
+-		return 3;
+-	
+-	if (va_arg(ap, char *) != arg4)
+-		return 4;
+-	
+-	va_end(ap);
+-
+-	return 0;
+-}
+-E_O_F
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS "$cfile" $SYSLIBS > $tfile 2>&1
+-
+-if test "$?" != "0" || grep arg "$tfile" > /dev/null 2>&1
+-then
+-	echo "
+-*** Could not compile test program for variable argument lists
+-
+-$CC -I../INC -I../SYSINC $DEFINES $COPTS $cfile $SYSLIBS"
+-	cat $tfile
+-	echo "
+-Check <stdarg.h>/<varargs.h> before re-running install.sh"
+-	exit 1
+-fi
+-
+-./a.out
+-x=$?
+-if test "$x" -ne 0
+-then
+-	echo "
+-*** Variable argument lists don't work!  (test program exit code: $x)
+-Check <stdarg.h>/<varargs.h> before re-running install.sh"
+-	exit 1
+-fi
+-
+-#########################################################################
+-#									#
+ # Set up the testroot 							#
+ #									#
+ #########################################################################
