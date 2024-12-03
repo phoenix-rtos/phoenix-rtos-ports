@@ -1,9 +1,10 @@
 --- lsb_vsx/test_sets/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
 +++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
-@@ -172,6 +172,21 @@
+@@ -172,6 +172,22 @@
  	(void) unlink(t_file);
  }
  
++/* gets() is a stub, add local definition */
 +private char*
 +local_gets(buffer)
 +char *buffer;
@@ -22,7 +23,7 @@
  
  private void
  test1()
-@@ -257,7 +272,7 @@
+@@ -257,7 +273,7 @@
  
  	if (ungetc(T6_CHAR, fp) != T6_CHAR)
  		fail = 1;
