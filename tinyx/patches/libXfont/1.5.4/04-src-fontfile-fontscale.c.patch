@@ -1,0 +1,14 @@
+diff -ruN a/src/fontfile/fontscale.c b/src/fontfile/fontscale.c
+--- a/src/fontfile/fontscale.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/fontfile/fontscale.c	2024-07-16 16:50:34.984835602 +0200
+@@ -34,6 +34,10 @@
+ #include    <X11/fonts/fntfilst.h>
+ #include <math.h>
+ 
++#ifdef __phoenix__
++#define hypot(x,y) sqrt(((x)*(x))+((y)*(y)))
++#endif
++
+ Bool
+ FontFileAddScaledInstance (FontEntryPtr entry, FontScalablePtr vals,
+ 			   FontPtr pFont, char *bitmapName)

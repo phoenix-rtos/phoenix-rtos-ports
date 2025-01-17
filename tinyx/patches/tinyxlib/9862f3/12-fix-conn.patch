@@ -1,0 +1,119 @@
+# Non-zero poll/select timeouts introduced by this patch are crucial for lively
+# client-server connection.
+# 
+# This also uses recv(MSG_PEEK) that emulates ioctl/FIONREAD under Linux -- it
+# returns the bytes available to read from the socket and doesn't depend 
+# on recv() ability to detect broken connections (thus XCONN_CHECK_FREQ patch is
+# commented out).If BytesReadable()/recv behaviour changes, it is important to
+# revisit XCONN_CHECK_FREQ.
+
+--- a/libxtrans/Xtranssock.c	2024-07-22 14:37:21.467165699 +0200
++++ b/libxtrans/Xtranssock.c	2024-07-24 14:08:56.034387339 +0200
+@@ -1541,14 +1541,24 @@
+ 
+ #endif /* TRANS_CLIENT */
+ 
+-
+ static int
+ TRANS(SocketBytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
+ 
+ {
+-    PRMSG (2,"SocketBytesReadable(%x,%d,%x)\n",
+-	ciptr, ciptr->fd, pend);
+-    return ioctl (ciptr->fd, FIONREAD, (char *) pend);
++/* this bufsize doesn't really matter, but using recv() as a replacement
++ * for ioctl/FIONREAD is quite slow 
++ * Maybe implement ioctl/FIONREAD in phoenix kernel? */
++#define BUFSIZE 64
++static char buf[BUFSIZE];
++  int k = recv(ciptr->fd, buf, BUFSIZE, MSG_PEEK | MSG_DONTWAIT);
++  if (k < 0) {
++    if (errno == EWOULDBLOCK || errno == EAGAIN)
++      k = 0;
++    else 
++      return -1;
++  } 
++  *pend = k;
++  return 0;
+ }
+ 
+ 
+# diff -ruN a/include/X11/Xlibint.h b/include/X11/Xlibint.h
+# --- a/include/X11/Xlibint.h	2024-07-25 15:04:02.350699330 +0200
+# +++ b/include/X11/Xlibint.h	2024-07-29 14:49:08.729362429 +0200
+# @@ -50,9 +50,9 @@
+#   * If your BytesReadable correctly detects broken connections, then
+#   * you should NOT define XCONN_CHECK_FREQ.
+#   */
+# -#ifndef XCONN_CHECK_FREQ
+# -#define XCONN_CHECK_FREQ 256
+# -#endif
+# +// #ifndef XCONN_CHECK_FREQ
+# +// #define XCONN_CHECK_FREQ 256
+# +// #endif
+#  
+#  struct _XGC
+#  {
+diff -ruN a/include/X11/Xpoll.h b/include/X11/Xpoll.h
+--- a/include/X11/Xpoll.h	2024-07-25 15:04:02.351699987 +0200
++++ b/include/X11/Xpoll.h	2024-07-29 14:37:45.800784463 +0200
+@@ -146,7 +146,7 @@
+ 		(dst)->fds_bits[7] &= ~((b1)->fds_bits[7]);
+ 
+ #else /* USE_POLL */
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif /* USE_POLL */
+ 
+ #endif /* _XPOLL_H_ */
+--- a/standard_definitions.mk	2024-07-25 15:04:02.434754552 +0200
++++ b/standard_definitions.mk	2024-07-29 14:34:16.832826259 +0200
+@@ -4,7 +4,7 @@
+ #CC=/opt/musl/bin/musl-gcc
+ 
+ #compilerflags
+-COMPFLAGS=-pipe -static -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
++COMPFLAGS=-pipe -static -Os -mtune=i386 -Wall -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_GNU_SOURCE -DUSE_POLL -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing  -I. -ffunction-sections -fdata-sections
+ 
+ COMMONDEFS=$(COMPFLAGS) -D_BSD_SOURCE -D_GNU_SOURCE -DUSECMS
+ 
+--- a/libtinyX11/XlibInt.c	2024-10-07 10:28:11.925322598 +0200
++++ b/libtinyX11/XlibInt.c	2024-10-07 10:31:25.856657685 +0200
+@@ -256,7 +256,7 @@
+ 	do {
+ 	    UnlockDisplay(dpy);
+ #ifdef USE_POLL
+-	    nfound = poll (&filedes, 1, -1);
++	    nfound = poll (&filedes, 1, 10);
+ #else
+ 	    nfound = Select (dpy->fd + 1, &r_mask, &w_mask, NULL, NULL);
+ #endif
+@@ -473,7 +473,7 @@
+ #ifdef USE_POLL
+ 	result = poll(filedes,
+ 		      (dpy->flags & XlibDisplayProcConni) ? 1 : 1+dpy->im_fd_length,
+-		      -1);
++		      1);
+ #else
+ 	result = Select(highest_fd + 1, &r_mask, NULL, NULL, NULL);
+ #endif
+@@ -756,7 +756,7 @@
+ #ifdef USE_POLL
+ 	    filedes.fd = dpy->fd;
+ 	    filedes.events = POLLIN;
+-	    if (pend = poll(&filedes, 1, 0))
++	    if (pend = poll(&filedes, 1, 10))
+ #else
+ 	    FD_ZERO(&r_mask);
+ 	    FD_SET(dpy->fd, &r_mask);
+--- a/libXt/NextEvent.c	2024-10-07 13:41:24.958653758 +0200
++++ b/libXt/NextEvent.c	2024-10-07 14:14:25.247737774 +0200
+@@ -336,7 +336,7 @@
+     return Select (wf->nfds, &wf->rmask, &wf->wmask, &wf->emask,
+ 		   wt->wait_time_ptr);
+ #else
+-    return poll (wf->fdlist, wf->fdlistlen, wt->poll_wait);
++    return poll (wf->fdlist, wf->fdlistlen, 100);
+ #endif
+ }
+ 

@@ -1,0 +1,11 @@
+diff -ruN a/ico.c b/ico.c
+--- a/ico.c	2024-08-05 09:04:38.644732743 +0200
++++ b/ico.c	2024-08-06 13:48:40.156026945 +0200
+@@ -1061,6 +1061,7 @@
+ #endif
+ 			XLookupString(&xev.xkey, buf, 10, &ksym, NULL);
+ 			do_it = ((ksym != XK_Q) && ksym != XK_q);
++			printf("keycode %u (keysym 0x%lx, %s)\n", xev.xkey.keycode, ksym, XKeysymToString(ksym));
+ 			break;
+ 		      case MapNotify:
+ 			blocking = False;

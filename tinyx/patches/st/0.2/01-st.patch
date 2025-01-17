@@ -1,0 +1,180 @@
+diff -ruN a/config.def.h b/config.def.h
+--- a/config.def.h	2024-08-27 09:42:15.347070749 +0200
++++ b/config.def.h	2024-08-27 16:24:55.225065320 +0200
+@@ -1,7 +1,7 @@
+ #define TAB 8
+ #define TNAME "st-256color"
+-#define FONT "-*-*-medium-r-*-*-*-120-75-75-*-60-*-*"
+-#define BOLDFONT "-*-*-bold-r-*-*-*-120-75-75-*-60-*-*"
++#define FONT "fixed"
++#define BOLDFONT "fixed"
+ #define BORDER 2
+ #define SHELL "/bin/sh"
+ 
+@@ -27,7 +27,7 @@
+ 
+ /* Default colors (colorname index)
+    foreground, background, cursor   */
+-#define DefaultFG 7
++#define DefaultFG 15
+ #define DefaultBG 0
+ #define DefaultCS 1
+ 
+diff -ruN a/config.mk b/config.mk
+--- a/config.mk	2024-08-27 09:42:15.347070749 +0200
++++ b/config.mk	2024-08-27 09:37:08.443804778 +0200
+@@ -1,18 +1,15 @@
+ # st version
+-VERSION = 0.1.1
++VERSION = 0.2
+ 
+ # Customize below to fit your system
+ 
+ # paths
+-PREFIX = /usr/local
++PREFIX ?= /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+ 
+-X11INC = /usr/X11R6/include
+-X11LIB = /usr/X11R6/lib
+-
+ # includes and libs
+-INCS = -I. -I/usr/include -I${X11INC}
+-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil
++INCS = -I. -I${PREFIX_H}
++LIBS = -L${PREFIX_A} -l:libX11.a -l:libphoenix.a
+ 
+ # flags
+ CPPFLAGS = -DVERSION=\"${VERSION}\"
+diff -ruN a/st.c b/st.c
+--- a/st.c	2024-08-27 09:42:15.347070749 +0200
++++ b/st.c	2024-08-27 16:29:06.650500521 +0200
+@@ -684,11 +684,20 @@
+ void
+ ttynew(void) {
+ 	int m, s;
+-	
+-	/* seems to work fine on linux, openbsd and freebsd */
+-	struct winsize w = {term.row, term.col, 0, 0};
+-	if(openpty(&m, &s, NULL, NULL, &w) < 0)
+-		die("openpty failed: %s\n", SERRNO);
++
++  m = open("/dev/ptmx", O_RDWR | O_NOCTTY);
++
++  if (m < 0 || grantpt(m) < 0 || unlockpt(m) < 0) {
++    die("ptm went brr\n");
++  }
++
++  char *ptsn = ptsname(m);
++  if (ptsn == NULL)
++    die("ptsn\n");
++
++  s = open(ptsn, O_RDWR | O_NOCTTY);
++  if (s < 0)
++    die("pts\n");
+ 
+ 	switch(pid = fork()) {
+ 	case -1:
+@@ -699,8 +708,6 @@
+ 		dup2(s, STDIN_FILENO);
+ 		dup2(s, STDOUT_FILENO);
+ 		dup2(s, STDERR_FILENO);
+-		if(ioctl(s, TIOCSCTTY, NULL) < 0)
+-			die("ioctl TIOCSCTTY failed: %s\n", SERRNO);
+ 		close(s);
+ 		close(m);
+ 		execsh();
+@@ -757,6 +764,7 @@
+ 
+ void
+ ttyresize(int x, int y) {
++#if 0
+ 	struct winsize w;
+ 
+ 	w.ws_row = term.row;
+@@ -764,6 +772,7 @@
+ 	w.ws_xpixel = w.ws_ypixel = 0;
+ 	if(ioctl(cmdfd, TIOCSWINSZ, &w) < 0)
+ 		fprintf(stderr, "Couldn't set window size: %s\n", SERRNO);
++#endif
+ }
+ 
+ void
+@@ -1680,13 +1689,23 @@
+ }
+ 
+ void
++phoenix_xgetfontinfo(int *ascent, int *descent, short *lbearing, short *rbearing) {
++	XFontStruct *xfonts;
++
++  xfonts = XLoadQueryFont(xw.dpy, "fixed");
++  if (!xfonts)
++   die("fixed failed");
++	*ascent = MAX(*ascent, xfonts->ascent);
++	*descent = MAX(*descent, xfonts->descent);
++	*lbearing = MAX(*lbearing, xfonts->min_bounds.lbearing);
++	*rbearing = MAX(*rbearing, xfonts->max_bounds.rbearing);
++}
++
++void
+ initfonts(char *fontstr, char *bfontstr) {
+-	if((dc.font.set = xinitfont(fontstr)) == NULL ||
+-	   (dc.bfont.set = xinitfont(bfontstr)) == NULL)
+-		die("Can't load font %s\n", dc.font.set ? BOLDFONT : FONT);
+-	xgetfontinfo(dc.font.set, &dc.font.ascent, &dc.font.descent,
++	phoenix_xgetfontinfo(&dc.font.ascent, &dc.font.descent,
+ 	    &dc.font.lbearing, &dc.font.rbearing);
+-	xgetfontinfo(dc.bfont.set, &dc.bfont.ascent, &dc.bfont.descent,
++	phoenix_xgetfontinfo(&dc.bfont.ascent, &dc.bfont.descent,
+ 	    &dc.bfont.lbearing, &dc.bfont.rbearing);
+ }
+ 
+@@ -1736,11 +1755,13 @@
+ 	xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.bufw, xw.bufh, XDefaultDepth(xw.dpy, xw.scr));
+ 
+ 
++#if 0
+ 	/* input methods */
+ 	xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL);
+ 	xw.xic = XCreateIC(xw.xim, XNInputStyle, XIMPreeditNothing
+ 					   | XIMStatusNothing, XNClientWindow, xw.win,
+ 					   XNFocusWindow, xw.win, NULL);
++#endif
+ 	/* gc */
+ 	dc.gc = XCreateGC(xw.dpy, xw.win, 0, NULL);
+ 	
+@@ -1789,8 +1810,7 @@
+ 		}
+ 	}
+ 
+-	XmbDrawImageString(xw.dpy, xw.buf, base.mode & ATTR_BOLD ? dc.bfont.set : dc.font.set,
+-		dc.gc, winx, winy, s, bytelen);
++	XDrawString(xw.dpy, xw.buf, dc.gc, winx, winy, s, bytelen);
+ 	
+ 	if(base.mode & ATTR_UNDERLINE)
+ 		XDrawLine(xw.dpy, xw.buf, dc.gc, winx, winy+1, winx+width-1, winy+1);
+@@ -1958,7 +1978,7 @@
+ 
+ 	meta = e->state & Mod1Mask;
+ 	shift = e->state & ShiftMask;
+-	len = XmbLookupString(xw.xic, e, buf, sizeof(buf), &ksym, &status);
++	len = XLookupString(e, buf, sizeof(buf), &ksym, &status);
+ 	
+ 	/* 1. custom keys from config.h */
+ 	if((customkey = kmap(ksym, e->state)))
+@@ -2012,6 +2032,7 @@
+ 
+ void
+ resize(XEvent *e) {
++#if 0
+ 	int col, row;
+ 	
+ 	if(e->xconfigure.width == xw.w && e->xconfigure.height == xw.h)
+@@ -2027,6 +2048,7 @@
+ 		draw();
+ 	ttyresize(col, row);
+ 	xresize(col, row);
++#endif
+ }
+ 
+ bool

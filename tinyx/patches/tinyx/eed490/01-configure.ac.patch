@@ -1,0 +1,272 @@
+diff -ruN a/configure.ac b/configure.ac
+--- a/configure.ac	2022-11-07 07:44:53.000000000 +0100
++++ b/configure.ac	2024-08-02 10:34:26.900380412 +0200
+@@ -71,8 +71,6 @@
+ 		strtol getopt getopt_long vsnprintf])
+ AC_FUNC_ALLOCA
+ dnl Old HAS_* names used in os/*.c.
+-AC_CHECK_FUNC([getdtablesize],
+-	AC_DEFINE(HAS_GETDTABLESIZE, 1, [Have the `getdtablesize' function.]))
+ AC_CHECK_FUNC([getifaddrs],
+ 	AC_DEFINE(HAS_GETIFADDRS, 1, [Have the `getifaddrs' function.]))
+ AC_CHECK_FUNC([getpeereid],
+@@ -85,18 +83,17 @@
+ AM_CONDITIONAL(NEED_VSNPRINTF, [test x$HAVE_VSNPRINTF = xno])
+ 
+ dnl Check for mmap support for Xvfb
+-AC_CHECK_FUNC([mmap], AC_DEFINE(HAS_MMAP, 1, [Have the `mmap' function.]))
++#AC_CHECK_FUNC([mmap], AC_DEFINE(HAS_MMAP, 1, [Have the `mmap' function.]))
++AC_DEFINE(HAS_MMAP, 1, [Have the `mmap' function.])
+ 
+ dnl Find the math libary
+ AC_CHECK_LIB(m, sqrt)
+ 
+ dnl APM header
+-AC_CHECK_HEADERS([linux/apm_bios.h], LNXAPM=yes)
+-AM_CONDITIONAL(LNXAPM, [test "x$LNXAPM" = xyes])
++AM_CONDITIONAL(LNXAPM, [test 1=0])
+ 
+ dnl fbdev header
+-AC_CHECK_HEADERS([linux/fb.h], FBDEV=yes)
+-AM_CONDITIONAL(FBDEVHW, [test "x$FBDEV" = xyes])
++AM_CONDITIONAL(FBDEVHW, [test 1=1] )
+ 
+ dnl MTRR header
+ AC_CHECK_HEADERS([asm/mtrr.h], ac_cv_asm_mtrr_h=yes)
+@@ -143,6 +140,10 @@
+ 	I386_VIDEO=yes
+ 	case $host_os in
+ 		*linux*)	DEFAULT_INT10=vm86 ;;
++    *phoenix*)	DEFAULT_INT10=stub
++      dnl --whole-archive/--no-whole-archive required for proper weak symbol substitution in libgraph
++      SYS_LIBS="-Wl,--whole-archive,-l:libvga.a,-l:libvirtio.a,-l:libgraph.a,--no-whole-archive"
++      ;;
+ 		*freebsd*)	AC_DEFINE(USE_DEV_IO) ;;
+ 		*netbsd*)	AC_DEFINE(USE_I386_IOPL)
+ 				SYS_LIBS=-li386
+@@ -319,34 +320,34 @@
+ 
+ dnl Core modules for most extensions, et al.
+ REQUIRED_MODULES="[randrproto >= 1.2] renderproto [fixesproto >= 4.0] [damageproto >= 1.1] xcmiscproto xextproto xproto xtrans xf86bigfontproto [scrnsaverproto >= 1.1] bigreqsproto resourceproto fontsproto inputproto [kbproto >= 1.0.3]"
+-REQUIRED_LIBS="xfont fontenc"
++REQUIRED_LIBS="xfont fontenc zlib"
+ 
+ AM_CONDITIONAL(SCREENSAVER, [test "x$SCREENSAVER" = xyes])
+-if test "x$SCREENSAVER" = xyes; then
+-	AC_DEFINE(SCREENSAVER, 1, [Support MIT-SCREEN-SAVER extension])
+-fi
++#if test "x$SCREENSAVER" = xyes; then
++#	AC_DEFINE(SCREENSAVER, 1, [Support MIT-SCREEN-SAVER extension])
++#fi
+ 
+ AM_CONDITIONAL(RES, [test "x$RES" = xyes])
+-if test "x$RES" = xyes; then
+-	AC_DEFINE(RES, 1, [Support X resource extension])
+-	REQUIRED_MODULES="$REQUIRED_MODULES resourceproto"
+-fi
++#if test "x$RES" = xyes; then
++#	AC_DEFINE(RES, 1, [Support X resource extension])
++#	REQUIRED_MODULES="$REQUIRED_MODULES resourceproto"
++#fi
+ 
+ AM_CONDITIONAL(DBE, [test "x$DBE" = xyes])
+-if test "x$DBE" = xyes; then
+-	AC_DEFINE(DBE, 1, [Support DBE extension])
+-	DBE_LIB='$(top_builddir)/dbe/libdbe.la'
+-fi
++#if test "x$DBE" = xyes; then
++#	AC_DEFINE(DBE, 1, [Support DBE extension])
++#	DBE_LIB='$(top_builddir)/dbe/libdbe.la'
++#fi
+ 
+ AM_CONDITIONAL(XF86BIGFONT, [test "x$XF86BIGFONT" = xyes])
+-if test "x$XF86BIGFONT" = xyes; then
+-	AC_DEFINE(XF86BIGFONT, 1, [Support XF86 Big font extension])
+-fi
++#if test "x$XF86BIGFONT" = xyes; then
++#	AC_DEFINE(XF86BIGFONT, 1, [Support XF86 Big font extension])
++#fi
+ 
+ AM_CONDITIONAL(DPMSExtension, [test "x$DPMSExtension" = xyes])
+-if test "x$DPMSExtension" = xyes; then
+-	AC_DEFINE(DPMSExtension, 1, [Support DPMS extension])
+-fi
++#if test "x$DPMSExtension" = xyes; then
++#	AC_DEFINE(DPMSExtension, 1, [Support DPMS extension])
++#fi
+ 
+ RENDER_LIB='$(top_builddir)/render/librender.la'
+ RENDER_INC='-I$(top_srcdir)/render'
+@@ -365,40 +366,40 @@
+ AC_CHECK_FUNC(strcasecmp, [], AC_DEFINE([NEED_STRCASECMP], 1,
+                                         [Do not have `strcasecmp'.]))
+ 
+-PKG_CHECK_MODULES([XDMCP], [xdmcp], [have_libxdmcp="yes"], [have_libxdmcp="no"])
+-if test "x$have_libxdmcp" = xyes; then
+-	AC_CHECK_LIB(Xdmcp, XdmcpWrap, [have_xdmcpwrap="yes"], [have_xdmcpwrap="no"], [$XDMCP_LIBS])
+-fi
+-if test "x$XDMCP" = xauto; then
+-	if test "x$have_libxdmcp" = xyes; then
+-		XDMCP=yes
+-	else
+-		XDMCP=no
+-	fi
+-fi
+-if test "x$XDMAUTH" = xauto; then
+-	if test "x$have_libxdmcp" = xyes && test "x$have_xdmcpwrap" = xyes; then
+-		XDMAUTH=yes
+-	else
+-		XDMAUTH=no
+-	fi
+-fi
++#PKG_CHECK_MODULES([XDMCP], [xdmcp], [have_libxdmcp="yes"], [have_libxdmcp="no"])
++#if test "x$have_libxdmcp" = xyes; then
++#	AC_CHECK_LIB(Xdmcp, XdmcpWrap, [have_xdmcpwrap="yes"], [have_xdmcpwrap="no"], [$XDMCP_LIBS])
++#fi
++#if test "x$XDMCP" = xauto; then
++#	if test "x$have_libxdmcp" = xyes; then
++#		XDMCP=yes
++#	else
++#		XDMCP=no
++#	fi
++#fi
++#if test "x$XDMAUTH" = xauto; then
++#	if test "x$have_libxdmcp" = xyes && test "x$have_xdmcpwrap" = xyes; then
++#		XDMAUTH=yes
++#	else
++#		XDMAUTH=no
++#	fi
++#fi
+ 
+ AM_CONDITIONAL(XDMCP, [test "x$XDMCP" = xyes])
+-if test "x$XDMCP" = xyes; then
+-	AC_DEFINE(XDMCP, 1, [Support XDM Control Protocol])
+-	REQUIRED_LIBS="$REQUIRED_LIBS xdmcp"
+-	XDMCP_MODULES="xdmcp"
+-fi
+-
++#if test "x$XDMCP" = xyes; then
++#	AC_DEFINE(XDMCP, 1, [Support XDM Control Protocol])
++#	REQUIRED_LIBS="$REQUIRED_LIBS xdmcp"
++#	XDMCP_MODULES="xdmcp"
++#fi
++#
+ AM_CONDITIONAL(XDMAUTH, [test "x$XDMAUTH" = xyes])
+-if test "x$XDMAUTH" = xyes; then
+-	AC_DEFINE(HASXDMAUTH,1,[Support XDM-AUTH*-1])
+-	if ! test "x$XDMCP" = xyes; then
+-		REQUIRED_LIBS="$REQUIRED_LIBS xdmcp"
+-		XDMCP_MODULES="xdmcp"
+-	fi
+-fi
++#if test "x$XDMAUTH" = xyes; then
++#	AC_DEFINE(HASXDMAUTH,1,[Support XDM-AUTH*-1])
++#	if ! test "x$XDMCP" = xyes; then
++#		REQUIRED_LIBS="$REQUIRED_LIBS xdmcp"
++#		XDMCP_MODULES="xdmcp"
++#	fi
++#fi
+ 
+ VENDOR_RELEASE="((($VERSION_MAJOR) * 10000000) + (($VERSION_MINOR) * 100000) + (($VERSION_PATCH) * 1000) + $VERSION_SNAP)"
+ 
+@@ -533,20 +534,13 @@
+     AC_DEFINE(KDRIVESERVER,1,[Build Kdrive X server])
+     AC_DEFINE(KDRIVEDDXACTIONS,,[Build kdrive ddx])
+ 
+-    AC_CHECK_HEADERS([asm/vm86.h sys/io.h])
+-    if test "$ac_cv_header_asm_vm86_h" = yes; then
+-        AC_DEFINE(KDRIVEVESA, 1, [Build VESA-based kdrive servers])
+-    fi
+-
+-    AC_CHECK_HEADERS([linux/fb.h])
+-    if test "$ac_cv_header_linux_fb_h" = yes; then
+-        AC_DEFINE(KDRIVEFBDEV, 1, [Build fbdev-based kdrive server])
+-    fi
++    AC_DEFINE(KDRIVEVESA, 0, [Build VESA-based kdrive servers])
++    AC_DEFINE(KDRIVEFBDEV, 1, [Build fbdev-based kdrive server])
+     
+     # damage shadow extension fb mi
+     KDRIVE_INC='-I$(top_srcdir)/kdrive/src'
+     KDRIVE_PURE_INCS="$KDRIVE_INC $MIEXT_DAMAGE_INC $MIEXT_SHADOW_INC $XEXT_INC $FB_INC $MI_INC"
+-    KDRIVE_OS_INC='-I$(top_srcdir)/kdrive/linux'
++    KDRIVE_OS_INC='-I$(top_srcdir)/kdrive/phoenix'
+     KDRIVE_INCS="$KDRIVE_PURE_INCS $KDRIVE_OS_INC"
+     
+     KDRIVE_CFLAGS="$XSERVER_CFLAGS -DHAVE_KDRIVE_CONFIG_H"
+@@ -561,9 +555,13 @@
+ 	    KDRIVE_OS_LIB='$(top_builddir)/kdrive/linux/liblinux.a'
+             KDRIVELINUX=yes
+ 	    ;;
++	*phoenix*)
++	    KDRIVE_OS_LIB='$(top_builddir)/kdrive/phoenix/libphoenix.a'
++            KDRIVEPHOENIX=yes
++	    ;;
+     esac
+     KDRIVE_STUB_LIB='$(top_builddir)/kdrive/src/libkdrivestubs.a'
+-    KDRIVE_LIBS="$DIX_LIB $KDRIVE_LIB $KDRIVE_OS_LIB $KDRIVE_PURE_LIBS $KDRIVE_STUB_LIB"
++    KDRIVE_LIBS="$DIX_LIB $KDRIVE_LIB $KDRIVE_PURE_LIBS $KDRIVE_OS_LIB $KDRIVE_STUB_LIB"
+ fi
+ AC_SUBST(KDRIVE_INCS)
+ AC_SUBST(KDRIVE_PURE_INCS)
+@@ -571,6 +569,7 @@
+ AC_SUBST(KDRIVE_PURE_LIBS)
+ AC_SUBST(KDRIVE_LIBS)
+ AM_CONDITIONAL(KDRIVELINUX, [test "x$KDRIVELINUX" = xyes])
++AM_CONDITIONAL(KDRIVEPHOENIX, [test "x$KDRIVEPHOENIX" = xyes])
+ AM_CONDITIONAL(KDRIVEVESA, [test x"$ac_cv_header_asm_vm86_h" = xyes])
+ AM_CONDITIONAL(KDRIVEFBDEV, [test x"$ac_cv_header_linux_fb_h" = xyes])
+ 
+@@ -579,21 +578,21 @@
+ 
+ dnl ---------- Compiler arguments
+ 
+-AX_CHECK_COMPILE_FLAG([-flto],
+-	[CFLAGS="$CFLAGS -flto"; LDFLAGS="$LDFLAGS -flto"; ac_cv_lto_supported=yes],
+-	[ac_cv_lto_supported=no],
+-	[])
+-
+-if test x"$ac_cv_lto_supported" = xno; then
+-	AC_MSG_NOTICE([LTO not supported, checking sections instead...])
+-
+-	AX_CHECK_COMPILE_FLAG([-ffunction-sections],
+-		[CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
+-		LDFLAGS="$LDFLAGS -Wl,-gc-sections"
+-		ac_cv_sections_supported=yes],
+-		[ac_cv_sections_supported=no],
+-		[])
+-fi
++#AX_CHECK_COMPILE_FLAG([-flto],
++#	[CFLAGS="$CFLAGS -flto"; LDFLAGS="$LDFLAGS -flto"; ac_cv_lto_supported=yes],
++#	[ac_cv_lto_supported=no],
++#	[])
++
++#if test x"$ac_cv_lto_supported" = xno; then
++#	AC_MSG_NOTICE([LTO not supported, checking sections instead...])
++#
++#	AX_CHECK_COMPILE_FLAG([-ffunction-sections],
++#		[CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
++#		LDFLAGS="$LDFLAGS -Wl,-gc-sections"
++#		ac_cv_sections_supported=yes],
++#		[ac_cv_sections_supported=no],
++#		[])
++#fi
+ 
+ AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],
+ 	[CFLAGS="$CFLAGS -fvisibility=hidden"; ac_cv_visibility_supported=yes],
+@@ -611,7 +610,7 @@
+ 	[])
+ 
+ AX_CHECK_LINK_FLAG([-Wl,-as-needed], [LDFLAGS="$LDFLAGS -Wl,-as-needed"],
+-	[], [])
++[], [])
+ 
+ dnl ----------
+ 
+@@ -655,6 +654,7 @@
+ kdrive/Makefile
+ kdrive/fbdev/Makefile
+ kdrive/linux/Makefile
++kdrive/phoenix/Makefile
+ kdrive/src/Makefile
+ kdrive/vesa/Makefile
+ ])
