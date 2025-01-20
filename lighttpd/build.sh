@@ -2,7 +2,7 @@
 
 set -e
 
-LIGHTTPD="lighttpd-1.4.53"
+LIGHTTPD="lighttpd-1.4.79"
 PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${LIGHTTPD}.tar.gz"
 
@@ -27,6 +27,9 @@ fi
 # Apply patches
 #
 for patchfile in "${PREFIX_PORT}"/patches/*.patch; do
+	if [ ! -f "$patchfile" ]; then
+		continue;
+	fi
 	if [ ! -f "$PREFIX_LIGHTTPD_MARKERS/$(basename "$patchfile").applied" ]; then
 		echo "applying patch: $patchfile"
 		patch -d "$PREFIX_LIGHTTPD_SRC" -p1 < "$patchfile"
@@ -42,10 +45,10 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	CONFIGFILE=$(find "${PREFIX_ROOTFS:?PREFIX_ROOTFS not set!}/etc" -name "lighttpd.conf")
 	grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_LIGHTTPD_SRC"/src/plugin-static.h
 
-	# FIXME: -Wno-error=implicit-function-declaration as lighthttp for some reason doesn't include arpa/inet.h when ntohs is used.
-	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX -Wno-error=implicit-function-declaration"
+	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
+	( cd "$PREFIX_LIGHTTPD_SRC" && "./autogen.sh" )
 	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 		-C --disable-ipv6 --disable-mmap --with-bzip2=no \
 		--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared  --host="$HOST" --with-openssl="${PREFIX_OPENSSL}" --with-pcre="${PREFIX_PCRE}" \
