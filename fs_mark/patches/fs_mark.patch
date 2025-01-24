@@ -1,0 +1,90 @@
+--- fs_mark-3.3/fs_mark.c	2025-01-02 19:10:48.757969200 +0100
++++ fs_mark-3.3.phoenix/fs_mark.c	2025-01-02 19:10:48.757969200 +0100
+@@ -29,7 +29,7 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <sys/stat.h>
+-#include <sys/vfs.h>
++#include <sys/statvfs.h>
+ #include <sys/time.h>
+ 
+ #include <fcntl.h>
+@@ -42,9 +42,8 @@
+ #include <ctype.h>
+ #include <time.h>
+ 
+-#include <linux/types.h>
+-#include <linux/limits.h>
+-#include <linux/unistd.h>
++#include <limits.h>
++#include <signal.h>
+ 
+ #include "fs_mark.h"
+ 
+@@ -493,12 +492,12 @@
+  */
+ int get_df_full(char *dir_name)
+ {
+-	struct statfs fs_buf;
++	struct statvfs fs_buf;
+ 	float df_used, used_blocks;
+ 	int df_percent_used;
+ 
+-	if (statfs(dir_name, &fs_buf) == -1) {
+-		fprintf(stderr, "fs_mark: statfs failed on %s %s\n", dir_name,
++	if (statvfs(dir_name, &fs_buf) == -1) {
++		fprintf(stderr, "fs_mark: statvfs failed on %s %s\n", dir_name,
+ 			strerror(errno));
+ 		cleanup_exit();
+ 	}
+@@ -517,11 +516,11 @@
+  */
+ unsigned long long get_bytes_free(char *dir_name)
+ {
+-	struct statfs fs_buf;
++	struct statvfs fs_buf;
+ 	unsigned long long bytes_free;
+ 
+-	if (statfs(dir_name, &fs_buf) == -1) {
+-		fprintf(stderr, "fs_mark: statfs failed on %s %s\n", dir_name,
++	if (statvfs(dir_name, &fs_buf) == -1) {
++		fprintf(stderr, "fs_mark: statvfs failed on %s %s\n", dir_name,
+ 			strerror(errno));
+ 		cleanup_exit();
+ 	}
+@@ -1115,6 +1114,10 @@
+ 
+ 	do_run(my_pid);
+ 
++#ifdef NOMMU
++        memset(names, 0, sizeof(struct name_entry) * num_files);
++#endif
++
+ 	fclose(child_log_file_fp);
+ }
+ 
+@@ -1137,8 +1140,15 @@
+ 	 * Fork one thread for each of the specified children
+ 	 */
+ 
++#ifdef NOMMU
++	#define FORK vfork
++	file_count = 0;
++#else
++	#define FORK fork
++#endif
++
+ 	for (i = 0; i < num_threads; i++) {
+-		if ((child_tasks[i].child_pid = fork()) == -1) {
++		if ((child_tasks[i].child_pid = FORK()) == -1) {
+ 			fprintf(stderr, "fs_mark: fork failed: %s\n",
+ 				strerror(errno));
+ 			cleanup_exit();
+@@ -1262,6 +1272,7 @@
+ 	 */
+ 	df_full = get_df_full(child_tasks[0].test_dir);
+ 
++	usleep(100000);
+ 	if (verbose_stats)
+ 		fprintf(log_fp,
+ 			"%6u %12u %12u %12.1f %16llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu\n",
