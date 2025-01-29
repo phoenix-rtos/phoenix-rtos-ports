@@ -1,0 +1,45 @@
+--- x264_org/input/input.c	2024-09-06 10:29:54.784756723 +0200
++++ x264/input/input.c	2024-09-06 11:05:56.206158357 +0200
+@@ -227,7 +227,19 @@
+     }
+ #else
+     size_t padded_size = size + MMAP_PADDING;
++#ifdef phoenix
++    /**
++     * PHOENIX-RTOS PATCH
++     * 
++     * Phoenix implementation of mmap() fails if `size` is not aligned to page size
++     * It is important to remove this patch when this issue is resolved.
++     * 
++     * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1155
++     */
++    if( (base = mmap( NULL, ((padded_size + (SIZE_PAGE - 1)) & ~(SIZE_PAGE - 1)), PROT_READ, MAP_PRIVATE, h->fd, offset )) != MAP_FAILED )
++#else
+     if( (base = mmap( NULL, padded_size, PROT_READ, MAP_PRIVATE, h->fd, offset )) != MAP_FAILED )
++#endif
+     {
+         /* Ask the OS to readahead pages. This improves performance whereas
+          * forcing page faults by manually accessing every page does not.
+@@ -242,7 +254,22 @@
+          * the file into a copy of the last valid page to prevent reads from invalid memory. */
+         size_t aligned_size = (padded_size - 1) & ~h->align_mask;
+         if( offset + aligned_size >= h->file_size )
++#ifdef phoenix
++        {
++            /**
++            * PHOENIX-RTOS PATCH
++            * 
++            * Phoenix implementation of mmap() fails if `size` is not aligned to page size
++            * It is important to remove this patch when this issue is resolved.
++            * 
++            * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1155
++            */
++            size_t phoenix_paddedMinusAligned = padded_size - aligned_size;
++            mmap( base + aligned_size, ((phoenix_paddedMinusAligned + (SIZE_PAGE - 1)) & ~(SIZE_PAGE - 1)), PROT_READ, MAP_PRIVATE|MAP_FIXED, h->fd, (offset + size - 1) & ~h->align_mask );
++        }
++#else
+             mmap( base + aligned_size, padded_size - aligned_size, PROT_READ, MAP_PRIVATE|MAP_FIXED, h->fd, (offset + size - 1) & ~h->align_mask );
++#endif
+ 
+         return base + align;
+     }
