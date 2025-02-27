@@ -1,0 +1,93 @@
+diff --git a/apps/lib/s_cb.c b/apps/lib/s_cb.c
+--- a/apps/lib/s_cb.c
++++ b/apps/lib/s_cb.c
+@@ -37,7 +37,7 @@ static int cookie_initialized = 0;
+ #endif
+ static BIO *bio_keylog = NULL;
+ 
+-static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
++static const char *s_cb_lookup(int val, const STRINT_PAIR* list, const char* def)
+ {
+     for ( ; list->name; ++list)
+         if (list->retval == val)
+@@ -215,7 +215,7 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
+     BIO_puts(bio, "Client Certificate Types: ");
+     for (i = 0; i < cert_type_num; i++) {
+         unsigned char cert_type = p[i];
+-        const char *cname = lookup((int)cert_type, cert_type_list, NULL);
++        const char *cname = s_cb_lookup((int)cert_type, cert_type_list, NULL);
+ 
+         if (i)
+             BIO_puts(bio, ", ");
+@@ -653,7 +653,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
+         version == TLS1_2_VERSION ||
+         version == TLS1_3_VERSION ||
+         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
+-        str_version = lookup(version, ssl_versions, "???");
++        str_version = s_cb_lookup(version, ssl_versions, "???");
+         switch (content_type) {
+         case SSL3_RT_CHANGE_CIPHER_SPEC:
+             /* type 20 */
+@@ -672,7 +672,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
+                     str_details1 = ", fatal";
+                     break;
+                 }
+-                str_details2 = lookup((int)bp[1], alert_types, " ???");
++                str_details2 = s_cb_lookup((int)bp[1], alert_types, " ???");
+             }
+             break;
+         case SSL3_RT_HANDSHAKE:
+@@ -680,7 +680,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
+             str_content_type = ", Handshake";
+             str_details1 = "???";
+             if (len > 0)
+-                str_details1 = lookup((int)bp[0], handshakes, "???");
++                str_details1 = s_cb_lookup((int)bp[0], handshakes, "???");
+             break;
+         case SSL3_RT_APPLICATION_DATA:
+             /* type 23 */
+@@ -821,7 +821,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
+                const unsigned char *data, int len, void *arg)
+ {
+     BIO *bio = arg;
+-    const char *extname = lookup(type, tlsext_types, "unknown");
++    const char *extname = s_cb_lookup(type, tlsext_types, "unknown");
+ 
+     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
+                client_server ? "server" : "client", extname, type, len);
+@@ -1477,7 +1477,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
+         return 1;
+     BIO_puts(sdb->out, "Security callback: ");
+ 
+-    nm = lookup(op, callback_types, NULL);
++    nm = s_cb_lookup(op, callback_types, NULL);
+     show_nm = nm != NULL;
+     switch (op) {
+     case SSL_SECOP_TICKET:
+@@ -1486,7 +1486,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
+         show_nm = 0;
+         break;
+     case SSL_SECOP_VERSION:
+-        BIO_printf(sdb->out, "Version=%s", lookup(nid, ssl_versions, "???"));
++        BIO_printf(sdb->out, "Version=%s", s_cb_lookup(nid, ssl_versions, "???"));
+         show_bits = 0;
+         show_nm = 0;
+         break;
+@@ -1555,14 +1555,14 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
+             else
+                 BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x", op);
+ 
+-            sname = lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
++            sname = s_cb_lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
+             if (sname != NULL) {
+                 BIO_printf(sdb->out, " scheme=%s", sname);
+             } else {
+                 int alg_code = salg[1];
+                 int hash_code = salg[0];
+-                const char *alg_str = lookup(alg_code, signature_tls12_alg_list, NULL);
+-                const char *hash_str = lookup(hash_code, signature_tls12_hash_list, NULL);
++                const char *alg_str = s_cb_lookup(alg_code, signature_tls12_alg_list, NULL);
++                const char *hash_str = s_cb_lookup(hash_code, signature_tls12_hash_list, NULL);
+ 
+                 if (alg_str != NULL && hash_str != NULL)
+                     BIO_printf(sdb->out, " digest=%s, algorithm=%s", hash_str, alg_str);

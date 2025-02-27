@@ -5,20 +5,20 @@
 	ports_api=1
 
 	name="openssl"
-	version="1.1.1a"
+	version="3.4.1"
 	desc="TLSv1.3 capable SSL and crypto library"
 
 	source="https://www.openssl.org/source/"
 	archive_filename="${name}-${version}.tar.gz"
 	src_path="${name}-${version}/"
 
-	sha256="fc20130f8b7cbd2fb918b2f14e2f429e109c31ddd0fb38fc5d71d9ffed3f9f41"
-	size="8350547"
+	sha256="002a2d6b30b58bf4bea46c43bdd96365aaf8daa6c428782aa4feee06da197df3"
+	size="18346056"
 
-	license="OpenSSL"
-	license_file="LICENSE"
+	license="Apache-2.0"
+	license_file="LICENSE.txt"
 
-	conflicts="openssl>=3"
+	conflicts="openssl<3"
 	depends=""
 	optional=""
 
@@ -30,7 +30,7 @@ p_prepare() {
 
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/Makefile" ]; then
 		cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_PORT_WORKDIR/Configurations/"
-		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl")
+		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl" no-docs)
 	fi
 }
 
