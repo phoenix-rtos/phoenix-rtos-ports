@@ -1,0 +1,15 @@
+This function is defined as a macro in OpenSSL 3 and autoconf does not detect it.
+Newer openvpn versions fix this issue.
+diff --git a/src/openvpn/openssl_compat.h b/src/openvpn/openssl_compat.h
+--- a/src/openvpn/openssl_compat.h
++++ b/src/openvpn/openssl_compat.h
+@@ -258,7 +258,7 @@ EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
+ }
+ #endif
+ 
+-#if !defined(HAVE_EVP_PKEY_ID)
++#if (!defined(HAVE_EVP_PKEY_ID)) && (OPENSSL_VERSION_NUMBER < 0x30000000L)
+ /**
+  * Get the PKEY type
+  *
+
