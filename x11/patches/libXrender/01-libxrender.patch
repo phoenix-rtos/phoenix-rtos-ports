@@ -1,0 +1,12 @@
+diff -ruN a/configure.ac b/configure.ac
+--- a/configure.ac	2025-02-20 10:54:25.943211268 +0100
++++ b/configure.ac	2025-02-20 10:54:39.329650568 +0100
+@@ -50,7 +50,7 @@
+           [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
+ XORG_MACROS_VERSION(1.8)
+ XORG_DEFAULT_OPTIONS
+-XORG_CHECK_MALLOC_ZERO
++# XORG_CHECK_MALLOC_ZERO
+ 
+ # Check render configuration, strip extra digits from package version to
+ # find the required protocol version

@@ -1,0 +1,36 @@
+diff -ruN a/Xtranssock.c b/Xtranssock.c
+--- a/Xtranssock.c	2025-02-20 10:25:40.658591768 +0100
++++ b/Xtranssock.c	2025-02-20 11:14:08.213481827 +0100
+@@ -74,6 +74,10 @@
+ #include <X11/Xthreads.h>
+ #endif
+ 
++#ifdef __phoenix__
++#define h_addr h_addr_list[0]
++#endif
++
+ #ifndef WIN32
+ 
+ #if defined(TCPCONN) || defined(UNIXCONN)
+@@ -1985,6 +1989,21 @@
+ 	if (ret == SOCKET_ERROR) errno = WSAGetLastError();
+ 	return ret;
+     }
++#elif __phoenix__
++/* this bufsize doesn't really matter, but using recv() as a replacement
++ * for ioctl/FIONREAD is quite slow 
++ * Maybe implement ioctl/FIONREAD in phoenix kernel? */
++#define BUFSIZE 64
++static char buf[BUFSIZE];
++  int k = recv(ciptr->fd, buf, BUFSIZE, MSG_PEEK | MSG_DONTWAIT);
++  if (k < 0) {
++    if (errno == EWOULDBLOCK || errno == EAGAIN)
++      k = 0;
++    else 
++      return -1;
++  } 
++  *pend = k;
++  return 0;
+ #else
+     return ioctl (ciptr->fd, FIONREAD, (char *) pend);
+ #endif /* WIN32 */

@@ -1,0 +1,71 @@
+diff -ruN a/src/fccache.c b/src/fccache.c
+--- a/src/fccache.c	2025-02-20 13:18:29.168121587 +0100
++++ b/src/fccache.c	2025-02-20 13:23:21.910668257 +0100
+@@ -1035,6 +1035,10 @@
+     FcCacheObjectDereference (cache);
+ }
+ 
++
++#define timercmp_ph(a, b, CMP) \
++	(((a)->tv_sec == (b)->tv_sec && (a)->tv_usec CMP (b)->tv_usec) || (a)->tv_sec CMP (b)->tv_sec)
++
+ static FcBool
+ FcDirCacheMapHelper (FcConfig *config, int fd, struct stat *fd_stat, struct stat *dir_stat, struct timeval *latest_cache_mtime, void *closure)
+ {
+@@ -1053,25 +1057,25 @@
+     dir_mtime.tv_usec = 0;
+ #endif
+     /* special take care of OSTree */
+-    if (!timercmp (&zero_mtime, &dir_mtime, !=))
++    if (!timercmp_ph (&zero_mtime, &dir_mtime, !=))
+     {
+-	if (!timercmp (&zero_mtime, &cache_mtime, !=))
++	if (!timercmp_ph (&zero_mtime, &cache_mtime, !=))
+ 	{
+ 	    if (*((FcCache **) closure))
+ 		FcDirCacheUnload (*((FcCache **) closure));
+ 	}
+-	else if (*((FcCache **) closure) && !timercmp (&zero_mtime, latest_cache_mtime, !=))
++	else if (*((FcCache **) closure) && !timercmp_ph (&zero_mtime, latest_cache_mtime, !=))
+ 	{
+ 	    FcDirCacheUnload (cache);
+ 	    return FcFalse;
+ 	}
+-	else if (timercmp (latest_cache_mtime, &cache_mtime, <))
++	else if (timercmp_ph (latest_cache_mtime, &cache_mtime, <))
+ 	{
+ 	    if (*((FcCache **) closure))
+ 		FcDirCacheUnload (*((FcCache **) closure));
+ 	}
+     }
+-    else if (timercmp (latest_cache_mtime, &cache_mtime, <))
++    else if (timercmp_ph (latest_cache_mtime, &cache_mtime, <))
+     {
+ 	if (*((FcCache **) closure))
+ 	    FcDirCacheUnload (*((FcCache **) closure));
+diff -ruN a/src/fccompat.c b/src/fccompat.c
+--- a/src/fccompat.c	2025-02-20 13:18:29.169121576 +0100
++++ b/src/fccompat.c	2025-02-20 13:25:54.886919723 +0100
+@@ -209,7 +209,7 @@
+ #else
+     random_r (&fcrandbuf, &result);
+ #endif
+-#elif HAVE_RANDOM
++#elif HAVE_RANDOM && !defined(__phoenix__)
+     static char statebuf[256];
+     char *state;
+     static FcBool initialized = FcFalse;
+diff -ruN a/src/fcxml.c b/src/fcxml.c
+--- a/src/fcxml.c	2025-02-20 13:18:29.170121564 +0100
++++ b/src/fcxml.c	2025-02-20 14:03:02.194536995 +0100
+@@ -27,6 +27,10 @@
+ #include <fcntl.h>
+ #include <stdarg.h>
+ 
++#ifdef __phoenix__
++#include <locale.h>
++#endif
++
+ #ifdef HAVE_DIRENT_H
+ #include <dirent.h>
+ #endif

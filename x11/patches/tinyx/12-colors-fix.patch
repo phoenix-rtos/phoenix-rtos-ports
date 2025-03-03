@@ -1,0 +1,146 @@
+diff -ruN a/kdrive/fbdev/fbdev.c b/kdrive/fbdev/fbdev.c
+--- a/kdrive/fbdev/fbdev.c	2024-08-21 12:36:43.433667825 +0200
++++ b/kdrive/fbdev/fbdev.c	2024-08-29 13:35:37.289274844 +0200
+@@ -33,7 +33,7 @@
+ void refresher(void *arg) {
+   graph_t* g = (graph_t*) arg;
+   while (1) {
+-    usleep(12588); // ~70Hz
++    usleep(33333); // ~30Hz
+     graph_commit(g);
+   }
+ }
+@@ -100,7 +100,7 @@
+     FatalError("failed to initialize graphics adapter: %s", strerror(k));
+   }
+ 
+-  if ((k = graph_mode(&priv->g, GRAPH_DEFMODE, GRAPH_70Hz)) < 0) {
++  if ((k = graph_mode(&priv->g, GRAPH_DEFMODE, GRAPH_DEFFREQ)) < 0) {
+ 		FatalError("failed to set graphics mode: %d", k);
+   }
+ 
+@@ -134,7 +134,6 @@
+ 	return TRUE;
+ }
+ 
+-#if 0
+ static Pixel fbdevMakeContig(Pixel orig, Pixel others)
+ {
+ 	Pixel low;
+@@ -147,6 +146,7 @@
+ 	return orig;
+ }
+ 
++#if 0
+ static Bool fbdevModeSupported(KdScreenInfo * screen, const KdMonitorTiming * t)
+ {
+ 	return TRUE;
+@@ -328,7 +328,6 @@
+   screen->width = priv->g.width;
+   screen->height = priv->g.height;
+   screen->rate = 30;
+-  screen->fb.depth = depth;
+ 
+   /* Calculate line_length if it's zero */
+   if (!priv->line_length)
+@@ -343,6 +342,32 @@
+ 	screen->fb.blueMask = Mask(0,offset);
+   screen->fb.bitsPerPixel = priv->bits_per_pixel;
+ 
++  screen->fb.redMask = fbdevMakeContig(screen->fb.redMask,
++            screen->fb.
++            greenMask | screen->
++            fb.blueMask);
++
++  screen->fb.greenMask =
++      fbdevMakeContig(screen->fb.greenMask,
++          screen->fb.redMask | screen->fb.
++          blueMask);
++
++  screen->fb.blueMask = fbdevMakeContig(screen->fb.blueMask,
++             screen->fb.redMask |
++             screen->fb.
++             greenMask);
++
++	Pixel allbits;
++
++  allbits =
++      screen->fb.redMask | screen->fb.greenMask | screen->
++      fb.blueMask;
++  depth = priv->bits_per_pixel;
++  while (depth && !(allbits & (1 << (depth - 1))))
++    depth--;
++
++  screen->fb.depth = depth;
++
+ 	return fbdevMapFramebuffer(screen);
+ }
+ 
+@@ -362,6 +387,7 @@
+ 	return TRUE;
+ }
+ 
++#if 0 
+ static void *fbdevWindowLinear(ScreenPtr pScreen,
+ 			CARD32 row,
+ 			CARD32 offset, int mode, CARD32 * size, void *closure)
+@@ -374,6 +400,7 @@
+ 	*size = priv->line_length;
+ 	return (CARD8 *) priv->fb + row * priv->line_length + offset;
+ }
++#endif
+ 
+ static Bool fbdevMapFramebuffer(KdScreenInfo * screen)
+ {
+@@ -625,26 +652,21 @@
+ 
+ static Bool fbdevCreateColormap(ColormapPtr pmap)
+ {
+-	ScreenPtr pScreen = pmap->pScreen;
+ 	VisualPtr pVisual;
+ 	int i;
+ 	int nent;
+-	xColorItem *pdefs;
++  int val;
+ 
+ 	pVisual = pmap->pVisual;
+ 	nent = pVisual->ColormapEntries;
+-	pdefs = malloc(nent * sizeof(xColorItem));
+-	if (!pdefs)
+-		return FALSE;
+-	for (i = 0; i < nent; i++)
+-		pdefs[i].pixel = i;
+-	fbdevGetColors(pScreen, nent, pdefs);
++  printf("%d\n", nent);
++
+ 	for (i = 0; i < nent; i++) {
+-		pmap->red[i].co.local.red = pdefs[i].red;
+-		pmap->green[i].co.local.green = pdefs[i].green;
+-		pmap->blue[i].co.local.blue = pdefs[i].blue;
++    val = i * 65535 / (nent - 1);
++		pmap->red[i].co.local.red = val;
++		pmap->green[i].co.local.green = val;
++		pmap->blue[i].co.local.blue = val;
+ 	}
+-	free(pdefs);
+ 	return TRUE;
+ }
+ 
+@@ -782,6 +804,7 @@
+ void fbdevGetColors(ScreenPtr pScreen, int n, xColorItem * pdefs)
+ {
+ 	int p;
++#if 0
+ 	int k;
+ 	int min, max;
+ 
+@@ -793,8 +816,9 @@
+ 		if (pdefs[k].pixel > max)
+ 			max = pdefs[k].pixel;
+ 	}
++#endif
+ 	while (n--) {
+ 		p = pdefs->pixel;
+ 		pdefs->red = pdefs->green = pdefs->blue = p;
+ 		pdefs++;
+ 	}

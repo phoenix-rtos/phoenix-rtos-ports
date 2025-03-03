@@ -1,0 +1,12 @@
+diff -ruN a/src/menu.c b/src/menu.c
+--- a/src/menu.c	2024-10-18 11:22:12.325252307 +0200
++++ b/src/menu.c	2024-10-18 12:55:33.116616496 +0200
+@@ -48,6 +48,8 @@
+ void feh_menu_cb(feh_menu * m, feh_menu_item * i, int action, unsigned short data);
+ void feh_menu_cb_opt_fullscreen(feh_menu * m, feh_menu_item * i);
+ 
++#define rint(x) ((int)round(x))
++
+ enum {
+ 	CB_CLOSE = 1,
+ 	CB_EXIT,
