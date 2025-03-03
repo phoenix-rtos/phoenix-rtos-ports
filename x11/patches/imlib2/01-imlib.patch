@@ -1,0 +1,158 @@
+diff -ruN a/src/bin/imlib2_show.c b/src/bin/imlib2_show.c
+--- a/src/bin/imlib2_show.c	2024-10-18 14:26:20.397180731 +0200
++++ b/src/bin/imlib2_show.c	2024-10-18 14:25:49.799547110 +0200
+@@ -13,6 +13,8 @@
+ 
+ #include "prog_x11.h"
+ 
++#define mblen(a, b) (-1)
++
+ static Window   win;
+ 
+ void            progress(Imlib_Image * im, char percent, int update_x,
+diff -ruN a/src/lib/dynamic_filters.c b/src/lib/dynamic_filters.c
+--- a/src/lib/dynamic_filters.c	2024-10-18 14:26:20.400180697 +0200
++++ b/src/lib/dynamic_filters.c	2024-10-18 14:25:49.805547033 +0200
+@@ -1,7 +1,7 @@
+ #include "common.h"
+ 
+ #include <ctype.h>
+-#include <dlfcn.h>
++// #include <dlfcn.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -23,6 +23,10 @@
+ #define FDEBUG
+ */
+ 
++#define dlopen(a, b) (NULL)
++#define dlsym(a, b) (NULL)
++#define dlclose(a) do {} while (0)
++
+ static ImlibExternalFilter *
+ __imlib_LoadFilter(char *file)
+ {
+diff -ruN a/src/lib/x11_grab.c b/src/lib/x11_grab.c
+--- a/src/lib/x11_grab.c	2024-10-18 14:26:20.402180675 +0200
++++ b/src/lib/x11_grab.c	2024-10-18 14:25:49.805547033 +0200
+@@ -4,8 +4,10 @@
+ #include <X11/Xutil.h>
+ #include <X11/extensions/shape.h>
+ #include <X11/extensions/XShm.h>
++#if 0
+ #include <sys/ipc.h>
+ #include <sys/shm.h>
++#endif
+ 
+ #include "x11_grab.h"
+ #include "x11_ximage.h"
+diff -ruN a/src/lib/x11_rend.c b/src/lib/x11_rend.c
+--- a/src/lib/x11_rend.c	2024-10-18 14:26:20.402180675 +0200
++++ b/src/lib/x11_rend.c	2024-10-18 14:25:49.804547046 +0200
+@@ -4,7 +4,9 @@
+ #include <string.h>
+ #include <X11/Xlib.h>
+ #include <X11/Xutil.h>
++#if 0
+ #include <X11/extensions/XShm.h>
++#endif
+ 
+ #include "blend.h"
+ #include "colormod.h"
+@@ -474,26 +476,32 @@
+             gcm = XCreateGC(x11->dpy, m, GCGraphicsExposures, &gcv);
+         }
+         /* write the mask */
++#if 0
+         if (shm)
+             /* write shm XImage */
+             XShmPutImage(x11->dpy, m, gcm, mxim, 0, 0, dx, dy, dw, dh, False);
+         /* write regular XImage */
+         else
++#endif
+             XPutImage(x11->dpy, m, gcm, mxim, 0, 0, dx, dy, dw, dh);
+     }
+ 
+     /* write the image */
++#if 0
+     if (shm)
+         /* write shm XImage */
+         XShmPutImage(x11->dpy, w, gc, xim, 0, 0, dx, dy, dw, dh, False);
+     /* write regular XImage */
+     else
++#endif
+         XPutImage(x11->dpy, w, gc, xim, 0, 0, dx, dy, dw, dh);
+ 
+     /* free the XImage and put onto our free list */
+     /* wait for the write to be done */
++#if 0
+     if (shm)
+         XSync(x11->dpy, False);
++#endif
+     __imlib_ConsumeXImage(x11, xim);
+     if (m)
+         __imlib_ConsumeXImage(x11, mxim);
+diff -ruN a/src/lib/x11_ximage.c b/src/lib/x11_ximage.c
+--- a/src/lib/x11_ximage.c	2024-10-18 14:26:20.402180675 +0200
++++ b/src/lib/x11_ximage.c	2024-10-18 14:25:49.805547033 +0200
+@@ -11,8 +11,10 @@
+ #include <xcb/shm.h>
+ #include <sys/mman.h>
+ #endif
++#if 0
+ #include <sys/ipc.h>
+ #include <sys/shm.h>
++#endif
+ 
+ #include "x11_ximage.h"
+ 
+@@ -52,6 +54,9 @@
+ static void
+ ShmCheck(Display *d)
+ {
++  x_does_shm = 0;
++  return;
++#if 0
+     const char     *s;
+     int             val;
+ 
+@@ -106,6 +111,7 @@
+ 
+         printf("%s: list_max_count=%d\n", __func__, list_max_count);
+     }
++#endif
+ }
+ 
+ XImage         *
+@@ -119,6 +125,7 @@
+ 
+     if (!x_does_shm)
+         return NULL;
++#if 0
+ 
+     /* try create an shm image */
+     xim = XShmCreateImage(x11->dpy, x11->vis, depth, ZPixmap, NULL, si, w, h);
+@@ -236,12 +243,14 @@
+     XDestroyImage(xim);
+ 
+     return NULL;
++#endif
+ }
+ 
+ void
+ __imlib_ShmDestroyXImage(const ImlibContextX11 *x11, XImage *xim,
+                          XShmSegmentInfo *si)
+ {
++#if 0
+     XSync(x11->dpy, False);
+     XShmDetach(x11->dpy, si);
+ #ifdef HAVE_X11_SHM_FD
+@@ -256,6 +265,7 @@
+         shmctl(si->shmid, IPC_RMID, 0);
+     }
+     XDestroyImage(xim);
++#endif
+ }
+ 
+ void

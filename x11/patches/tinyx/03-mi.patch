@@ -1,0 +1,54 @@
+diff -ruN a/mi/miarc.c b/mi/miarc.c
+--- a/mi/miarc.c	2022-11-07 07:44:53.000000000 +0100
++++ b/mi/miarc.c	2024-08-02 10:34:26.858386257 +0200
+@@ -74,7 +74,8 @@
+ static double miDcos(double a);
+ static double miDasin(double v);
+ static double miDatan2(double dy, double dx);
+-double	cbrt(double);
++
++double cbrt(double);
+ 
+ #ifdef ICEILTEMPDECL
+ ICEILTEMPDECL
+diff -ruN a/mi/mi.h b/mi/mi.h
+--- a/mi/mi.h	2022-11-07 07:44:53.000000000 +0100
++++ b/mi/mi.h	2024-08-02 10:34:26.859386118 +0200
+@@ -56,6 +56,10 @@
+ #include "input.h"
+ #include "cursor.h"
+ 
++#ifdef __phoenix__
++#define hypot(x,y) sqrt(((x)*(x))+((y)*(y)))
++#endif
++
+ #define MiBits	CARD32
+ 
+ typedef struct _miDash *miDashPtr;
+diff -ruN a/mi/miinitext.c b/mi/miinitext.c
+--- a/mi/miinitext.c	2022-11-07 07:44:53.000000000 +0100
++++ b/mi/miinitext.c	2024-08-02 10:34:26.858386257 +0200
+@@ -147,7 +147,9 @@
+ #ifdef SCREENSAVER
+     { "MIT-SCREEN-SAVER", &noScreenSaverExtension },
+ #endif
++#ifndef __phoenix__
+     { SHMNAME, &noMITShmExtension },
++#endif
+     { "RANDR", &noRRExtension },
+     { "RENDER", &noRenderExtension },
+     { "SHAPE", &noShapeExtension },
+diff -ruN a/mi/miscrinit.c b/mi/miscrinit.c
+--- a/mi/miscrinit.c	2022-11-07 07:44:53.000000000 +0100
++++ b/mi/miscrinit.c	2024-08-02 10:34:26.860385979 +0200
+@@ -38,8 +38,10 @@
+ #include "pixmapstr.h"
+ #include "dix.h"
+ #include "miline.h"
++#ifndef __phoenix__
+ #define _XSHM_SERVER_
+ #include <X11/extensions/XShm.h>
++#endif
+ #include "shmint.h"
+ 
+ /* We use this structure to propogate some information from miScreenInit to

@@ -1,0 +1,141 @@
+# This is a workaround that adds the contents of png loader module to the
+# loaders.c. It is here until dynamic library support gets merged
+# This patch therefore assumes that the loaders.c is appended with
+# the contents of src/modules/loaders/loader_png.c i.e. via
+#
+# cat src/modules/loaders/loader_png.c >> src/lib/loaders.c
+#
+diff -ruN a/src/lib/loaders.c b/src/lib/loaders.c
+--- a/src/lib/loaders.c	2024-10-21 08:47:17.655432152 +0200
++++ b/src/lib/loaders.c	2024-10-18 15:36:38.778314765 +0200
+@@ -1,6 +1,6 @@
+ #include "common.h"
+ 
+-#include <dlfcn.h>
++// #include <dlfcn.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -11,9 +11,52 @@
+ #include "image.h"
+ #include "loaders.h"
+ 
++const char *const _formats[] = { "png" };
++
++#define IMLIB_LOADER_(_fmts, _ldr, _svr, _inex, _flags) \
++    __EXPORT__ ImlibLoaderModule loader = { \
++        .ldr_version = IMLIB2_LOADER_VERSION, \
++        .ldr_flags = _flags, \
++        .num_formats = ARRAY_SIZE(_fmts), \
++        .formats = _fmts, \
++        .inex = _inex, \
++        .load = _ldr, \
++        .save = _svr, \
++    }
++
++#define IMLIB_LOADER(_fmts, _ldr, _svr) \
++    IMLIB_LOADER_(_fmts, _ldr, _svr, NULL, 0)
++
++#define QUIT_WITH_RC(_err) { rc = _err; goto quit; }
++
++#define PCAST(T, p) ((T)(const void *)(p))
++
++#define DC(fmt...)
++#define D(fmt...)
++#define Dx(fmt...)
++#define DL(fmt...)
++
++typedef struct _ImlibImageFileInfo {
++    struct _ImlibImageFileInfo *next;
++    char           *name;
++    FILE           *fp;
++    const void     *fdata;
++    off_t           fsize;
++} ImlibImageFileInfo;
++
++static int _load(ImlibImage *im, int load_data);
++
++static int _save(ImlibImage *im);
++
++IMLIB_LOADER(_formats, _load, _save);
++
+ #define DBG_PFX "LOAD"
+ #define DP(fmt...) DC(DBG_LOAD, fmt)
+ 
++#define dlopen(a, b) (NULL)
++#define dlsym(a, b) (NULL)
++#define dlclose(a) do {} while (0)
++
+ static ImlibLoader *loaders = NULL;
+ static ImlibLoader *loaders_unloaded = NULL;
+ static char     loaders_loaded = 0;
+@@ -190,6 +233,7 @@
+         goto found;
+     }
+ 
++#if 0
+     l = malloc(sizeof(ImlibLoader));
+     if (!l)
+         goto bail;
+@@ -207,6 +251,10 @@
+         DP("%s: dlerror: %s\n", __func__, dlerror());
+         goto bail;
+     }
++#endif
++    l = malloc(sizeof(ImlibLoader));
++    l->handle = NULL;
++    l->module = m = &loader;
+ 
+     /* Check version and that we have at least load() or save() */
+     if (m->ldr_version != IMLIB2_LOADER_VERSION ||
+@@ -216,7 +264,7 @@
+         goto bail;
+     }
+ 
+-    l->file = strdup(file);
++    l->file = NULL;
+     l->name = m->formats[0];
+ 
+   found:
+@@ -333,11 +381,15 @@
+     l = NULL;
+     if (kl)
+     {
++#if 0
+         dso = __imlib_ModuleFind(__imlib_PathToLoaders(), kl->dso);
+         l = __imlib_LookupLoaderByModulePath(dso);
+         if (!l)
+-            l = __imlib_ProduceLoader(dso);
++#endif
++            l = __imlib_ProduceLoader(NULL);
++#if 0
+         free(dso);
++#endif
+     }
+     DP("%s: '%s' -> '%s': %p\n", __func__, format, kl ? kl->dso : "-", l);
+     return l;
+@@ -426,16 +478,13 @@
+     DP("%s: fmt='%s': %s\n", __func__, format, l ? l->file : "-");
+     return l;
+ }
+-#include "config.h"
+-#include "Imlib2_Loader.h"
++
+ 
+ #include <png.h>
+ #include <stdbool.h>
+ #include <arpa/inet.h>
+ 
+-#define DBG_PFX "LDR-png"
+-
+-static const char *const _formats[] = { "png" };
++// static const char *const _formats[] = { "png" };
+ 
+ #define USE_IMLIB2_COMMENT_TAG 0
+ 
+@@ -1184,5 +1233,3 @@
+ 
+     return rc;
+ }
+-
+-IMLIB_LOADER(_formats, _load, _save);

@@ -1,0 +1,91 @@
+diff -ruN a/kdrive/fbdev/fbdev.c b/kdrive/fbdev/fbdev.c
+--- a/kdrive/fbdev/fbdev.c	2024-08-05 09:04:38.652732766 +0200
++++ b/kdrive/fbdev/fbdev.c	2024-08-08 12:33:09.385160526 +0200
+@@ -374,7 +374,7 @@
+ 
+   scrpriv->shadow = FALSE;
+ 
+-	KdComputeMouseMatrix(&m, scrpriv->randr, screen->width, screen->height);
++	KdComputeMouseMatrix(&m, RR_Rotate_0, screen->width, screen->height);
+ 
+ 	KdSetMouseMatrix(&m);
+ 
+--- a/kdrive/phoenix/mouse.c	2024-08-05 09:04:38.653732769 +0200
++++ b/kdrive/phoenix/mouse.c	2024-08-07 16:30:38.814841906 +0200
+@@ -25,6 +25,7 @@
+ #include <kdrive-config.h>
+ #endif
+ #include <errno.h>
++#include <pthread.h>
+ #include <termios.h>
+ #include <X11/X.h>
+ #include <X11/Xproto.h>
+@@ -45,6 +46,14 @@
+ 	int used;
+ } Kbufio;
+ 
++typedef struct _mr_args_t {
++  int fd;
++  void *closure;
++} mouse_reader_args_t;
++
++mouse_reader_args_t mr_args;
++pthread_t mouse_thread;
++
+ static Bool MouseWaitForReadable(int fd, int timeout)
+ {
+ 	fd_set set;
+@@ -863,15 +872,17 @@
+ 	}
+ }
+ 
++static void* mouse_reader(void * arg) {
++  mouse_reader_args_t *mr_args = (mouse_reader_args_t *) arg;
++  while (1) {
++    MouseRead(mr_args->fd, mr_args->closure);
++  }
++}
++
+ static int MouseInputType;
+ 
+ const char * const kdefaultMouse[] = {
+ 	"/dev/mouse",
+-	"/dev/psaux",
+-	"/dev/input/mice",
+-	"/dev/adbmouse",
+-	"/dev/ttyS0",
+-	"/dev/ttyS1",
+ };
+ 
+ #define NUM_DEFAULT_MOUSE    (sizeof (kdefaultMouse) / sizeof (kdefaultMouse[0]))
+@@ -893,14 +904,14 @@
+ 			continue;
+ 		if (!mi->name) {
+ 			for (i = 0; i < NUM_DEFAULT_MOUSE; i++) {
+-				fd = open(kdefaultMouse[i], 2);
++				fd = open(kdefaultMouse[i], O_RDWR);
+ 				if (fd >= 0) {
+ 					mi->name = strdup(kdefaultMouse[i]);
+ 					break;
+ 				}
+ 			}
+ 		} else
+-			fd = open(mi->name, 2);
++			fd = open(mi->name, O_RDWR);
+ 
+ 		if (fd >= 0) {
+ 			km = malloc(sizeof(Kmouse));
+@@ -913,9 +924,10 @@
+ 				mi->driver = km;
+ 				mi->inputType = MouseInputType;
+ 				MouseFirstProtocol(km, mi->prot);
+-				if (KdRegisterFd
+-				    (MouseInputType, fd, MouseRead, (void *)mi))
+-					n++;
++        mr_args.fd = fd;
++        mr_args.closure = (void *)mi;
++        if (pthread_create(&mouse_thread, NULL, mouse_reader, &mr_args) == 0)
++            n++;
+ 			} else
+ 				close(fd);
+ 		}

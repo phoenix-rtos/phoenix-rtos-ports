@@ -1,0 +1,56 @@
+diff -ruN a/mi/miinitext.c b/mi/miinitext.c
+--- a/mi/miinitext.c	2025-02-19 16:36:51.391001828 +0100
++++ b/mi/miinitext.c	2025-02-19 17:03:08.693627096 +0100
+@@ -90,8 +90,10 @@
+ 
+ #define _XSHM_SERVER_
+ #include <X11/extensions/shmstr.h>
++#ifndef __phoenix__
+ #define _XTEST_SERVER_
+ #include <X11/extensions/XTest.h>
++#endif
+ #ifdef XF86BIGFONT
+ #include <X11/extensions/xf86bigfproto.h>
+ #endif
+diff -ruN a/os/osdep.h b/os/osdep.h
+--- a/os/osdep.h	2025-02-19 16:36:51.404002187 +0100
++++ b/os/osdep.h	2025-02-19 16:41:52.639244394 +0100
+@@ -61,7 +61,9 @@
+ #define MAXBUFSIZE (1 << 22)
+ #endif
+ 
++#ifdef XDMCP
+ #include <X11/Xdmcp.h>
++#endif
+ 
+ #ifdef _POSIX_SOURCE
+ #include <limits.h>
+@@ -109,10 +111,12 @@
+ 
+ #include <stddef.h>
+ 
++#ifdef XDMCP
+ typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
+ typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
+ typedef Bool (*AddAuthorFunc)(unsigned name_length, const char *name,
+ 				unsigned data_length, char *data);
++#endif
+ 
+ typedef struct _connectionInput {
+     struct _connectionInput *next;
+@@ -245,6 +249,7 @@
+ /* in secauth.c */
+ extern XID AuthSecurityCheck (AuthCheckArgs);
+ 
++#ifdef XDMCP
+ /* in xdmcp.c */
+ extern void XdmcpUseMsg (void);
+ extern int XdmcpOptions(int argc, char **argv, int i);
+@@ -273,6 +278,7 @@
+ 
+ struct sockaddr_in;
+ extern void XdmcpRegisterBroadcastAddress (const struct sockaddr_in *addr);
++#endif
+ 
+ #ifdef HASXDMAUTH
+ extern void XdmAuthenticationInit (const char *cookie, int cookie_length);

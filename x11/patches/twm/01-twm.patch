@@ -1,0 +1,73 @@
+diff -ruN a/configure.ac b/configure.ac
+--- a/configure.ac	2022-04-02 20:36:49.000000000 +0200
++++ b/configure.ac	2024-08-20 10:45:57.220251974 +0200
+@@ -50,10 +50,6 @@
+ 
+ # Checks for pkg-config packages
+ PKG_CHECK_MODULES([TWM], [x11 xext xt xmu ice sm xproto >= 7.0.17])
+-PKG_CHECK_MODULES([XRANDR], [xrandr], [have_xrandr=yes], [have_xrandr=no])
+-if test "$have_xrandr" = yes; then
+-	AC_DEFINE([HAVE_XRANDR], [1], [Define to 1 if you have the xrandr headers/libraries])
+-fi
+ 
+ AC_CONFIG_FILES([Makefile
+ 		src/Makefile
+diff -ruN a/src/menus.c b/src/menus.c
+--- a/src/menus.c	2022-04-02 20:36:49.000000000 +0200
++++ b/src/menus.c	2024-08-20 10:53:18.394309064 +0200
+@@ -79,7 +79,9 @@
+ #include "session.h"
+ #include <X11/Xmu/CharSet.h>
+ #include "version.h"
+-#include <X11/extensions/sync.h>
++#include <X11/Xmd.h>
++#include <X11/extensions/syncconst.h>
++#include <X11/extensions/syncstr.h>
+ #include <X11/SM/SMlib.h>
+ 
+ int RootFunction = 0;
+@@ -1906,6 +1908,7 @@
+             Bell(XkbBI_MinorError, 0, tmp_win->w);
+         break;
+ 
++#if 0
+     case F_CIRCLEUP:
+         XCirculateSubwindowsUp(dpy, Scr->Root);
+         break;
+@@ -1913,6 +1916,7 @@
+     case F_CIRCLEDOWN:
+         XCirculateSubwindowsDown(dpy, Scr->Root);
+         break;
++#endif
+ 
+     case F_EXEC:
+         PopDownMenu();
+diff -ruN a/src/parse.c b/src/parse.c
+--- a/src/parse.c	2022-04-02 20:36:49.000000000 +0200
++++ b/src/parse.c	2024-08-20 10:48:18.826964856 +0200
+@@ -69,8 +69,10 @@
+ #include "gram.h"
+ #include "parse.h"
+ 
++#include <X11/Xmd.h>
+ #include <X11/Xatom.h>
+-#include <X11/extensions/sync.h>
++#include <X11/extensions/syncconst.h>
++#include <X11/extensions/syncstr.h>
+ 
+ #ifndef SYSTEM_INIT_FILE
+ #define SYSTEM_INIT_FILE "/usr/lib/X11/twm/system.twmrc"
+diff -ruN a/src/twm.c b/src/twm.c
+--- a/src/twm.c	2022-04-02 20:36:49.000000000 +0200
++++ b/src/twm.c	2024-08-20 10:53:07.850111898 +0200
+@@ -81,7 +81,9 @@
+ #include <X11/Xatom.h>
+ #include <X11/SM/SMlib.h>
+ #include <X11/Xmu/Error.h>
+-#include <X11/extensions/sync.h>
++#include <X11/Xmd.h>
++#include <X11/extensions/syncstr.h>
++#include <X11/extensions/syncconst.h>
+ #include <X11/Xlocale.h>
+ 
+ #ifdef XPRINT

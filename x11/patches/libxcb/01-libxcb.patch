@@ -1,0 +1,51 @@
+diff -ruN a/src/xcb_conn.c b/src/xcb_conn.c
+--- a/src/xcb_conn.c	2025-02-19 15:17:38.977170598 +0100
++++ b/src/xcb_conn.c	2025-02-20 11:52:16.034294036 +0100
+@@ -507,7 +507,13 @@
+     pthread_mutex_unlock(&c->iolock);
+     do {
+ #if USE_POLL
++#ifdef __phoenix__
++				do {
++					ret = poll(&fd, 1, 10);
++				} while (ret == 0);
++#else
+         ret = poll(&fd, 1, -1);
++#endif
+         /* If poll() returns an event we didn't expect, such as POLLNVAL, treat
+          * it as if it failed. */
+         if(ret >= 0 && (fd.revents & ~fd.events))
+diff -ruN a/src/xcb_in.c b/src/xcb_in.c
+--- a/src/xcb_in.c	2025-02-19 15:17:38.978170594 +0100
++++ b/src/xcb_in.c	2025-02-20 11:52:30.922356775 +0100
+@@ -391,7 +391,13 @@
+             pfd.events = POLLIN;
+             pfd.revents = 0;
+             do {
+-                ret = poll(&pfd, 1, -1);
++#ifdef __phoenix__
++				do {
++					ret = poll(&pfd, 1, 10);
++				} while (ret == 0);
++#else
++        ret = poll(&pfd, 1, -1);
++#endif
+             } while (ret == -1 && errno == EINTR);
+ #else
+             fd_set fds;
+diff -ruN a/src/xcbint.h b/src/xcbint.h
+--- a/src/xcbint.h	2025-02-19 15:17:38.979170589 +0100
++++ b/src/xcbint.h	2025-02-19 15:20:45.620359596 +0100
+@@ -48,6 +48,12 @@
+ # define XCB_ALLOW_FALLTHRU /* FALLTHRU */
+ #endif
+ 
++#ifdef __phoenix__
++#include <arpa/inet.h>
++#define MSG_TRUNC 0
++#define MSG_CTRUNC 0
++#endif
++
+ enum workarounds {
+     WORKAROUND_NONE,
+     WORKAROUND_GLX_GET_FB_CONFIGS_BUG,

@@ -1,0 +1,47 @@
+diff -ruN a/src/gib_imlib.c b/src/gib_imlib.c
+--- a/src/gib_imlib.c	2024-10-18 11:22:12.324252299 +0200
++++ b/src/gib_imlib.c	2024-10-18 12:08:43.242781146 +0200
+@@ -27,6 +27,8 @@
+ #include "utils.h"
+ #include "debug.h"
+ 
++#define imlib_context_set_angle(a) do {} while (0)
++
+ /*
+ int
+ gib_imlib_load_image(Imlib_Image * im, char *filename)
+diff -ruN a/src/imlib.c b/src/imlib.c
+--- a/src/imlib.c	2024-10-18 11:22:12.324252299 +0200
++++ b/src/imlib.c	2024-10-18 12:09:43.025313887 +0200
+@@ -111,9 +111,11 @@
+ 
+ void init_imlib_fonts(void)
+ {
++#if 0
+ 	/* Set up the font stuff */
+ 	imlib_add_path_to_font_path(".");
+ 	imlib_add_path_to_font_path(PREFIX "/share/feh/fonts");
++#endif
+ 
+ 	return;
+ }
+diff -ruN a/src/menu.c b/src/menu.c
+--- a/src/menu.c	2024-10-18 11:22:12.325252307 +0200
++++ b/src/menu.c	2024-10-18 12:10:32.595839790 +0200
+@@ -934,6 +934,7 @@
+ 
+ void feh_menu_init_common(void)
+ {
++#if 0
+ 	int num_desks, i;
+ 	char buf[30];
+ 	feh_menu *m;
+@@ -1051,7 +1052,7 @@
+ 		}
+ 	}
+ 	common_menus = 1;
+-
++#endif
+ 	return;
+ }
+ 

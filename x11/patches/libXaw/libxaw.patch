@@ -1,0 +1,20 @@
+diff -ruN a/src/XawI18n.h b/src/XawI18n.h
+--- a/src/XawI18n.h	2025-02-21 13:42:01.414732516 +0100
++++ b/src/XawI18n.h	2025-02-21 15:19:48.321243638 +0100
+@@ -34,9 +34,16 @@
+ #endif
+ #endif
+ 
++#ifdef __phoenix__
++/* no real utf8/wchar support on phoenix */
++#define USE_XWCHAR_STRING
++#define USE_XMBTOWC
++typedef unsigned int wint_t;
++#else
+ #ifdef HAVE_WCHAR_H
+ #include <wchar.h>
+ #endif
++#endif
+ 
+ #include <stdlib.h>
+ 

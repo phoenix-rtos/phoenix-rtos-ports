@@ -1,0 +1,12 @@
+diff -ruN a/configure.ac b/configure.ac
+--- a/configure.ac	2025-02-19 16:26:51.644525039 +0100
++++ b/configure.ac	2025-02-19 16:27:09.924987341 +0100
+@@ -28,7 +28,7 @@
+ XORG_WITH_FOP
+ XORG_WITH_XSLTPROC
+ XORG_CHECK_SGML_DOCTOOLS(1.8)
+-XORG_CHECK_MALLOC_ZERO
++# XORG_CHECK_MALLOC_ZERO
+ 
+ # Determine .so library version per platform
+ # based on SharedXextRev in monolith xc/config/cf/*Lib.tmpl
