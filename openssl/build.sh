@@ -2,7 +2,7 @@
 
 set -e
 
-OPENSSL=openssl-1.1.1a
+OPENSSL=openssl-3.4.1
 PKG_URL="https://www.openssl.org/source/${OPENSSL}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${OPENSSL}.tar.gz"
 
@@ -37,7 +37,7 @@ done
 #
 if [ ! -f "${PREFIX_PORT_BUILD}/Makefile" ]; then
 	cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_OPENSSL_SRC/Configurations/"
-	(cd "${PREFIX_PORT_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
+	(cd "${PREFIX_PORT_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl" no-docs)
 fi
 
 
