@@ -65,6 +65,7 @@ ports=(
 	"coremark"
 	"coreMQTT"
 	"lsb_vsx"
+	"libpng"
 )
 
 

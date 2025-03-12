@@ -1,0 +1,12 @@
+diff -ruN a/Makefile.am b/Makefile.am
+--- a/Makefile.am	2024-10-18 10:20:12.884467503 +0200
++++ b/Makefile.am	2024-10-18 10:19:21.813487165 +0200
+@@ -301,7 +301,7 @@
+ 	rm -f $@ $*.tf[12]
+ 	test -d scripts || mkdir scripts || test -d scripts
+ 	$(DFNCPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)\
+-	    $(CPPFLAGS) $(SYMBOL_CFLAGS) $< > $*.tf1
++	    $(CFLAGS) $(CPPFLAGS) $(SYMBOL_CFLAGS) $< > $*.tf1
+ 	$(AWK) -f "${srcdir}/scripts/dfn.awk" out="$*.tf2" $*.tf1 1>&2
+ 	rm -f $*.tf1
+ 	mv $*.tf2 $@
