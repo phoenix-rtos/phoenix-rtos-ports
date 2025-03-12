@@ -1,0 +1,36 @@
+diff -ruN a/joe/path.c b/joe/path.c
+--- a/joe/path.c	2025-01-28 16:45:28.638164837 +0100
++++ b/joe/path.c	2025-01-28 16:55:26.678023403 +0100
+@@ -400,6 +400,11 @@
+ char **rexpnd_users(const char *word)
+ {
+ 	char **lst = NULL;
++
++#ifdef __phoenix__
++			char *t = vsncpy(NULL,0,sc("~"));
++			lst = vaadd(lst, vsncpy(sv(t),sz("phoenix")));
++#else
+ 	struct passwd *pw;
+ 
+ 	while((pw=getpwent()))
+@@ -408,6 +413,7 @@
+ 			lst = vaadd(lst, vsncpy(sv(t),sz(pw->pw_name)));
+ 			}
+ 	endpwent();
++#endif
+ 
+ 	return lst;
+ }
+diff -ruN a/joe/util/checkwidths.c b/joe/util/checkwidths.c
+--- a/joe/util/checkwidths.c	2025-01-28 16:45:28.629164428 +0100
++++ b/joe/util/checkwidths.c	2025-01-28 16:46:45.575753776 +0100
+@@ -12,7 +12,9 @@
+ #include <arpa/inet.h>
+ #include <stddef.h>
+ #include <poll.h>
++#ifndef __phoenix__
+ #include <sys/fcntl.h>
++#endif
+ #include <termios.h>
+ 
+ #define TO_CHAR_OK(c) ((char)(c))
