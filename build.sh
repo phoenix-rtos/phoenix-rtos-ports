@@ -14,12 +14,12 @@ unset DEBUG
 if [ "$TARGET_FAMILY" = "ia32" ]; then
 	HOST_TARGET="i386"
 	HOST="i386-pc-phoenix"
-elif [ "$TARGET_FAMILY" = "armv7a7" ]; then
+elif [[ "$TARGET_FAMILY" == "arm"* ]]; then
 	HOST_TARGET="arm"
 	HOST="arm-phoenix"
-elif [ "$TARGET_FAMILY" = "riscv64" ]; then
-	HOST_TARGET="riscv64"
-	HOST="riscv64-phoenix"
+elif [ "$TARGET_FAMILY" = "sparcv8leon" ]; then
+	HOST_TARGET="sparc"
+	HOST="sparc-phoenix"
 else
 	HOST_TARGET="$TARGET_FAMILY"
 	HOST="${TARGET_FAMILY}-phoenix"
