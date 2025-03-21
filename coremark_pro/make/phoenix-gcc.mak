@@ -1,0 +1,74 @@
+#  File : util/make/phoenix.mak
+
+# SYSTEM ENVIRONMENT SECTION
+
+# Variable: CC
+#	name of the compiler
+#   already set in the environment
+CC ?=
+
+OBJOUT = -o
+COBJT  = -c
+CINCD  = -I
+CDEFN  = -D
+OEXT   = .o
+
+AS ?=
+
+LD     = $(CC)
+EXEOUT = -o
+EXE    =
+
+AR     ?=
+LIBTYPE = .a
+LIBOUT  =
+
+# COMPILER SECTION
+
+COMPILER_FLAGS	= -g -O2 $(CDEFN)NDEBUG
+COMPILER_NOOPT	= -O0 $(CDEFN)NDEBUG
+COMPILER_DEBUG	= -O0 -g $(CDEFN)BMDEBUG=1 $(CDEFN)THDEBUG=1
+PACK_OPTS =
+
+#Variable: COMPILER_DEFINES
+# Optional - Passed to compiler, here or in makefile to override THCFG defines.
+COMPILER_DEFINES = HOST_EXAMPLE_CODE=1 HAVE_SYS_STAT_H=1 USE_NATIVE_PTHREAD=1 NO_ALIGNED_ALLOC \
+    EE_SIZEOF_PTR=__SIZEOF_POINTER__ EE_PTR_ALIGN=__SIZEOF_POINTER__ EE_SIZEOF_INT=__SIZEOF_INT__ \
+    EE_SIZEOF_LONG=__SIZEOF_LONG__
+
+COMPILER_DEFS = $(addprefix $(CDEFN),$(COMPILER_DEFINES))
+PLATFORM_DEFS = $(addprefix $(CDEFN),$(PLATFORM_DEFINES))
+
+#Variable: CFLAGS
+#	Options for the compiler.
+ifdef DDB
+ CFLAGS += $(COMPILER_DEBUG) $(COMPILER_DEFS) $(PLATFORM_DEFS) $(PACK_OPTS)
+else
+ ifdef DDN
+  CFLAGS += $(COMPILER_NOOPT) $(COMPILER_DEFS) $(PLATFORM_DEFS) $(PACK_OPTS)
+ else
+  CFLAGS += $(COMPILER_FLAGS) $(COMPILER_DEFS) $(PLATFORM_DEFS) $(PACK_OPTS)
+ endif
+endif
+ifdef DDT
+ CFLAGS += $(CDEFN)THDEBUG=1
+endif
+
+# LINKER SECTION
+
+LINKER_FLAGS = $(CFLAGS) $(LDFLAGS)
+
+# LIBRARIAN SECTION
+LIBRARY_FLAGS = scr
+
+# SIZE SECTION
+SIZE       = $(PLATFORM)-size
+SIZE_FLAGS =
+
+# CONTROL SECTION
+
+ARFLAGS      = $(LIBRARY_FLAGS)
+LIBRARY      = $(AR) $(ARFLAGS)
+LIBRARY_LAST =
+
+COPY_DATA=cp -Ru
