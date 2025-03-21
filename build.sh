@@ -63,6 +63,7 @@ ports=(
 	"picocom"
 	"fs_mark"
 	"coremark"
+	"coremark_pro"
 	"coreMQTT"
 	"lsb_vsx"
 )
