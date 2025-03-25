@@ -2,7 +2,7 @@
 
 set -e
 
-LIGHTTPD="lighttpd-1.4.53"
+LIGHTTPD="lighttpd-1.4.78"
 PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.gz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${LIGHTTPD}.tar.gz"
 
@@ -45,6 +45,7 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
+	( cd "$PREFIX_LIGHTTPD_SRC" && "./autogen.sh" )
 	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 		-C --disable-ipv6 --disable-mmap --with-bzip2=no \
 		--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared  --host="$HOST" --with-openssl="${PREFIX_OPENSSL}" --with-pcre="${PREFIX_PCRE}" \
