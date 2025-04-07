@@ -34,6 +34,14 @@ for patchfile in "${PREFIX_MBEDTLS_PATCHES}"/*.patch; do
 	fi
 done
 
+# Copy custom config.h
+if [ -n "$PORTS_MBEDTLS_CONFIG_DIR" ] && [ -f "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" ]; then
+	if ! cmp -s "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" "${PREFIX_PORT_BUILD}/${MBEDTLS}/include/mbedtls/config.h"; then
+		echo "copying config.h"
+		cp -a "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" "${PREFIX_PORT_BUILD}/${MBEDTLS}/include/mbedtls/config.h"
+	fi
+fi
+
 # Flag that can be checked in makefiles
 export phoenix=1
 
