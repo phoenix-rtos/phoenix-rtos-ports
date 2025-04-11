@@ -1,0 +1,9 @@
+--- a/src/plugin-static.h	2025-04-11 14:53:38.273126650 +0200
++++ b/src/plugin-static.h	2025-04-11 14:53:25.491193904 +0200
+@@ -1,4 +1,6 @@
+ PLUGIN_INIT(mod_indexfile)
++PLUGIN_INIT(mod_dirlisting)
++PLUGIN_INIT(mod_staticfile)
+ PLUGIN_INIT(mod_access)
+ PLUGIN_INIT(mod_accesslog)
+ PLUGIN_INIT(mod_alias)
