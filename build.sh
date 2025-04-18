@@ -86,4 +86,8 @@ for port in "${ports[@]}"; do
 )
 done
 
+[ "${PORTS_CHECK}" = "y" ] && ./phoenix-rtos-ports/check/build.sh
+
+[ "${PORTS_LWIP_TESTS}" = "y" ] && ./phoenix-rtos-ports/lwip-tests/build.sh
+
 exit 0
