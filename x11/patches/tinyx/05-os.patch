@@ -1,0 +1,118 @@
+diff -ruN a/os/connection.c b/os/connection.c
+--- a/os/connection.c	2022-11-07 07:44:53.000000000 +0100
++++ b/os/connection.c	2024-08-02 10:34:26.883382778 +0200
+@@ -170,7 +170,7 @@
+     lastfdesc = sysconf(_SC_OPEN_MAX) - 1;
+ #endif
+ 
+-#ifdef HAS_GETDTABLESIZE
++#if defined(HAS_GETDTABLESIZE) && !defined(__phoenix__)
+     if (lastfdesc < 0)
+ 	lastfdesc = getdtablesize() - 1;
+ #endif
+diff -ruN a/os/osdep.h b/os/osdep.h
+--- a/os/osdep.h	2022-11-07 07:44:53.000000000 +0100
++++ b/os/osdep.h	2024-08-02 10:34:26.883382778 +0200
+@@ -52,6 +52,8 @@
+ #ifndef _OSDEP_H_
+ #define _OSDEP_H_ 1
+ 
++#define DEBUG
++
+ #define BOTIMEOUT 200 /* in milliseconds */
+ #define BUFSIZE 4096
+ #define BUFWATERMARK 8192
+@@ -69,6 +71,11 @@
+ #undef _POSIX_SOURCE
+ #endif
+ 
++#ifdef __phoenix__
++#include <sys/resource.h>
++#define NOFILES_MAX RLIMIT_NOFILE
++#endif
++
+ #ifndef OPEN_MAX
+ #include <sys/param.h>
+ #ifndef OPEN_MAX
+diff -ruN a/os/osinit.c b/os/osinit.c
+--- a/os/osinit.c	2022-11-07 07:44:53.000000000 +0100
++++ b/os/osinit.c	2024-08-02 11:09:16.163880506 +0200
+@@ -94,8 +94,10 @@
+ 
+ 
+     if (!been_here) {
++#ifndef __phoenix__
+ 	fclose(stdin);
+ 	fclose(stdout);
++#endif
+ 	/*
+ 	 * If a write of zero bytes to stderr returns non-zero, i.e. -1,
+ 	 * then writing to stderr failed, and we'll write somewhere else
+@@ -120,7 +122,9 @@
+ 		dup2 (fileno (err), 2);
+ 		fclose (err);
+ 	    }
++#ifndef __phoenix__
+ 	    setlinebuf(stderr);
++#endif
+ 	}
+ 
+ 	if (getpgrp () == 0)
+diff -ruN a/os/utils.c b/os/utils.c
+--- a/os/utils.c	2022-11-07 07:44:53.000000000 +0100
++++ b/os/utils.c	2024-08-02 10:34:26.884382639 +0200
+@@ -206,6 +206,7 @@
+ void
+ LockServer(void)
+ {
++#ifndef __phoenix__
+   char tmp[PATH_MAX], pid_str[12];
+   int lfd, i, haslock, l_pid, t;
+   char *tmppath = NULL;
+@@ -327,6 +328,7 @@
+   if (!haslock)
+     FatalError("Could not create server lock file: %s\n", LockFile);
+   StillLocking = FALSE;
++#endif
+ }
+ 
+ /*
+@@ -336,12 +338,14 @@
+ void
+ UnlockServer(void)
+ {
++#ifndef __phoenix__
+   if (nolock) return;
+ 
+   if (!StillLocking){
+ 
+   (void) unlink(LockFile);
+   }
++#endif
+ }
+ 
+ /* Force connections to close on SIGHUP from init */
+@@ -985,9 +989,12 @@
+ Bool		SmartScheduleIdle;
+ Bool		SmartScheduleTimerStopped;
+ 
++#ifndef __phoenix__
++/* Phoenix currently doesn't support virtual timers */
+ #ifdef SIGVTALRM
+ #define SMART_SCHEDULE_POSSIBLE
+ #endif
++#endif
+ 
+ #ifdef SMART_SCHEDULE_POSSIBLE
+ #define SMART_SCHEDULE_SIGNAL		SIGALRM
+@@ -1334,10 +1341,6 @@
+     cur->next = pidlist;
+     pidlist = cur;
+ 
+-#ifdef DEBUG
+-    ErrorF("Popen: `%s', fp = %p\n", command, iop);
+-#endif
+-
+     return iop;
+ #else
+     int ruid, euid;

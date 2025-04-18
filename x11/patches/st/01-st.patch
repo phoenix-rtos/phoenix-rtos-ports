@@ -1,0 +1,138 @@
+diff -ruN a/config.def.h b/config.def.h
+--- a/config.def.h	2025-02-20 18:57:25.613701469 +0100
++++ b/config.def.h	2025-03-03 12:21:49.425726381 +0100
+@@ -5,7 +5,7 @@
+  *
+  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
+  */
+-static char font[] = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
++static char font[] = "DejaVu Sans Mono:pixelsize=12:antialias=true:autohint=true";
+ static int borderpx = 2;
+ 
+ /*
+diff -ruN a/config.mk b/config.mk
+--- a/config.mk	2025-02-20 18:57:25.613701469 +0100
++++ b/config.mk	2025-02-20 19:01:34.898720872 +0100
+@@ -4,19 +4,17 @@
+ # Customize below to fit your system
+ 
+ # paths
+-PREFIX = /usr/local
++PREFIX ?= /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+ 
+-X11INC = /usr/X11R6/include
+-X11LIB = /usr/X11R6/lib
+-
+ # includes and libs
+-INCS = -I. -I/usr/include -I${X11INC} \
++INCS = -I. -I${PREFIX_H} \
+        `pkg-config --cflags fontconfig` \
+        `pkg-config --cflags freetype2`
+-LIBS = -L/usr/lib -lc -L${X11LIB} -lm -lrt -lX11 -lutil -lXft \
++LIBS = -L${PREFIX_A} -l:libXext.a -l:libXft.a -l:libXrender.a -l:libX11.a -l:libxcb.a -l:libXau.a -l:libphoenix.a \
+        `pkg-config --libs fontconfig`  \
+-       `pkg-config --libs freetype2`
++       `pkg-config --libs freetype2` \
++       `pkg-config --libs expat`
+ 
+ # flags
+ CPPFLAGS = -DVERSION=\"${VERSION}\" -D_XOPEN_SOURCE=600
+diff -ruN a/st.c b/st.c
+--- a/st.c	2025-02-20 18:57:25.613701469 +0100
++++ b/st.c	2025-03-03 11:03:59.041719599 +0100
+@@ -1387,6 +1387,9 @@
+ 	exit(0);
+ }
+ 
++#ifndef _POSIX_ARG_MAX
++#define _POSIX_ARG_MAX 100
++#endif
+ 
+ void
+ stty(void)
+@@ -1416,7 +1419,9 @@
+ ttynew(void)
+ {
+ 	int m, s;
++#ifndef __phoenix__
+ 	struct winsize w = {term.row, term.col, 0, 0};
++#endif
+ 
+ 	if (opt_io) {
+ 		term.mode |= MODE_PRINT;
+@@ -1436,9 +1441,25 @@
+ 		return;
+ 	}
+ 
++#ifdef __phoenix__
++   m = open("/dev/ptmx", O_RDWR | O_NOCTTY);
++ 
++   if (m < 0 || grantpt(m) < 0 || unlockpt(m) < 0) {
++     die("ptm went brr\n");
++   }
++ 
++   char *ptsn = ptsname(m);
++   if (ptsn == NULL)
++     die("ptsn\n");
++ 
++   s = open(ptsn, O_RDWR | O_NOCTTY);
++   if (s < 0)
++     die("pts\n");
++#else
+ 	/* seems to work fine on linux, openbsd and freebsd */
+ 	if (openpty(&m, &s, NULL, NULL, &w) < 0)
+ 		die("openpty failed: %s\n", strerror(errno));
++#endif
+ 
+ 	switch (pid = fork()) {
+ 	case -1:
+@@ -1513,7 +1534,7 @@
+ 		FD_SET(cmdfd, &rfd);
+ 
+ 		/* Check if we can write. */
+-		if (pselect(cmdfd+1, &rfd, &wfd, NULL, NULL, NULL) < 0) {
++		if (select(cmdfd+1, &rfd, &wfd, NULL, NULL) < 0) {
+ 			if (errno == EINTR)
+ 				continue;
+ 			die("select failed: %s\n", strerror(errno));
+@@ -2931,10 +2952,14 @@
+ 
+ 	control = ISCONTROL(u);
+ 	len = utf8encode(u, c);
++#ifdef __phoenix__
++		width = 1;
++#else
+ 	if (!control && (width = wcwidth(u)) == -1) {
+ 		memcpy(c, "\357\277\275", 4); /* UTF_INVALID */
+ 		width = 1;
+ 	}
++#endif
+ 
+ 	if (IS_SET(MODE_PRINT))
+ 		tprinter(c, len);
+@@ -4219,6 +4244,7 @@
+ 	int xfd = XConnectionNumber(xw.dpy), xev, blinkset = 0, dodraw = 0;
+ 	struct timespec drawtimeout, *tv = NULL, now, last, lastblink;
+ 	long deltatime;
++	struct timeval tvv;
+ 
+ 	/* Waiting for window mapping */
+ 	do {
+@@ -4248,7 +4274,15 @@
+ 		FD_SET(cmdfd, &rfd);
+ 		FD_SET(xfd, &rfd);
+ 
+-		if (pselect(MAX(xfd, cmdfd)+1, &rfd, NULL, NULL, tv, NULL) < 0) {
++		if (tv != NULL) {
++			tvv.tv_sec = tv->tv_sec;
++			tvv.tv_usec = tv->tv_nsec / 1000;
++		} else {
++			tvv.tv_sec = 0;
++			tvv.tv_usec = 100;
++		}
++
++		if (select(MAX(xfd, cmdfd)+1, &rfd, NULL, NULL, &tvv) < 0) {
+ 			if (errno == EINTR)
+ 				continue;
+ 			die("select failed: %s\n", strerror(errno));

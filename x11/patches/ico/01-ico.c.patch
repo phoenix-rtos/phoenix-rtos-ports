@@ -1,0 +1,31 @@
+diff -ruN a/ico.c b/ico.c
+--- a/ico.c	2024-07-22 14:37:21.564164578 +0200
++++ b/ico.c	2024-07-24 11:32:51.014963666 +0200
+@@ -74,12 +74,16 @@
+ #ifdef HAVE_CONFIG_H
+ #include "config.h"
+ 
+-#include <X11/XlibConf.h>
+ #ifdef XTHREADS
+ # define MULTITHREAD
+ #endif
+ #endif /* HAVE_CONFIG_H / autoconf */
+ 
++#define _X_UNUSED
++#define _X_NORETURN
++#define DEBUG
++#undef MULTITHREAD
++
+ #include <math.h>
+ #include <X11/Xlib.h>
+ #include <X11/Xatom.h>
+@@ -90,9 +94,7 @@
+ #ifdef MULTIBUFFER
+ #include <X11/extensions/multibuf.h>
+ #endif /* MULTIBUFFER */
+-#ifdef MULTITHREAD
+ #include <X11/Xthreads.h>
+-#endif
+ #include <X11/Xos.h>
+ 
+ #define MIN_ICO_WIDTH 5

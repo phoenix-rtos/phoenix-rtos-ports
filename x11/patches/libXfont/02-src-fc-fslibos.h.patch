@@ -1,0 +1,15 @@
+diff -ruN a/src/fc/fslibos.h b/src/fc/fslibos.h
+--- a/src/fc/fslibos.h	2017-11-28 15:34:21.000000000 +0100
++++ b/src/fc/fslibos.h	2024-07-16 16:50:15.143867373 +0200
+@@ -92,6 +92,11 @@
+ #  define NMSKBITS 32
+ # endif
+ 
++#ifdef __phoenix__
++#include <sys/resource.h>
++#define NOFILES_MAX RLIMIT_NOFILE
++#endif
++
+ # define MSKCNT ((FONT_OPEN_MAX + NMSKBITS - 1) / NMSKBITS)
+ 
+ typedef unsigned long FdSet[MSKCNT];
