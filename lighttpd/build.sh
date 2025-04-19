@@ -2,10 +2,13 @@
 
 set -e
 
-LIGHTTPD="lighttpd-1.4.79"
-PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.xz"
+PKG_NAME=lighttpd
+PKG_VERSION=1.4.79
+PKG_SOURCE=${PKG_NAME}-${PKG_VERSION}.tar.xz
+PKG_SOURCE_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/"
+PKG_BUILD_DIR=${PREFIX_PORT_BUILD}/${PKG_NAME}-${PKG_VERSION}
 
-PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${LIGHTTPD}"
+PREFIX_PORT_SRC="${PKG_BUILD_DIR}"
 
 PREFIX_OPENSSL=${PREFIX_BUILD}
 PREFIX_PCRE=${PREFIX_BUILD}
@@ -14,8 +17,8 @@ PREFIX_PCRE=${PREFIX_BUILD}
 # Download, unpack, and apply patches
 #
 if [ ! -d "$PREFIX_PORT_SRC" ]; then
-	b_port_download "${PKG_URL%/*}" "${PKG_URL##*/}"
-	tar xJf "$PREFIX_PORT/${PKG_URL##*/}" -C "$PREFIX_PORT_BUILD"
+	b_port_download "$PKG_SOURCE_URL" "$PKG_SOURCE"
+	tar xJf "$PREFIX_PORT/$PKG_SOURCE" -C "$PREFIX_PORT_BUILD"
 	b_port_apply_patches "$PREFIX_PORT_SRC"
 fi
 
