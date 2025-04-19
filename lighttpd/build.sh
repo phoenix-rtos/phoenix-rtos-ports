@@ -3,39 +3,21 @@
 set -e
 
 LIGHTTPD="lighttpd-1.4.79"
-PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.gz"
-PKG_MIRROR_URL="https://files.phoesys.com/ports/${LIGHTTPD}.tar.gz"
+PKG_URL="https://download.lighttpd.net/lighttpd/releases-1.4.x/${LIGHTTPD}.tar.xz"
 
 PREFIX_PORT_SRC="${PREFIX_PORT_BUILD}/${LIGHTTPD}"
-PREFIX_LIGHTTPD_MARKERS="$PREFIX_PORT_BUILD/markers/"
 
 PREFIX_OPENSSL=${PREFIX_BUILD}
 PREFIX_PCRE=${PREFIX_BUILD}
 
 #
-# Download and unpack
+# Download, unpack, and apply patches
 #
-mkdir -p "$PREFIX_PORT_BUILD" "$PREFIX_LIGHTTPD_MARKERS"
-if [ ! -f "$PREFIX_PORT/${LIGHTTPD}.tar.gz" ]; then
-	if ! wget "$PKG_URL" -P "${PREFIX_PORT}" --no-check-certificate; then
-		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
-	fi
+if [ ! -d "$PREFIX_PORT_SRC" ]; then
+	b_port_download "${PKG_URL%/*}" "${PKG_URL##*/}"
+	tar xJf "$PREFIX_PORT/${PKG_URL##*/}" -C "$PREFIX_PORT_BUILD"
+	b_port_apply_patches "$PREFIX_PORT_SRC"
 fi
-[ -d "$PREFIX_PORT_SRC" ] || tar zxf "$PREFIX_PORT/${LIGHTTPD}.tar.gz" -C "$PREFIX_PORT_BUILD"
-
-#
-# Apply patches
-#
-for patchfile in "${PREFIX_PORT}"/patches/*.patch; do
-	if [ ! -f "$patchfile" ]; then
-		continue;
-	fi
-	if [ ! -f "$PREFIX_LIGHTTPD_MARKERS/$(basename "$patchfile").applied" ]; then
-		echo "applying patch: $patchfile"
-		patch -d "$PREFIX_PORT_SRC" -p1 < "$patchfile"
-		touch "$PREFIX_LIGHTTPD_MARKERS/$(basename "$patchfile").applied"
-	fi
-done
 
 #
 # Configure
