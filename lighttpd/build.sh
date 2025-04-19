@@ -41,9 +41,14 @@ done
 # Configure
 #
 if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
-	# FIXME: take into account commented-out modules
+	# Note: using CONFIGFILE from phoenix-rtos-project sample project
+	#   is a Phoenix RTOS bootstrap heuristic to populate lighttpd
+	#   ${PREFIX_PORT_SRC}/src/plugin-static.h for the static build.
+	#   This logic can be replaced with custom list in src/plugin-static.h
+	#   and, as needed, appropriate modifications to ./configure below.
+	# Note: assumes one "mod_xxxx" per line in lighttpd.conf server.modules
 	CONFIGFILE=$(find "${PREFIX_ROOTFS:?PREFIX_ROOTFS not set!}/etc" -name "lighttpd.conf")
-	grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_PORT_SRC"/src/plugin-static.h
+	grep '"mod_' "$CONFIGFILE" | grep -v '\s*#' | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_PORT_SRC"/src/plugin-static.h
 
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
