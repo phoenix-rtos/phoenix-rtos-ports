@@ -45,14 +45,19 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	CONFIGFILE=$(find "${PREFIX_ROOTFS:?PREFIX_ROOTFS not set!}/etc" -name "lighttpd.conf")
 	grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" > "$PREFIX_LIGHTTPD_SRC"/src/plugin-static.h
 
-	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
 	( cd "$PREFIX_LIGHTTPD_SRC" && "./autogen.sh" )
-	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
-		-C --disable-ipv6 --disable-mmap --with-bzip2=no \
-		--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared  --host="$HOST" --with-openssl="${PREFIX_OPENSSL}" --with-pcre="${PREFIX_PCRE}" \
-		--prefix="$PREFIX_PORT_BUILD" --sbindir="$PREFIX_PROG")
+	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" \
+		CFLAGS="${CFLAGS} -DLIGHTTPD_STATIC" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
+		-C --host="$HOST" \
+		--prefix="$PREFIX_PORT_BUILD" --sbindir="$PREFIX_PROG" \
+		--enable-shared=no --enable-static=yes --disable-shared \
+		LIGHTTPD_STATIC=yes \
+		--disable-ipv6 --disable-mmap \
+		--with-openssl="${PREFIX_OPENSSL}" \
+		--with-pcre="${PREFIX_PCRE}" \
+		--with-zlib="$WITH_ZLIB" )
 
 	set +e
 	ex "+/HAVE_MMAP 1/d" "+/HAVE_MUNMAP 1/d" "+/HAVE_GETRLIMIT 1/d" "+/HAVE_SYS_POLL_H 1/d" \
