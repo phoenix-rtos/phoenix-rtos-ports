@@ -1,0 +1,14 @@
+See https://github.com/openssl/openssl/issues/20923
+diff --git a/crypto/ec/asm/ecp_nistz256-armv4.pl b/crypto/ec/asm/ecp_nistz256-armv4.pl
+--- a/crypto/ec/asm/ecp_nistz256-armv4.pl
++++ b/crypto/ec/asm/ecp_nistz256-armv4.pl
+@@ -81,7 +81,7 @@ close TABLE;
+ die "insane number of elements" if ($#arr != 64*16*37-1);
+ 
+ $code.=<<___;
+-.rodata
++.section .rodata
+ .globl	ecp_nistz256_precomputed
+ .type	ecp_nistz256_precomputed,%object
+ .align	12
+
