@@ -1,0 +1,39 @@
+diff -ruN a/config.mk b/config.mk
+--- a/config.mk	2024-08-09 12:42:00.109791945 +0200
++++ b/config.mk	2024-08-09 12:41:44.723456850 +0200
+@@ -4,28 +4,21 @@
+ # Customize below to fit your system
+ 
+ # paths
+-PREFIX = /usr/local
++PREFIX ?= /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+ 
+-X11INC = /usr/X11R6/include
+-X11LIB = /usr/X11R6/lib
+-
+-# Xinerama, comment if you don't want it
+-XINERAMALIBS = -L${X11LIB} -lXinerama
+-XINERAMAFLAGS = -DXINERAMA
+-
+ # includes and libs
+-INCS = -I. -I/usr/include -I${X11INC}
+-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
++INCS = -I. -I${PREFIX_H}
++LIBS = -L${PREFIX_A} -l:libX11.a -l:libphoenix.a -l:libxcb.a -l:libXau.a
+ 
+ # flags
+-CPPFLAGS = -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
+-CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+-LDFLAGS = -s ${LIBS}
++CPPFLAGS += -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
++CFLAGS += -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
++LDFLAGS += -s ${LIBS}
+ 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
+ #LDFLAGS = ${LIBS}
+ 
+ # compiler and linker
+-CC = cc
++CC ?= cc

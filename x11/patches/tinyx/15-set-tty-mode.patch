@@ -1,0 +1,39 @@
+diff -ruN a/kdrive/phoenix/phoenix.c b/kdrive/phoenix/phoenix.c
+--- a/kdrive/phoenix/phoenix.c	2024-10-01 15:21:58.698012684 +0200
++++ b/kdrive/phoenix/phoenix.c	2024-10-02 13:10:42.440162376 +0200
+@@ -5,6 +5,7 @@
+ #include <errno.h>
+ #include <signal.h>
+ #include <termios.h>
++#include <phoenix/fbcon.h>
+ #include <sys/stat.h>
+ #include <sys/ioctl.h>
+ #include <X11/keysym.h>
+@@ -24,6 +25,10 @@
+ 	if (ioctl(fd, TIOCNOTTY, NULL) < 0) {
+ 		FatalError("PhoenixInit: TIOCNOTTY failed\n");
+ 	}
++
++	if (ioctl(fd, FBCONSETMODE, FBCON_DISABLED) < 0) {
++		FatalError("PhoenixInit: FBCONSETMODE failed\n");
++	}
+   close(fd);
+ 
+ 	return 1;
+@@ -47,6 +52,16 @@
+ 
+ static void PhoenixFini(void)
+ {
++  int fd;
++  if ((fd = open("/dev/tty0", O_WRONLY, 0)) < 0) {
++    FatalError("PhoenixInit: Cannot open /dev/tty0 (%s)\n",
++         strerror(errno));
++  }
++
++	if (ioctl(fd, FBCONSETMODE, FBCON_ENABLED) < 0) {
++		FatalError("PhoenixInit: FBCONSETMODE failed\n");
++	}
++  close(fd);
+ }
+ 
+ static const KdOsFuncs PhoenixFuncs = {

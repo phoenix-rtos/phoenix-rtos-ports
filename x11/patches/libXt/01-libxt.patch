@@ -1,0 +1,26 @@
+diff -ruN a/configure.ac b/configure.ac
+--- a/configure.ac	2025-02-19 17:21:09.341698355 +0100
++++ b/configure.ac	2025-02-19 17:21:28.960697839 +0100
+@@ -45,7 +45,6 @@
+ 	  [m4_fatal([must install xorg-macros 1.16 or later before running autoconf/autogen])])
+ XORG_MACROS_VERSION(1.16)
+ XORG_DEFAULT_OPTIONS
+-XORG_CHECK_MALLOC_ZERO
+ XORG_ENABLE_SPECS
+ XORG_WITH_XMLTO(0.0.20)
+ XORG_WITH_FOP
+diff -ruN a/src/NextEvent.c b/src/NextEvent.c
+--- a/src/NextEvent.c	2025-02-19 17:21:09.317698417 +0100
++++ b/src/NextEvent.c	2025-02-20 11:20:53.456151663 +0100
+@@ -369,6 +369,11 @@
+ IoWait(wait_times_ptr_t wt, wait_fds_ptr_t wf)
+ {
+ #ifdef USE_POLL
++#ifdef __phoenix__
++	if (wt->poll_wait == -1) {
++		wt->poll_wait = 100;
++	}
++#endif
+     return poll(wf->fdlist, (nfds_t) wf->fdlistlen, wt->poll_wait);
+ #else
+     return Select (wf->nfds, &wf->rmask, &wf->wmask, &wf->emask,

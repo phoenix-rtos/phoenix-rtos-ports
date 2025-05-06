@@ -1,0 +1,112 @@
+diff -ruN a/kdrive/fbdev/fbdev.c b/kdrive/fbdev/fbdev.c
+--- a/kdrive/fbdev/fbdev.c	2024-09-16 14:38:25.534289942 +0200
++++ b/kdrive/fbdev/fbdev.c	2024-09-18 17:01:13.606892680 +0200
+@@ -29,6 +29,8 @@
+ 
+ #include <errno.h>
+ #include <pthread.h>
++#include <sys/platform.h>
++#include <phoenix/arch/ia32/ia32.h>
+ 
+ void refresher(void *arg) {
+   graph_t* g = (graph_t*) arg;
+@@ -87,6 +89,7 @@
+ 	priv->fb = priv->fb_base + off;
+ #endif
+ 
++#if 0
+   int k;
+ 
+   priv->smem_len = 0x2000;
+@@ -113,6 +116,28 @@
+ 
+   priv->g.height = priv->g.height;
+   priv->g.width = priv->g.width;
++#endif
++
++  int err = 0;
++
++  platformctl_t pctl = {.action = pctl_get, .type = pctl_graphmode };
++
++	if ((err = platformctl(&pctl)) < 0) {
++    printf("platformctl failed: %d\n", err);
++		return err;
++  }
++
++  size_t memsz = (pctl.graphmode.pitch * pctl.graphmode.height * (pctl.graphmode.bpp / 8) + _PAGE_SIZE - 1) & ~(_PAGE_SIZE - 1);
++	if ((priv->fb = mmap(NULL, memsz, PROT_READ | PROT_WRITE, MAP_DEVICE | MAP_SHARED | MAP_UNCACHED | MAP_ANONYMOUS | MAP_PHYSMEM, -1, pctl.graphmode.framebuffer)) == MAP_FAILED) {
++    printf("mmap failed\n");
++		return -ENOMEM;
++  }
++
++  priv->smem_len = memsz;
++  priv->bits_per_pixel = pctl.graphmode.bpp;
++  priv->height = pctl.graphmode.height;
++  priv->width = pctl.graphmode.width;
++  priv->line_length = pctl.graphmode.pitch;
+ 
+ 	return TRUE;
+ }
+@@ -325,13 +350,13 @@
+ 	FbdevPriv *priv = screen->card->driver;
+ 	int depth = priv->bits_per_pixel;
+ 
+-  screen->width = priv->g.width;
+-  screen->height = priv->g.height;
++  screen->width = priv->width;
++  screen->height = priv->height;
+   screen->rate = 30;
+ 
+   /* Calculate line_length if it's zero */
+   if (!priv->line_length)
+-    priv->line_length = (priv->g.width * depth + 7) / 8;
++    priv->line_length = (priv->width * depth + 7) / 8;
+ 
+ 	screen->fb.visuals = (1 << TrueColor);
+ 
+@@ -410,17 +435,18 @@
+ 
+   scrpriv->shadow = FALSE;
+ 
++	screen->width = priv->width;
++	screen->height = priv->height;
++
+ 	KdComputeMouseMatrix(&m, RR_Rotate_0, screen->width, screen->height);
+ 
+ 	KdSetMouseMatrix(&m);
+ 
+-	screen->width = priv->g.width;
+-	screen->height = priv->g.height;
+ 	screen->memory_base = (CARD8 *) (priv->fb);
+ 	screen->memory_size = priv->smem_len;
+ 
+-  screen->fb.byteStride = (priv->g.width * priv->bits_per_pixel + 7) / 8;
+-  screen->fb.pixelStride = priv->g.width;
++  screen->fb.byteStride = priv->line_length;
++  screen->fb.pixelStride = priv->width;
+   screen->fb.frameBuffer = (CARD8 *) (priv->fb);
+   screen->off_screen_base = screen->fb.byteStride * screen->height;
+ 
+@@ -792,8 +818,10 @@
+ {
+ 	FbdevPriv *priv = card->driver;
+ 
++#if 0
+ 	graph_close(&priv->g);
+ 	graph_done();
++#endif
+ 	free(priv);
+ }
+ 
+diff -ruN a/kdrive/fbdev/fbdev.h b/kdrive/fbdev/fbdev.h
+--- a/kdrive/fbdev/fbdev.h	2024-09-16 14:38:25.534289942 +0200
++++ b/kdrive/fbdev/fbdev.h	2024-09-18 16:59:34.092072626 +0200
+@@ -35,6 +35,8 @@
+   uint32_t smem_len;                 /* Length of frame buffer mem */
+   uint32_t line_length;              /* length of a line in bytes    */
+   uint32_t bits_per_pixel;           /* guess what                   */
++  uint16_t width;
++  uint16_t height;
+ 	char *fb;
+ } FbdevPriv;
+ 

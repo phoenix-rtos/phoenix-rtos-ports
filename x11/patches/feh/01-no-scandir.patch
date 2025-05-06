@@ -1,0 +1,20 @@
+diff -ruN a/src/filelist.c b/src/filelist.c
+--- a/src/filelist.c	2024-10-18 11:22:12.323252291 +0200
++++ b/src/filelist.c	2024-10-18 13:13:25.876576966 +0200
+@@ -240,6 +240,8 @@
+ 	}
+ 
+ 	if ((S_ISDIR(st.st_mode)) && (level != FILELIST_LAST)) {
++    weprintf("opening directories unsupported");
++#if 0
+ 		struct dirent **de;
+ 		DIR *dir;
+ 		int cnt, n;
+@@ -283,6 +285,7 @@
+ 			free(de);
+ 		}
+ 		closedir(dir);
++#endif
+ 	} else if (S_ISREG(st.st_mode)) {
+ 		D(("Adding regular file %s to filelist\n", path));
+ 		filelist = gib_list_add_front(filelist, feh_file_new(path));

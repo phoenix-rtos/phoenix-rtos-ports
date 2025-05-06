@@ -1,0 +1,78 @@
+diff -ruN a/kdrive/fbdev/fbdev.c b/kdrive/fbdev/fbdev.c
+--- a/kdrive/fbdev/fbdev.c	2024-08-21 13:07:32.038968445 +0200
++++ b/kdrive/fbdev/fbdev.c	2024-08-21 12:26:44.467523732 +0200
+@@ -28,6 +28,15 @@
+ #include <sys/ioctl.h>
+ 
+ #include <errno.h>
++#include <pthread.h>
++
++void refresher(void *arg) {
++  graph_t* g = (graph_t*) arg;
++  while (1) {
++    usleep(12588); // ~70Hz
++    graph_commit(g);
++  }
++}
+ 
+ extern int KdTsPhyScreen;
+ 
+@@ -80,7 +89,6 @@
+ 
+   int k;
+ 
+-  priv->bits_per_pixel = 32;
+   priv->smem_len = 0x2000;
+ 
+   if ((k = graph_init()) < 0) {
+@@ -92,15 +100,16 @@
+     FatalError("failed to initialize graphics adapter: %s", strerror(k));
+   }
+ 
+-  if ((k = graph_mode(&priv->g, GRAPH_DEFMODE, GRAPH_DEFFREQ)) < 0) {
++  if ((k = graph_mode(&priv->g, GRAPH_DEFMODE, GRAPH_70Hz)) < 0) {
+ 		FatalError("failed to set graphics mode: %d", k);
+   }
+ 
+-  if (priv->g.depth != 4) {
+-		FatalError(stderr, "32-bit video resolution required");
+-  }
++  pthread_t thread;
++
++  pthread_create(&thread, NULL, (void*) refresher, &priv->g);
+ 
+   priv->fb = priv->g.data;
++  priv->bits_per_pixel = priv->g.depth * 8;
+ 
+   priv->g.height = priv->g.height;
+   priv->g.width = priv->g.width;
+@@ -316,22 +325,22 @@
+ 	FbdevPriv *priv = screen->card->driver;
+ 	int depth = priv->bits_per_pixel;
+ 
+-  screen->width = 640;
+-  screen->height = 400;
++  screen->width = priv->g.width;
++  screen->height = priv->g.height;
+   screen->rate = 30;
+   screen->fb.depth = depth;
+ 
+-  depth = priv->bits_per_pixel;
+-
+   /* Calculate line_length if it's zero */
+   if (!priv->line_length)
+     priv->line_length = (priv->g.width * depth + 7) / 8;
+ 
+ 	screen->fb.visuals = (1 << TrueColor);
++
+ #define Mask(o,l)   (((1 << l) - 1) << o)
+-	screen->fb.redMask = Mask(16,8);
+-	screen->fb.greenMask = Mask(8,8);
+-	screen->fb.blueMask = Mask(0,8);
++  int offset = depth / 4;
++	screen->fb.redMask = Mask(offset * 2, offset);
++	screen->fb.greenMask = Mask(offset * 1, offset);
++	screen->fb.blueMask = Mask(0,offset);
+   screen->fb.bitsPerPixel = priv->bits_per_pixel;
+ 
+ 	return fbdevMapFramebuffer(screen);
