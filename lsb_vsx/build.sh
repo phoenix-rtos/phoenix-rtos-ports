@@ -14,7 +14,7 @@ PREFIX_LSB_VSX_FILES="${PREFIX_PORT_BUILD}/files"
 
 apply_patches() {
 	local patchfile
-  
+
 	for patchfile in "${PREFIX_PORT}/patches/${1}/"*.patch; do
 		patch_basename="$(basename "$patchfile")"
 		patch_dirname="$(basename "$(dirname "$patchfile")")"
@@ -203,11 +203,12 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
 	PATH="${TET_ROOT}/test_sets/BIN:${TET_EXECUTE}/BIN:$PATH"
 	export TET_ROOT TET_EXECUTE PATH HOME
 
+	chmod u+w "${PREFIX_LSB_VSX_FILES}/src/makefile"
 	apply_patches "ps_TETware"
 	echo -e "\n--- Compiling TETware-Lite for Phoenix-RTOS ---\n"
 	cd "${TET_ROOT}/src"
 	sh tetconfig -t lite
-	make; make install
+	make && make install
 	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "${TET_ROOT}/bin/tcc"
 	b_install "${PREFIX_PROG_STRIPPED}/tcc" "/usr/bin"
 	touch "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built"
