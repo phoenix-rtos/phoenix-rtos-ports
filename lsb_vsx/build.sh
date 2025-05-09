@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 LSB_VSX_VER="2.0-1"
 LSB_VSX="lsb_vsx-$LSB_VSX_VER"
@@ -14,7 +15,7 @@ PREFIX_LSB_VSX_FILES="${PREFIX_PORT_BUILD}/files"
 
 apply_patches() {
 	local patchfile
-  
+
 	for patchfile in "${PREFIX_PORT}/patches/${1}/"*.patch; do
 		patch_basename="$(basename "$patchfile")"
 		patch_dirname="$(basename "$(dirname "$patchfile")")"
@@ -192,7 +193,8 @@ sed -e "s|^CC =.*$|CC = ${CC}|" \
     -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
     -e "s|^AR =.*$|AR = ${AR}|" \
     -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
-    -e "s|^COPTS =.*$|COPTS = ${COPTS}|" \
+    -e "s|^COPTS =.*$|COPTS = ${COPTS} -std=gnu89|" \
+    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
     "${PREFIX_PORT}/config/ps_defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
 
 #
@@ -203,11 +205,12 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
 	PATH="${TET_ROOT}/test_sets/BIN:${TET_EXECUTE}/BIN:$PATH"
 	export TET_ROOT TET_EXECUTE PATH HOME
 
+	chmod u+w "${PREFIX_LSB_VSX_FILES}/src/makefile"
 	apply_patches "ps_TETware"
 	echo -e "\n--- Compiling TETware-Lite for Phoenix-RTOS ---\n"
 	cd "${TET_ROOT}/src"
 	sh tetconfig -t lite
-	make; make install
+	make && make install
 	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "${TET_ROOT}/bin/tcc"
 	b_install "${PREFIX_PROG_STRIPPED}/tcc" "/usr/bin"
 	touch "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built"
@@ -220,6 +223,7 @@ fi
 VSXDIR="${HOME}/SRC"
 
 sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
+    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
     -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
     -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
     -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
