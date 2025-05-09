@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 LSB_VSX_VER="2.0-1"
 LSB_VSX="lsb_vsx-$LSB_VSX_VER"
@@ -192,7 +193,8 @@ sed -e "s|^CC =.*$|CC = ${CC}|" \
     -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
     -e "s|^AR =.*$|AR = ${AR}|" \
     -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
-    -e "s|^COPTS =.*$|COPTS = ${COPTS}|" \
+    -e "s|^COPTS =.*$|COPTS = ${COPTS} -std=gnu89|" \
+    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
     "${PREFIX_PORT}/config/ps_defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
 
 #
@@ -221,6 +223,7 @@ fi
 VSXDIR="${HOME}/SRC"
 
 sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
+    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
     -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
     -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
     -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
