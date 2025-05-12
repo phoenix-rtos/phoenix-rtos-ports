@@ -134,7 +134,7 @@ if [ "$HOST_NEW_PATCH" = "y" ]; then
 fi
 
 #
-# # Compile TETware-Lite for host
+# # Compile TETware-Lite (Host)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built" ]; then
@@ -150,7 +150,23 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built" ]; then
 fi
 
 #
-# # Build VSX test framework for host (vbuild only needed)
+# # Configure vsxparams file (Host)
+#
+
+sed -e "s|^CC=.*$|CC=\"/bin/cc\"|" \
+    -e "s|^INCDIRS=.*$|INCDIRS=\"/usr/include /usr/include/x86_64-linux-gnu\"|" \
+    -e "s|^#PATH=\(.*\)$|PATH=\1|" \
+    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_ROOT}/test_sets/TESTROOT\"|" \
+    -e "s|^VSXDIR=.*$|VSXDIR=\"${TET_ROOT}/test_sets/SRC\"|" \
+    -e "s|^VSX_ORG=.*$|VSX_ORG=\"Phoenix Systems\"|" \
+    -e "s|^VSX_OPER=.*$|VSX_OPER=\"${USER:-Unknown}\"|" \
+    -e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
+    -e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
+    -e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
+    "${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/host_config/host_vsxparams"
+
+#
+# # Build VSX test framework - vbuild only needed (Host)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_VSX/host_VSX.built" ]; then
@@ -182,7 +198,7 @@ if [ "$PS_NEW_PATCH" = "y" ]; then
 fi
 
 #
-# # Configure src/defines.mk (used by TETware)
+# # Configure defines.mk (Phoenix-RTOS)
 #
 
 COPTS="$(echo "$CFLAGS" | sed 's/-I[^ ]* //g')"
@@ -193,10 +209,12 @@ sed -e "s|^CC =.*$|CC = ${CC}|" \
     -e "s|^AR =.*$|AR = ${AR}|" \
     -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
     -e "s|^COPTS =.*$|COPTS = ${COPTS}|" \
-    "${PREFIX_PORT}/config/ps_defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
+    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
+    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
+    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
 
 #
-# # Compile TETware-Lite for Phoenix-RTOS
+# # Compile TETware-Lite (Phoenix-RTOS)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
@@ -214,22 +232,25 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
 fi
 
 #
-# # Configure ps_vsxparams file
+# # Configure vsxparams file (Phoenix-RTOS)
 #
 
 VSXDIR="${HOME}/SRC"
 
 sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
+    -e "s|^COPTS=.*$|COPTS=\"\"|" \
     -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
     -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
     -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
     -e "s|^INCDIRS=.*$|INCDIRS=\"${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include\"|" \
     -e "s|^VSXDIR=.*$|VSXDIR=\"${VSXDIR}\"|" \
     -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_EXECUTE}\"|" \
-    "${PREFIX_PORT}/config/ps_vsxparams.skel" > "${PREFIX_PORT_BUILD}/ps_config/ps_vsxparams"
+    -e "s|^VSX_SYS=.*$|VSX_SYS=\"Phoenix-RTOS\"|" \
+    -e "s|^MLIB=.*$|MLIB=\"\"|" \
+    "${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/ps_config/ps_vsxparams"
 
 #
-# # Build VSX test framework
+# # Build VSX test framework (Phoenix-RTOS)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_VSX/ps_VSX.built" ]; then

@@ -119,7 +119,7 @@
 -
 +VSXDIR="${HOME}/SRC"
  TGTDIR="$VSXDIR"
-+cp -f "${PREFIX_PORT}/config/host_vsxparams" "${VSXDIR}/vsxparams"
++cp -f "${PREFIX_PORT_BUILD}/host_config/host_vsxparams" "${VSXDIR}/vsxparams"
 +. "${VSXDIR}/vsxparams"
  
 -while :

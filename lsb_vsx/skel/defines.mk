@@ -88,12 +88,10 @@ TET_CDEFS = -D_POSIX_SOURCE -DNSIG=_NSIG
 DTET_CDEFS = -DINETD
 
 # CC - the name of the C compiler
-# This parameter is set in build.sh script
-CC = 
+CC = gcc
 #
 # LD_R - the program that performs partial linking
-# This parameter is set in build.sh script
-LD_R = 
+LD_R = ld -r
 #
 # CDEFS and COPTS - options that are always passed to cc when compiling
 # program and "ordinary" library files
@@ -102,25 +100,22 @@ LD_R =
 # CDEFS always includes -I$(INC) -I$(DINC) (in that order)
 # and usually defines NSIG (the highest signal number plus one)
 # COPTS is used to specify other options (e.g.: -O)
-CDEFS = -I$(INC) -I$(DINC) # This parameter is extended in build.sh script
-# This parameter is set in build.sh script
-COPTS = 
+CDEFS = -I$(INC) -I$(DINC)
+COPTS = -O
 #
 # LDFLAGS - options that are always passed to cc when linking
-# This parameter is set in build.sh script
-LDFLAGS = 
+LDFLAGS =
 #
 # system libraries for inclusion at the end of the cc command line
 # when building TETware programs
-SYSLIBS = 
+SYSLIBS =
 #
 # if your system's a.out format includes a .comment section that can be
 # compressed by using mcs -c, set MCS to mcs; otherwise set MCS to @:
 MCS = @:
 #
 # AR is the name of the archive library maintainer
-# This parameter is set in build.sh script
-AR = 
+AR = ar
 #
 # LORDER and TSORT are the names for lorder and tsort, used to order an archive
 # library; if they don't exist on your system or don't work, set LORDER to echo
@@ -158,7 +153,7 @@ DTET_THR_CDEFS = $(DTET_CDEFS)
 # Set SHLIB_COPTS to SHLIB_NOT_SUPPORTED if shared libraries are not supported
 # on your system or if you don't want to build the shared versions of the
 # API libraries.
-SHLIB_COPTS = SHLIB_NOT_SUPPORTED
+SHLIB_COPTS = -fPIC
 #
 # SHLIB_CC names the compiler that is used when generating the object files
 # that are to be put in a shared library.
@@ -184,7 +179,7 @@ THRSHLIB_BUILD_END =
 #
 # C_PLUS - the name of the C++ compiler
 # To disable C++ support, set C_PLUS = CPLUSPLUS_NOT_SUPPORTED.
-C_PLUS = CPLUSPLUS_NOT_SUPPORTED
+C_PLUS = g++
 # C_SUFFIX - suffix for C++ source files
 # (without an initial dot; e.g: C, cpp etc.)
 C_SUFFIX = C
