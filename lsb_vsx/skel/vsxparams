@@ -1,12 +1,12 @@
 #VSX_OPER - the name of the person running the VSX test suite
-VSX_OPER="${USER:-Unknown}"
+VSX_OPER="Unknown"
 
 #VSX_ORG - the name of the organisation for whom VSX is being run
-VSX_ORG="Phoenix Systems"
+VSX_ORG="Unknown"
 
 #VSX_SYS - the name of the system (hardware and software) on which the VSX
 #	verification is being performed
-VSX_SYS="Phoenix-RTOS"
+VSX_SYS="Unknown"
 
 #TEST_MODE - the VSX test mode to be used
 TEST_MODE="POSIX96"
@@ -17,18 +17,16 @@ TEST_XNFS="n"
 
 #SUBSETS - a space-separated list of the subsets of VSX to be installed
 #	For example: "base dm"
-SUBSETS="base"
+SUBSETS=""
 
 #VSXDIR - this parameter defines the source directory for the VSX software.
 #	The value given to this parameter must be a full pathname
-#   This parameter is set in build.sh script
-VSXDIR=
+VSXDIR="$TET_ROOT/test_sets/SRC"
 
 #TET_EXECUTE - this parameter defines the directory from which the VSX tests
 #	will be executed.
 #	The value given to this parameter must be a full pathname
-#   This parameter is set in build.sh script
-TET_EXECUTE=
+TET_EXECUTE="$TET_ROOT/test_sets/TESTROOT"
 
 #SPEED - this parameter defines the speed of the machine on a 1-10 scale
 #	A speed of 1 is given to a very fast machine and 10 to a very 
@@ -44,20 +42,18 @@ SPEED="5"
 #INCDIRS - this parameter defines the directories which contain the include
 #	files for the system being tested, in order of searching.
 #	This parameter is normally set to /usr/include
-#   This parameter is set in build.sh script
-INCDIRS= 
+INCDIRS="/usr/include"
 
 #CC - this parameter defines the C compiler to be used in building the suite.
 #	This parameter is normally set to a pathname for c89 or cc.
 #	It must be set to (a pathname for) c89 for UNIX98 registration runs.
-#   This parameter is set in build.sh script
-CC=
+CC="/usr/bin/cc"
 
 #COPTS - this parameter defines any special command line options needed by the
 #	C compiler.
 #	This parameter is normally set to ""
 # Set to -ansi with gcc to get a clean compiler namespace
-COPTS=""
+COPTS="-ansi"
 
 #THR_COPTS - this parameter defines C compiler options to be used instead of
 #	COPTS when compiling code that will be linked with the TETware
@@ -73,8 +69,7 @@ DEFINES="-D_POSIX_C_SOURCE=199506"
 #LDFLAGS - this parameter defines any special link editor (loader) options 
 #	needed by the C compiler link edit phase.
 #	This parameter is normally set to ""
-#   This parameter is set in build.sh script
-LDFLAGS=
+LDFLAGS=""
 
 #CFPURE -  this parameter defines the link editor option used to produce a
 #	pure executable (shared text) program.
@@ -97,13 +92,11 @@ TSORT="cat"
 #	If this parameter is set to "ranlib", LORDER should be set to "echo"
 #	and TSORT set to "cat".
 #	Otherwise this parameter should be set to "echo"
-#   This parameter is set in build.sh script
-RANLIB=
+RANLIB="ranlib"
 
 #AR - the command (and options) used to create a library archive.
 #	This parameter is normally set to "ar cr"
-#   This parameter is set in build.sh script
-AR=
+AR="ar cr"
 
 #CHOWN - the command used to change the ownership of files.
 #	This parameter is normally set to "chown" or "/etc/chown"
@@ -120,11 +113,11 @@ CHMOD="chmod"
 #MLIB - the name of the mathematics library
 #	This parameter is only needed by some subsets, and is not used
 #	when testing XNFS.  It is typically set to "/usr/lib/libm.a".
-MLIB=""
+MLIB="-lm"
 
 #RPCLIB - the name of the RPC library
 #	This parameter is only used when testing XNFS.
-RPCLIB=""
+RPCLIB=".../SRC/LIB/xnfs_socket.a"
 
 #RPC_TYPE - whether the RPC library is TLI or socket-based
 #	This parameter must be set to "TLI" or "socket".
@@ -157,7 +150,7 @@ SERVER_TET_ROOT=""
 #NOSPC_DEV - the mountable device to be used for ENOSPC testing
 #	This parameter is only needed by some subsets, and is not used
 #	when testing XNFS.
-NOSPC_DEV="NOSPC_DEV"
+NOSPC_DEV="/dev/loop0"
 
 #VPRINTF_SUPP - indicates whether the ANSI function vprintf() is supported
 #	This parameter must be "y" in X/Open modes but may be "n" in
