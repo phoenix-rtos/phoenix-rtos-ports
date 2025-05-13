@@ -1,43 +1,12 @@
---- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.host/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
-@@ -46,36 +46,6 @@
- export DEFINES LDFLAGS SYSLIBS CURDIR PATH TET_EXECUTE LORDER TSORT AR
- echo "*** The VSX source directory is rooted at $VSXDIR"
- 
--#  Work out next journal file number
--
--JNLDIR="$HOME/results"
--if test ! -d "$JNLDIR"
--then
--	echo "*** journal directory $JNLDIR does not exist"
--	exit 1
--fi
--
--num=`ls -r "$JNLDIR" | \
--	awk '/^install\.[0-9]*$/ {
--		n = index($0, ".")
--		num = substr($0, n+1, 99) + 1
--		printf "%4.4d\n", num
--		exit
--	    }
--	    END { if (num == 0) print "0001" }'`
--
--if test -z "$num" -o 0 -eq "$num"
--then
--	echo "*** error searching journal directory: $JNLDIR"
--	exit 1
--fi
--
--JNLFILE="$JNLDIR/install.$num"
--echo "*** Install journal file is: $JNLFILE"
--
--# all output from here to end is tee'd into journal file
--(
--
+--- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2025-05-08 13:50:18.989594058 +0200
++++ lsb_vsx.host/test_sets/SRC/install/scripts/install.sh	2025-05-13 14:16:55.042485405 +0200
+@@ -1,4 +1,4 @@
+-: use Bourne Shell
++#!/usr/bin/env bash
  #########################################################################
  #									#
- # Update the file std.h with the system dependencies			#
-@@ -157,152 +127,6 @@
+ #	SCCS:	@(#)install/scripts/install.sh	4.3 (03/03/98)  VSXgen release 1.4#
+@@ -157,152 +157,6 @@
  
  #########################################################################
  #									#
@@ -190,7 +159,7 @@
  # Set up the testroot 							#
  #									#
  #########################################################################
-@@ -625,37 +449,9 @@
+@@ -625,37 +479,9 @@
  #									#
  #########################################################################
  
@@ -230,14 +199,26 @@
  
  case $TEST_XNFS in
  [Yy])
-@@ -685,10 +481,6 @@
+@@ -681,14 +507,22 @@
+ 	then	echo "$dir make succeeded"
+ 	else	echo "$dir make failed:"
+ 		cat make.$target
++        exit 1
+ 	fi
      )
++    test "$?" -eq 1 && fail=1
  done
  
--# end of output tee'd to journal file
--
--) 2>&1 | tee "$JNLFILE"
--
++if [ -n "$fail" ]; then
++    exit 1
++fi
++
+ # end of output tee'd to journal file
+ 
+ ) 2>&1 | tee "$JNLFILE"
+ 
++test "${PIPESTATUS[0]}" -eq "1" && exit 1
++
  # clean up: remove temporary files
  $rm_tmp1; $rm_tmp2
  

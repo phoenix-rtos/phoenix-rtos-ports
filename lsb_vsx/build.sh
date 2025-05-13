@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 LSB_VSX_VER="2.0-1"
 LSB_VSX="lsb_vsx-$LSB_VSX_VER"
@@ -14,7 +15,7 @@ PREFIX_LSB_VSX_FILES="${PREFIX_PORT_BUILD}/files"
 
 apply_patches() {
 	local patchfile
-  
+
 	for patchfile in "${PREFIX_PORT}/patches/${1}/"*.patch; do
 		patch_basename="$(basename "$patchfile")"
 		patch_dirname="$(basename "$(dirname "$patchfile")")"
@@ -134,6 +135,12 @@ if [ "$HOST_NEW_PATCH" = "y" ]; then
 fi
 
 #
+# # Configure defines.mk (Host)
+#
+
+cd "$TET_ROOT"; sh configure -t lite > /dev/null
+
+#
 # # Compile TETware-Lite (Host)
 #
 
@@ -143,8 +150,7 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built" ]; then
 
 	apply_patches "host_TETware"
 	echo -e "\n--- Compiling TETware-Lite for host ---\n"
-	cd "$TET_ROOT" && sh configure -t lite > /dev/null
-	cd "${TET_ROOT}/src" && make && make install
+	cd "${TET_ROOT}/src"; make all; make install
 	cp -p "${TET_ROOT}/bin/tcc" "${PREFIX_PORT_BUILD}/host_bin/tcc"
 	touch "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built"
 fi
@@ -208,7 +214,6 @@ sed -e "s|^CC =.*$|CC = ${CC}|" \
     -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
     -e "s|^AR =.*$|AR = ${AR}|" \
     -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
-    -e "s|^COPTS =.*$|COPTS = ${COPTS}|" \
     -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
     -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
     "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
@@ -221,11 +226,10 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
 	PATH="${TET_ROOT}/test_sets/BIN:${TET_EXECUTE}/BIN:$PATH"
 	export TET_ROOT TET_EXECUTE PATH HOME
 
+	cd "${TET_ROOT}/src" && sh tetconfig -t lite
 	apply_patches "ps_TETware"
 	echo -e "\n--- Compiling TETware-Lite for Phoenix-RTOS ---\n"
-	cd "${TET_ROOT}/src"
-	sh tetconfig -t lite
-	make; make install
+	cd "${TET_ROOT}/src"; make; make install
 	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "${TET_ROOT}/bin/tcc"
 	b_install "${PREFIX_PROG_STRIPPED}/tcc" "/usr/bin"
 	touch "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built"
@@ -238,7 +242,6 @@ fi
 VSXDIR="${HOME}/SRC"
 
 sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
-    -e "s|^COPTS=.*$|COPTS=\"\"|" \
     -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
     -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
     -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
@@ -274,7 +277,7 @@ then
 	sed -e "s|^PATH=.*$|PATH=${PATH}|" \
 	    -e "s|^VSXDIR=.*$|VSXDIR=${TET_ROOT}/test_sets/SRC|" \
 	    "${PREFIX_PORT_BUILD}/host_config/tetbuild.cfg" > "${HOME}/tetbuild.cfg"
-	cd "$HOME" && "${PREFIX_PORT_BUILD}/host_bin/tcc" -p -b -s "${PREFIX_PORT}/config/scen.bld"
+	cd "$HOME"; "${PREFIX_PORT_BUILD}/host_bin/tcc" -p -b -s "${PREFIX_PORT}/config/scen.bld"
 
 #
 # # Strip and copy to rootfs
