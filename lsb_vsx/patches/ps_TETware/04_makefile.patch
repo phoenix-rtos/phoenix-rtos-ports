@@ -1,0 +1,76 @@
+--- lsb_vsx/src/makefile	2025-05-08 13:50:42.383485342 +0200
++++ lsb_vsx.phoenix/src/makefile	2025-05-08 17:18:49.653802166 +0200
+@@ -76,10 +76,12 @@
+ 		;;							\
+ 	esac;								\
+ 									\
++	ret=0;								\
++									\
+ 	for i in $(DIRS);						\
+ 	do								\
+ 		echo $$i...;						\
+-		(cd $$i && $(MAKE) $@);					\
++		(cd $$i && $(MAKE) $@) || ret=1;			\
+ 	done;								\
+ 									\
+ 	x="`(perl -e 'exit 0') 2>&1 || true`";				\
+@@ -93,6 +95,8 @@
+ 		;;							\
+ 	esac;								\
+ 									\
++	if [ "$$ret" -eq "1" ]; then exit 1; fi;                        \
++									\
+ 	case "$(JAVA_CDEFS):$(JAVA_COPTS)" in				\
+ 	*NOT_SUPPORTED*)						\
+ 		;;							\
+
+--- lsb_vsx/src/tet3/makefile	2025-05-08 13:50:18.926594350 +0200
++++ lsb_vsx.phoenix/src/tet3/makefile	2025-05-08 17:00:51.566959021 +0200
+@@ -95,11 +95,13 @@
+ 		;;							\
+ 	esac;								\
+ 									\
++	ret=0;								\
++									\
+ 	: "tcm, api library and programs";				\
+ 	for i in $(DIRS);						\
+ 	do								\
+ 		echo $$i:;						\
+-		(cd $$i && $(MAKE) $@);					\
++		(cd $$i && $(MAKE) $@) || ret=1;			\
+ 	done;								\
+ 									\
+ 	: "thread-safe tcm and api library";				\
+@@ -110,7 +112,7 @@
+ 		for i in $(THRDIRS);					\
+ 		do							\
+ 			echo $$i:;					\
+-			(cd $$i && $(MAKE) $@);				\
++			(cd $$i && $(MAKE) $@) || ret=1;		\
+ 		done;							\
+ 		;;							\
+ 	esac;								\
+@@ -123,7 +125,7 @@
+ 		for i in $(SHLIBDIRS);					\
+ 		do							\
+ 			echo $$i:;					\
+-			(cd $$i && $(MAKE) $@);				\
++			(cd $$i && $(MAKE) $@) || ret=1;		\
+ 		done;							\
+ 		;;							\
+ 	esac;								\
+@@ -136,11 +138,13 @@
+ 		for i in $(THRSHLIBDIRS);				\
+ 		do							\
+ 			echo $$i:;					\
+-			(cd $$i && $(MAKE) $@);				\
++			(cd $$i && $(MAKE) $@) || ret=1;		\
+ 		done;							\
+ 		;;							\
+ 	esac;								\
+ 									\
++	if [ "$$ret" -eq "1" ]; then exit 1; fi;                        \
++									\
+ 	: "C++ tcm";							\
+ 	case "$(C_PLUS):$@" in						\
+ 	*NOT_SUPPORTED*)						\

@@ -1,5 +1,11 @@
---- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/install.sh	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2025-05-08 13:50:18.989594058 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/install.sh	2025-05-09 15:43:56.245766734 +0200
+@@ -1,4 +1,4 @@
+-: use Bourne Shell
++#!/usr/bin/env bash
+ #########################################################################
+ #									#
+ #	SCCS:	@(#)install/scripts/install.sh	4.3 (03/03/98)  VSXgen release 1.4#
 @@ -141,6 +141,17 @@
  #########################################################################
  echo "
@@ -171,3 +177,26 @@
  # Set up the testroot 							#
  #									#
  #########################################################################
+@@ -681,14 +546,22 @@
+ 	then	echo "$dir make succeeded"
+ 	else	echo "$dir make failed:"
+ 		cat make.$target
++		exit 1
+ 	fi
+     )
++    test "$?" -eq 1 && fail=1
+ done
+ 
++if [ -n "$fail" ]; then
++	exit 1
++fi
++
+ # end of output tee'd to journal file
+ 
+ ) 2>&1 | tee "$JNLFILE"
+ 
++test "${PIPESTATUS[0]}" -eq "1" && exit 1
++
+ # clean up: remove temporary files
+ $rm_tmp1; $rm_tmp2
+ 
