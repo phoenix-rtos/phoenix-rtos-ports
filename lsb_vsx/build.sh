@@ -140,6 +140,12 @@ fi
 
 cd "$TET_ROOT"; sh configure -t lite > /dev/null
 
+sed -e "s|^COPTS =\(.*\)$|COPTS = \1 -std=gnu89|" \
+    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
+    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
+    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
+    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
+
 #
 # # Compile TETware-Lite (Host)
 #
@@ -160,6 +166,7 @@ fi
 #
 
 sed -e "s|^CC=.*$|CC=\"/bin/cc\"|" \
+    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
     -e "s|^INCDIRS=.*$|INCDIRS=\"/usr/include /usr/include/x86_64-linux-gnu\"|" \
     -e "s|^#PATH=\(.*\)$|PATH=\1|" \
     -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_ROOT}/test_sets/TESTROOT\"|" \
@@ -214,6 +221,8 @@ sed -e "s|^CC =.*$|CC = ${CC}|" \
     -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
     -e "s|^AR =.*$|AR = ${AR}|" \
     -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
+    -e "s|^COPTS =.*$|COPTS = ${COPTS} -std=gnu89|" \
+    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
     -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
     -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
     "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
@@ -242,6 +251,7 @@ fi
 VSXDIR="${HOME}/SRC"
 
 sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
+    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
     -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
     -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
     -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
