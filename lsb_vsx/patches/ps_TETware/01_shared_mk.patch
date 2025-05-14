@@ -4,8 +4,8 @@
  	$(LOCAL_CC) $(DTET_CFLAGS) -c $(APISRC)sigreset.c
  
  
-+# Ports are build with -j 9, below targets cannot be run in parallel due to mv command
-+.NOTPARALLEL: tet_1fork$O tet_afork$O
++# Prevent parallel build of tet_1fork$O and tet_afork$O
++.NOTPARALLEL:
 +
  # dependencies
  
