@@ -135,22 +135,20 @@ if [ "$HOST_NEW_PATCH" = "y" ]; then
 fi
 
 #
-# # Configure defines.mk (Host)
-#
-
-cd "$TET_ROOT"; sh configure -t lite > /dev/null
-
-sed -e "s|^COPTS =\(.*\)$|COPTS = \1 -std=gnu89|" \
-    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
-    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
-    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
-    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
-
-#
 # # Compile TETware-Lite (Host)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built" ]; then
+	# Configure TETware
+	cd "$TET_ROOT"; sh configure -t lite > /dev/null
+
+	# Update defines.mk values
+	sed -e "s|^COPTS =\(.*\)$|COPTS = \1 -std=gnu89|" \
+	    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
+	    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
+	    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
+	    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
+
 	PATH="${TET_ROOT}/bin:$PATH"
 	export TET_ROOT PATH
 
@@ -162,32 +160,28 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_TETware/host_TETware.built" ]; then
 fi
 
 #
-# # Configure vsxparams file (Host)
-#
-
-sed -e "s|^CC=.*$|CC=\"/bin/cc\"|" \
-    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
-    -e "s|^INCDIRS=.*$|INCDIRS=\"/usr/include /usr/include/x86_64-linux-gnu\"|" \
-    -e "s|^#PATH=\(.*\)$|PATH=\1|" \
-    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_ROOT}/test_sets/TESTROOT\"|" \
-    -e "s|^VSXDIR=.*$|VSXDIR=\"${TET_ROOT}/test_sets/SRC\"|" \
-    -e "s|^VSX_ORG=.*$|VSX_ORG=\"Phoenix Systems\"|" \
-    -e "s|^VSX_OPER=.*$|VSX_OPER=\"${USER:-Unknown}\"|" \
-    -e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
-    -e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
-    -e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
-    "${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/host_config/host_vsxparams"
-
-#
 # # Build VSX test framework - vbuild only needed (Host)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_VSX/host_VSX.built" ]; then
-	export HOME
+	# Configure vsxparams file
+	sed -e "s|^CC=.*$|CC=\"/bin/cc\"|" \
+	    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
+	    -e "s|^INCDIRS=.*$|INCDIRS=\"/usr/include /usr/include/x86_64-linux-gnu\"|" \
+	    -e "s|^#PATH=\(.*\)$|PATH=\1|" \
+	    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_ROOT}/test_sets/TESTROOT\"|" \
+	    -e "s|^VSXDIR=.*$|VSXDIR=\"${TET_ROOT}/test_sets/SRC\"|" \
+	    -e "s|^VSX_ORG=.*$|VSX_ORG=\"Phoenix Systems\"|" \
+	    -e "s|^VSX_OPER=.*$|VSX_OPER=\"${USER:-Unknown}\"|" \
+	    -e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
+	    -e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
+	    -e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
+	"${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/host_config/host_vsxparams"
 
 	apply_patches "host_VSX"
-	cd "${TET_ROOT}/test_sets"
-	sh setup_testsets.sh
+
+	export HOME
+	cd "${TET_ROOT}/test_sets"; sh setup_testsets.sh
 	cp -p "${HOME}/BIN/vbuild" "${PREFIX_PORT_BUILD}/host_bin/vbuild"
 	cp -p "${HOME}/tetbuild.cfg" "${PREFIX_PORT_BUILD}/host_config/tetbuild.cfg"
 
@@ -211,32 +205,31 @@ if [ "$PS_NEW_PATCH" = "y" ]; then
 fi
 
 #
-# # Configure defines.mk (Phoenix-RTOS)
-#
-
-COPTS="$(echo "$CFLAGS" | sed 's/-I[^ ]* //g')"
-
-sed -e "s|^CC =.*$|CC = ${CC}|" \
-    -e "s|^LD_R =.*$|LD_R = ${LD} -r|" \
-    -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
-    -e "s|^AR =.*$|AR = ${AR}|" \
-    -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
-    -e "s|^COPTS =.*$|COPTS = ${COPTS} -std=gnu89|" \
-    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
-    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
-    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
-    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
-
-#
 # # Compile TETware-Lite (Phoenix-RTOS)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
+	COPTS="$(echo "$CFLAGS" | sed 's/-I[^ ]* //g')"
+
+	# Update defines.mk values
+	sed -e "s|^CC =.*$|CC = ${CC}|" \
+	    -e "s|^LD_R =.*$|LD_R = ${LD} -r|" \
+	    -e "s|^LDFLAGS =.*$|LDFLAGS = ${CFLAGS} ${LDFLAGS}|" \
+	    -e "s|^AR =.*$|AR = ${AR}|" \
+	    -e "s|^CDEFS =\(.*\)$|CDEFS =\1 -I${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include|" \
+	    -e "s|^COPTS =.*$|COPTS = ${COPTS} -std=gnu89|" \
+	    -e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
+	    -e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
+	    -e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
+	    "${PREFIX_PORT}/skel/defines.mk" > "${PREFIX_LSB_VSX_FILES}/src/defines.mk"
+
 	PATH="${TET_ROOT}/test_sets/BIN:${TET_EXECUTE}/BIN:$PATH"
 	export TET_ROOT TET_EXECUTE PATH HOME
 
-	cd "${TET_ROOT}/src" && sh tetconfig -t lite
+	cd "${TET_ROOT}/src"; sh tetconfig -t lite
+
 	apply_patches "ps_TETware"
+
 	echo -e "\n--- Compiling TETware-Lite for Phoenix-RTOS ---\n"
 	cd "${TET_ROOT}/src"; make; make install
 	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "${TET_ROOT}/bin/tcc"
@@ -245,31 +238,28 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_TETware/ps_TETware.built" ]; then
 fi
 
 #
-# # Configure vsxparams file (Phoenix-RTOS)
-#
-
-VSXDIR="${HOME}/SRC"
-
-sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
-    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
-    -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
-    -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
-    -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
-    -e "s|^INCDIRS=.*$|INCDIRS=\"${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include\"|" \
-    -e "s|^VSXDIR=.*$|VSXDIR=\"${VSXDIR}\"|" \
-    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_EXECUTE}\"|" \
-    -e "s|^VSX_SYS=.*$|VSX_SYS=\"Phoenix-RTOS\"|" \
-    -e "s|^MLIB=.*$|MLIB=\"\"|" \
-    "${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/ps_config/ps_vsxparams"
-
-#
 # # Build VSX test framework (Phoenix-RTOS)
 #
 
 if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_VSX/ps_VSX.built" ]; then
+	VSXDIR="${HOME}/SRC"
+
+	# Configure vsxparams file
+	sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
+	    -e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
+	    -e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
+	    -e "s|^AR=.*$|AR=\"${AR} cr\"|" \
+	    -e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
+	    -e "s|^INCDIRS=.*$|INCDIRS=\"${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include\"|" \
+	    -e "s|^VSXDIR=.*$|VSXDIR=\"${VSXDIR}\"|" \
+	    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_EXECUTE}\"|" \
+	    -e "s|^VSX_SYS=.*$|VSX_SYS=\"Phoenix-RTOS\"|" \
+	    -e "s|^MLIB=.*$|MLIB=\"\"|" \
+	"${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/ps_config/ps_vsxparams"
+
 	apply_patches "ps_VSX"
-	cd "${TET_ROOT}/test_sets"
-	sh setup_testsets.sh
+
+	cd "${TET_ROOT}/test_sets"; sh setup_testsets.sh
 	touch "${PREFIX_LSB_VSX_MARKERS}/ps_VSX/ps_VSX.built"
 fi
 
