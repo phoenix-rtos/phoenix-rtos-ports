@@ -22,7 +22,7 @@ apply_patches() {
 
 		if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/${patch_dirname}/${patch_basename}.applied" ]; then
 			echo "applying patch: $patchfile"
-			patch -d "${PREFIX_PORT_BUILD}/files" -p1 < "$patchfile"
+			patch -d "$PREFIX_LSB_VSX_FILES" -p1 < "$patchfile"
 			touch "${PREFIX_LSB_VSX_MARKERS}/${patch_dirname}/${patch_basename}.applied"
 		fi
 	done
@@ -77,6 +77,7 @@ prepare_new_build() {
 	rm -rf "${PREFIX_LSB_VSX_FILES:?}/"*
 	tar xzf "${PREFIX_PORT}/packages/tet_vsxgen_3.02.tgz" -C "$PREFIX_LSB_VSX_FILES"
 	tar xzf "${PREFIX_PORT}/packages/lts_vsx-pcts2.0beta.tgz" -C "${PREFIX_LSB_VSX_FILES}/test_sets"
+	chmod -R u+w "$PREFIX_LSB_VSX_FILES"
 }
 
 mkdir -p "$PREFIX_LSB_VSX_MARKERS"
@@ -103,6 +104,7 @@ wget "$PKG_URL2" -P "${PREFIX_PORT}/packages" || wget "$PKG_MIRROR_URL2" -P "${P
 if [ ! -d "${PREFIX_LSB_VSX_FILES}/src" ]; then
 	tar xzf "${PREFIX_PORT}/packages/tet_vsxgen_3.02.tgz" -C "$PREFIX_LSB_VSX_FILES"
 	tar xzf "${PREFIX_PORT}/packages/lts_vsx-pcts2.0beta.tgz" -C "${PREFIX_LSB_VSX_FILES}/test_sets"
+	chmod -R u+w "$PREFIX_LSB_VSX_FILES"
 fi
 
 TET_ROOT="$PREFIX_LSB_VSX_FILES"
