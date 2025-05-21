@@ -1,0 +1,6 @@
+--- contrib_orginal/ports/unix/check/config.h	2024-01-09 16:16:39.402560579 +0100
++++ contrib/ports/unix/check/config.h	2024-01-11 12:56:06.185539301 +0100
+@@ -1,2 +1,2 @@
+ /* Enable this to simplify debugging */
+-/* #define LWIP_UNITTESTS_NOFORK */
++#define LWIP_UNITTESTS_NOFORK
