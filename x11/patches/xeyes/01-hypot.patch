@@ -1,0 +1,11 @@
+diff -ruN a/Eyes.c b/Eyes.c
+--- a/Eyes.c	2024-08-19 11:59:47.698361121 +0200
++++ b/Eyes.c	2024-08-19 12:00:01.299368023 +0200
+@@ -55,6 +55,7 @@
+ 
+ #define offset(field) XtOffsetOf(EyesRec, eyes.field)
+ #define goffset(field) XtOffsetOf(WidgetRec, core.field)
++#define hypot(x,y) sqrt(((x)*(x))+((y)*(y)))
+ 
+ static XtResource resources[] = {
+     {XtNwidth, XtCWidth, XtRDimension, sizeof(Dimension),

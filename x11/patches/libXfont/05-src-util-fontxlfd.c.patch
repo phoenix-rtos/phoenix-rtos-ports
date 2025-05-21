@@ -1,0 +1,13 @@
+diff -ruN a/src/util/fontxlfd.c b/src/util/fontxlfd.c
+--- a/src/util/fontxlfd.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/util/fontxlfd.c	2024-07-16 16:52:11.788691581 +0200
+@@ -43,6 +43,9 @@
+ #if defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV)
+ #define NO_LOCALE
+ #endif
++#ifdef __phoenix__
++#define NO_LOCALE
++#endif
+ #ifndef NO_LOCALE
+ #include	<locale.h>
+ #endif

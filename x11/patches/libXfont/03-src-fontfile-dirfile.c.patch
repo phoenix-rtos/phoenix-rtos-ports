@@ -1,0 +1,21 @@
+diff -ruN a/src/fontfile/dirfile.c b/src/fontfile/dirfile.c
+--- a/src/fontfile/dirfile.c	2017-11-28 15:34:21.000000000 +0100
++++ b/src/fontfile/dirfile.c	2024-07-16 16:51:06.852786243 +0200
+@@ -94,7 +94,7 @@
+ 	strcat(dir_file, "/");
+     strcat(dir_file, FontDirFile);
+ #ifndef WIN32
+-    file_fd = open(dir_file, O_RDONLY | O_NOFOLLOW);
++    file_fd = open(dir_file, O_RDONLY);
+     if (file_fd >= 0) {
+ 	file = fdopen(file_fd, "rt");
+     }
+@@ -291,7 +291,7 @@
+     }
+ 
+ #ifndef WIN32
+-    file_fd = open(alias_file, O_RDONLY | O_NOFOLLOW);
++    file_fd = open(alias_file, O_RDONLY);
+     if (file_fd >= 0) {
+ 	file = fdopen(file_fd, "rt");
+     }

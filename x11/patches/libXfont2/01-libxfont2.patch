@@ -1,0 +1,29 @@
+diff -ruN a/src/fc/fslibos.h b/src/fc/fslibos.h
+--- a/src/fc/fslibos.h	2025-02-19 14:42:00.979117191 +0100
++++ b/src/fc/fslibos.h	2025-02-19 14:46:09.751396785 +0100
+@@ -43,6 +43,11 @@
+  * makedepend screws up on #undef OPEN_MAX, so we define a new symbol
+  */
+ 
++#ifdef __phoenix__
++#include <sys/resource.h>
++#define NOFILES_MAX RLIMIT_NOFILE
++#endif
++
+ # ifndef FONT_OPEN_MAX
+ 
+ #  ifdef _POSIX_SOURCE
+diff -ruN a/src/fontfile/dirfile.c b/src/fontfile/dirfile.c
+--- a/src/fontfile/dirfile.c	2025-02-19 14:42:00.983117201 +0100
++++ b/src/fontfile/dirfile.c	2025-02-19 14:43:10.974265983 +0100
+@@ -51,6 +51,10 @@
+ #define O_CLOEXEC	0
+ #endif
+ 
++#ifdef __phoenix__
++#define O_NOFOLLOW 0
++#endif
++
+ static Bool AddFileNameAliases ( FontDirectoryPtr dir );
+ static int ReadFontAlias ( char *directory, Bool isFile,
+ 			   FontDirectoryPtr *pdir );

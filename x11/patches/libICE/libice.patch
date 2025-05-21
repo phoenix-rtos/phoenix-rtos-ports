@@ -1,0 +1,25 @@
+diff -ruN a/src/iceauth.c b/src/iceauth.c
+--- a/src/iceauth.c	2025-02-20 10:30:27.381904891 +0100
++++ b/src/iceauth.c	2025-02-20 10:31:06.062301524 +0100
+@@ -65,7 +65,9 @@
+     }
+ #else /* ITIMER_REAL */
+     {
++#ifndef __phoenix__
+ 	long    time ();
++#endif
+ 	ldata[0] = time ((long *) 0);
+ 	ldata[1] = getpid ();
+     }
+diff -ruN a/src/process.c b/src/process.c
+--- a/src/process.c	2025-02-20 10:30:27.381904891 +0100
++++ b/src/process.c	2025-02-20 10:34:30.229255389 +0100
+@@ -67,7 +67,7 @@
+     return (0);\
+ }
+ 
+-#ifndef HAVE_ASPRINTF
++#if !defined(HAVE_ASPRINTF) && !defined(__phoenix__)
+ # include <stdarg.h>
+ 
+ /* sprintf variant found in newer libc's which allocates string to print to */

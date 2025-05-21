@@ -1,0 +1,20 @@
+diff -ruN a/configure.in b/configure.in
+--- a/configure.in	2024-10-07 11:50:36.720475289 +0200
++++ b/configure.in	2024-10-07 12:46:54.984035534 +0200
+@@ -84,6 +84,16 @@
+ 	AC_SUBST(WIDGET_OBJS)
+ fi
+ 
++dnl force athena
++AC_DEFINE(USE_ATHENA)
++WIDGET_LIBS="$WIDGET_LIBS -lXaw -lXmu"
++WIDGET_OBJS="$WIDGET_OBJS x11-athena.o"
++
++WIDGET_LIBS="$WIDGET_LIBS -lXt -lXpm -lX11"
++WIDGET_OBJS="$WIDGET_OBJS x11.o"
++AC_SUBST(WIDGET_LIBS)
++AC_SUBST(WIDGET_OBJS)
++
+ AC_ARG_ENABLE(gtk,
+ 	[  --enable-gtk            build with the GTK widget set])
+ 

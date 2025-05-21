@@ -1,0 +1,16 @@
+diff -ruN a/dix/dixfonts.c b/dix/dixfonts.c
+--- a/dix/dixfonts.c	2022-11-07 07:44:53.000000000 +0100
++++ b/dix/dixfonts.c	2024-08-02 11:12:41.020667770 +0200
+@@ -1859,10 +1859,10 @@
+     patternCache = MakeFontPatternCache();
+ 
+     {
+-#ifdef KDRIVESERVER
+         BuiltinRegisterFpeFunctions();
+-#endif
++#ifndef __phoenix__
+         FontFileRegisterFpeFunctions();
++#endif
+     }
+ }
+ 

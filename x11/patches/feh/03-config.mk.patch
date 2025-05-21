@@ -1,0 +1,16 @@
+diff -ruN a/config.mk b/config.mk
+--- a/config.mk	2024-10-18 11:22:12.317252245 +0200
++++ b/config.mk	2025-01-28 11:16:47.137332890 +0100
+@@ -1,5 +1,5 @@
+ PACKAGE ?= feh
+-VERSION ?= ${shell git describe --dirty}
++VERSION ?= 3.10.3
+ 
+ app ?= 0
+ curl ?= 1
+@@ -112,4 +112,4 @@
+ CFLAGS += -DPREFIX=\"${PREFIX}\" \
+ 	-DPACKAGE=\"${PACKAGE}\" -DVERSION=\"${VERSION}\"
+ 
+-LDLIBS += -lm -lpng -lX11 -lImlib2
++LDLIBS += -lm -l:libImlib2.a -l:libpng.a -l:libXext.a -l:libX11.a -l:libz.a -l:libfreetype.a -l:libxcb.a -l:libXau.a
