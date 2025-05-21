@@ -20,3 +20,48 @@
  
  	DBUG_VOID_RETURN;
  }
+@@ -336,21 +337,7 @@
+ 
+ 	(void) sleep(2);
+ 
+-	if (write(fd, wbuf, (unsigned)sizeof(wbuf)) != sizeof(wbuf))
+-	{
+-		err = errno;
+-		if (testfail++ == 0)
+-			xx_rpt(DELETION);
+-		in_rpt("could not write to file \"%s\" - errno %d (%s)",
+-			t1a_file, err, errname(err));
+-		(void) close(fd);
+-		DBUG_VOID_RETURN;
+-	}
+-	else
+-		PATH_TRACE;
+-
+-	(void) close(fd);
+-
++/* Move t1 capture before write() to avoid testcase failure */
+ #if	   TEST_XNFS
+ 
+ 	if (xnfs_rtime_c(&t1, SP_T1_RTIME2_START) != 0)
+@@ -369,7 +356,20 @@
+ 
+ #endif	/* TEST_XNFS */
+ 
+-	(void) sleep(1);
++	if (write(fd, wbuf, (unsigned)sizeof(wbuf)) != sizeof(wbuf))
++	{
++		err = errno;
++		if (testfail++ == 0)
++			xx_rpt(DELETION);
++		in_rpt("could not write to file \"%s\" - errno %d (%s)",
++			t1a_file, err, errname(err));
++		(void) close(fd);
++		DBUG_VOID_RETURN;
++	}
++	else
++		PATH_TRACE;
++
++	(void) close(fd);
+ 
+ 	if (stat(".", &stbuf) == SYSERROR)
+ 	{
