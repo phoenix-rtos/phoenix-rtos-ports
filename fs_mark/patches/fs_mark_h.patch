@@ -1,0 +1,26 @@
+--- fs_mark-3.3/fs_mark.h	2025-01-02 19:10:48.757969200 +0100
++++ fs_mark-3.3.phoenix/fs_mark.h	2025-01-02 19:10:48.757969200 +0100
+@@ -29,6 +29,14 @@
+ #define FILENAME_SIZE		(128) 		/* Max length of filenames */
+ #define MAX_STRING_SIZE		(160)	    	/* Max number of bytes in a string */
+ 
++#ifdef NOMMU
++	#undef MAX_IO_BUFFER_SIZE
++	#undef MAX_NAME_PATH
++
++	#define MAX_IO_BUFFER_SIZE (1024 * 32)     /* Max write buffer size is 32KB */
++	#define MAX_NAME_PATH      (200)           /* Length of the pathname before the leaf */
++#endif
++
+ /*
+  * Default values
+  */
+@@ -125,7 +133,7 @@
+ int	num_threads = 1;			/* Number of threads */
+ int	do_fill_fs = 0;				/* Run until the file system is full  */
+ int	verbose_stats = 0;		    	/* Print complete stats for each system call */
+-char 	log_file_name[PATH_MAX] = "fs_log.txt"; /* Log file name for run */
++char 	log_file_name[PATH_MAX - 16] = "fs_log.txt"; /* Log file name for run, reserve space for suffix */
+ FILE	*log_file_fp;				/* Parent file pointer for log file  */
+ FILE	*child_log_file_fp;			/* Child file pointer for log file  */
+ 
