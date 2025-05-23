@@ -1,0 +1,231 @@
+diff --git a/internal.h b/internal.h
+index f10c426..0d82412 100644
+--- a/internal.h
++++ b/internal.h
+@@ -43,10 +43,39 @@ typedef int32_t s32;
+ 
+ #ifdef __phoenix__
+ #include <phoenix/ethtool.h>
++#include "uapi/linux/ethtool.h"
+ #include "uapi/linux/net_tstamp.h"
+ #include <sys/socket.h>
+ #include <limits.h>
+ #define __KERNEL_DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
++
++static __inline__ void ethtool_cmd_speed_set(struct ethtool_cmd *ep, __u32 speed)
++{
++	ep->speed = (__u16)(speed & 0xFFFF);
++	ep->speed_hi = (__u16)(speed >> 16);
++}
++
++static __inline__ __u32 ethtool_cmd_speed(const struct ethtool_cmd *ep)
++{
++	return (ep->speed_hi << 16) | ep->speed;
++}
++
++static __inline__ int ethtool_validate_speed(__u32 speed)
++{
++	return speed <= INT_MAX || speed == (__u32)SPEED_UNKNOWN;
++}
++
++static __inline__ int ethtool_validate_duplex(__u8 duplex)
++{
++	switch (duplex) {
++	case DUPLEX_HALF:
++	case DUPLEX_FULL:
++	case DUPLEX_UNKNOWN:
++		return 1;
++	}
++
++	return 0;
++}
+ #else
+ #include <linux/ethtool.h>
+ #include <linux/net_tstamp.h>
+diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
+index 506e086..de358df 100644
+--- a/uapi/linux/ethtool.h
++++ b/uapi/linux/ethtool.h
+@@ -32,6 +32,7 @@
+  * initializer.
+  */
+ 
++#ifndef __phoenix__
+ /**
+  * struct ethtool_cmd - DEPRECATED, link control and status
+  * This structure is DEPRECATED, please use struct ethtool_link_settings.
+@@ -120,6 +121,7 @@ struct ethtool_cmd {
+ 	__u32	reserved[2];
+ };
+ 
++
+ static __inline__ void ethtool_cmd_speed_set(struct ethtool_cmd *ep,
+ 					 __u32 speed)
+ {
+@@ -131,6 +133,7 @@ static __inline__ __u32 ethtool_cmd_speed(const struct ethtool_cmd *ep)
+ {
+ 	return (ep->speed_hi << 16) | ep->speed;
+ }
++#endif
+ 
+ /* Device supports clause 22 register access to PHY or peripherals
+  * using the interface defined in <linux/mii.h>.  This should not be
+@@ -652,6 +655,7 @@ enum ethtool_link_ext_substate_module {
+ 	ETHTOOL_LINK_EXT_SUBSTATE_MODULE_CMIS_NOT_READY = 1,
+ };
+ 
++#ifndef __phoenix__
+ #define ETH_GSTRING_LEN		32
+ 
+ /**
+@@ -712,6 +716,7 @@ enum ethtool_stringset {
+ 	/* add new constants above here */
+ 	ETH_SS_COUNT
+ };
++#endif
+ 
+ /**
+  * enum ethtool_mac_stats_src - source of ethtool MAC statistics
+@@ -1088,6 +1093,7 @@ enum ethtool_module_fw_flash_status {
+ 	ETHTOOL_MODULE_FW_FLASH_STATUS_ERROR,
+ };
+ 
++#ifndef __phoenix__
+ /**
+  * struct ethtool_gstrings - string set for data tagging
+  * @cmd: Command number = %ETHTOOL_GSTRINGS
+@@ -1171,6 +1177,7 @@ struct ethtool_test {
+ 	__u32	len;
+ 	__u64	data[];
+ };
++#endif
+ 
+ /**
+  * struct ethtool_stats - device-specific statistics
+@@ -1946,6 +1953,7 @@ enum ethtool_fec_config_bits {
+ 
+ /* Link mode bit indices */
+ enum ethtool_link_mode_bit_indices {
++#ifndef __phoenix__
+ 	ETHTOOL_LINK_MODE_10baseT_Half_BIT	= 0,
+ 	ETHTOOL_LINK_MODE_10baseT_Full_BIT	= 1,
+ 	ETHTOOL_LINK_MODE_100baseT_Half_BIT	= 2,
+@@ -1978,7 +1986,7 @@ enum ethtool_link_mode_bit_indices {
+ 	ETHTOOL_LINK_MODE_56000baseSR4_Full_BIT	= 29,
+ 	ETHTOOL_LINK_MODE_56000baseLR4_Full_BIT	= 30,
+ 	ETHTOOL_LINK_MODE_25000baseCR_Full_BIT	= 31,
+-
++#endif
+ 	/* Last allowed bit for __ETHTOOL_LINK_MODE_LEGACY_MASK is bit
+ 	 * 31. Please do NOT define any SUPPORTED_* or ADVERTISED_*
+ 	 * macro for bits > 31. The only way to use indices > 31 is to
+@@ -2080,6 +2088,7 @@ enum ethtool_link_mode_bit_indices {
+ 	__ETHTOOL_LINK_MODE_MASK_NBITS
+ };
+ 
++#ifndef __phoenix__
+ #define __ETHTOOL_LINK_MODE_LEGACY_MASK(base_name)	\
+ 	(1UL << (ETHTOOL_LINK_MODE_ ## base_name ## _BIT))
+ 
+@@ -2191,27 +2200,33 @@ enum ethtool_link_mode_bit_indices {
+ 
+ #define SPEED_UNKNOWN		-1
+ 
+-static __inline__ int ethtool_validate_speed(__u32 speed)
+-{
+-	return speed <= INT_MAX || speed == (__u32)SPEED_UNKNOWN;
+-}
+-
+ /* Duplex, half or full. */
+ #define DUPLEX_HALF		0x00
+ #define DUPLEX_FULL		0x01
+ #define DUPLEX_UNKNOWN		0xff
+ 
+-static __inline__ int ethtool_validate_duplex(__u8 duplex)
+-{
+-	switch (duplex) {
+-	case DUPLEX_HALF:
+-	case DUPLEX_FULL:
+-	case DUPLEX_UNKNOWN:
+-		return 1;
+-	}
+-
+-	return 0;
+-}
++/* Which connector port. */
++#define PORT_TP			0x00
++#define PORT_AUI		0x01
++#define PORT_MII		0x02
++#define PORT_FIBRE		0x03
++#define PORT_BNC		0x04
++#define PORT_DA			0x05
++#define PORT_NONE		0xef
++#define PORT_OTHER		0xff
++
++/* Enable or disable autonegotiation. */
++#define AUTONEG_DISABLE		0x00
++#define AUTONEG_ENABLE		0x01
++
++/* MDI or MDI-X status/control - if MDI/MDI_X/AUTO is set then
++ * the driver is required to renegotiate link
++ */
++#define ETH_TP_MDI_INVALID	0x00 /* status: unknown; control: unsupported */
++#define ETH_TP_MDI		0x01 /* status: MDI;     control: force MDI */
++#define ETH_TP_MDI_X		0x02 /* status: MDI-X;   control: force MDI-X */
++#define ETH_TP_MDI_AUTO		0x03 /*                  control: auto-select */
++#endif
+ 
+ #define MASTER_SLAVE_CFG_UNSUPPORTED		0
+ #define MASTER_SLAVE_CFG_UNKNOWN		1
+@@ -2239,16 +2254,6 @@ static __inline__ int ethtool_validate_duplex(__u8 duplex)
+ /* The MAC is programmed with a sufficiently-large IPG. */
+ #define RATE_MATCH_OPEN_LOOP	3
+ 
+-/* Which connector port. */
+-#define PORT_TP			0x00
+-#define PORT_AUI		0x01
+-#define PORT_MII		0x02
+-#define PORT_FIBRE		0x03
+-#define PORT_BNC		0x04
+-#define PORT_DA			0x05
+-#define PORT_NONE		0xef
+-#define PORT_OTHER		0xff
+-
+ /* Which transceiver to use. */
+ #define XCVR_INTERNAL		0x00 /* PHY and MAC are in the same package */
+ #define XCVR_EXTERNAL		0x01 /* PHY and MAC are in different packages */
+@@ -2256,18 +2261,6 @@ static __inline__ int ethtool_validate_duplex(__u8 duplex)
+ #define XCVR_DUMMY2		0x03
+ #define XCVR_DUMMY3		0x04
+ 
+-/* Enable or disable autonegotiation. */
+-#define AUTONEG_DISABLE		0x00
+-#define AUTONEG_ENABLE		0x01
+-
+-/* MDI or MDI-X status/control - if MDI/MDI_X/AUTO is set then
+- * the driver is required to renegotiate link
+- */
+-#define ETH_TP_MDI_INVALID	0x00 /* status: unknown; control: unsupported */
+-#define ETH_TP_MDI		0x01 /* status: MDI;     control: force MDI */
+-#define ETH_TP_MDI_X		0x02 /* status: MDI-X;   control: force MDI-X */
+-#define ETH_TP_MDI_AUTO		0x03 /*                  control: auto-select */
+-
+ /* Wake-On-Lan options. */
+ #define WAKE_PHY		(1 << 0)
+ #define WAKE_UCAST		(1 << 1)
+@@ -2430,6 +2423,7 @@ enum ethtool_reset_flags {
+ #define ETH_RESET_SHARED_SHIFT	16
+ 
+ 
++#ifndef __phoenix__
+ /**
+  * struct ethtool_link_settings - link control and status
+  *
+@@ -2562,6 +2556,7 @@ struct ethtool_link_settings {
+ 	 * __u32 map_lp_advertising[link_mode_masks_nwords];
+ 	 */
+ };
++#endif
+ 
+ /**
+  * enum phy_upstream - Represents the upstream component a given PHY device
