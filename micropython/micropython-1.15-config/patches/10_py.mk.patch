@@ -1,0 +1,23 @@
+--- micropython-1.15/py/py.mk	2025-05-27 12:41:16.805122035 +0200
++++ micropython-phoenix/py/py.mk	2025-05-28 14:46:18.231823671 +0200
+@@ -19,7 +19,9 @@
+ QSTR_GLOBAL_REQUIREMENTS += $(HEADER_BUILD)/mpversion.h
+
+ # some code is performance bottleneck and compiled with other optimization options
+-CSUPEROPT = -O3
++# PHOENIX-RTOS: Downgraded optimization level from -O3 to -O2 to prevent runtime errors
++# observed with GCC 14.2; -O3 introduced aggressive optimizations that caused instability.
++CSUPEROPT = -O2
+
+ # Enable building 32-bit code on 64-bit host.
+ ifeq ($(MICROPY_FORCE_32BIT),1)
+@@ -278,7 +280,8 @@
+
+ # Force nlr code to always be compiled with space-saving optimisation so
+ # that the function preludes are of a minimal and predictable form.
+-$(PY_BUILD)/nlr%.o: CFLAGS += -Os
++# PHOENIX-RTOS: These optimisation caused Page Faults when compiled with GCC 14.2.
++#$(PY_BUILD)/nlr%.o: CFLAGS += -Os
+
+ # optimising gc for speed; 5ms down to 4ms on pybv2
+ $(PY_BUILD)/gc.o: CFLAGS += $(CSUPEROPT)
