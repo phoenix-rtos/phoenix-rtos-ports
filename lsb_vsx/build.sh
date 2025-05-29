@@ -255,8 +255,13 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/ps_VSX/ps_VSX.built" ]; then
 	    -e "s|^INCDIRS=.*$|INCDIRS=\"${PREFIX_PROJECT}/_build/${TARGET}/sysroot/usr/include\"|" \
 	    -e "s|^VSXDIR=.*$|VSXDIR=\"${VSXDIR}\"|" \
 	    -e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_EXECUTE}\"|" \
+	    -e "s|^VSX_ORG=.*$|VSX_ORG=\"Phoenix Systems\"|" \
+	    -e "s|^VSX_OPER=.*$|VSX_OPER=\"${USER:-Unknown}\"|" \
 	    -e "s|^VSX_SYS=.*$|VSX_SYS=\"Phoenix-RTOS\"|" \
 	    -e "s|^MLIB=.*$|MLIB=\"\"|" \
+	    -e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
+	    -e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
+	    -e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
 	"${PREFIX_PORT}/skel/vsxparams" > "${PREFIX_PORT_BUILD}/ps_config/ps_vsxparams"
 
 	apply_patches "ps_VSX"
