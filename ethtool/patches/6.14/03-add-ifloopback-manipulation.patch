@@ -1,0 +1,142 @@
+diff --git a/ethtool.8.in b/ethtool.8.in
+index 7e164a6..584b157 100644
+--- a/ethtool.8.in
++++ b/ethtool.8.in
+@@ -247,6 +247,11 @@ ethtool \- query or control network driver and hardware settings
+ .A1 on off
+ .RB ...
+ .HP
++.B ethtool \-b|\-\-show\-loopback
++.I ethX
++.B ethtool \-B|\-\-config\-loopback
++.I ethX
++.B1 on off
+ .B ethtool \-p|\-\-identify
+ .I devname
+ .RI [ N ]
+@@ -794,6 +799,20 @@ Specifies whether Rx ntuple filters and actions should be enabled
+ Specifies whether receive hashing offload should be enabled
+ .RE
+ .TP
++.B \-b \-\-show\-loopback
++Queries the specified ethernet device for loopback mode settings.
++.TP
++.B \-B \-\-config\-loopback
++Configures loopback mode on the specified ethernet device. Possible values
++are:
++.TP
++.A1 on off
++Switches loopback mode
++.B on
++or
++.B off
++for the specified ethernet device.
++.TP
+ .B \-p \-\-identify
+ Initiates adapter-specific action intended to enable an operator to
+ easily identify the adapter by sight.  Typically this involves
+diff --git a/ethtool.c b/ethtool.c
+index f7639d4..c9d8ee2 100644
+--- a/ethtool.c
++++ b/ethtool.c
+@@ -29,6 +29,7 @@
+  *   * show settings for all devices
+  */
+ 
++#include "phoenix/ethtool.h"
+ #include "internal.h"
+ #include <string.h>
+ #include <strings.h>
+@@ -5754,6 +5755,56 @@ static int do_sfec(struct cmd_context *ctx)
+ 
+ static int do_perqueue(struct cmd_context *ctx);
+ 
++static int do_gloopback(struct cmd_context *ctx)
++{
++	int err;
++	struct ethtool_value edata = {
++		.cmd = ETHTOOL_GLOOPBACK,
++		.data = 0,
++	};
++
++	err = send_ioctl(ctx, &edata);
++	if (err < 0) {
++		perror("Cannot get loopback status");
++		return err;
++	}
++	printf("%.*s: Loopback is %s\n", IFNAMSIZ, ctx->ifr.ifr_name, edata.data ? "on" : "off");
++
++	return err;
++}
++
++static int do_sloopback(struct cmd_context *ctx)
++{
++	int err;
++	struct ethtool_value edata;
++
++	edata.cmd = ETHTOOL_SLOOPBACK;
++
++	if (ctx->argc != 1) {
++		exit_bad_args_info("{ on|off } should be provided");
++	}
++
++	if (strcmp(ctx->argp[0], "on") == 0) {
++		edata.data = 1;
++	} else if (strcmp(ctx->argp[0], "off") == 0) {
++		edata.data = 0;
++	} else {
++		exit_bad_args_info("{ on|off } are the only supported options");
++	}
++
++	err = send_ioctl(ctx, &edata);
++	if (err < 0) {
++		perror("Cannot set loopback");
++		return err;
++	}
++	if (edata.data == ETH_PHY_LOOPBACK_SET_FAILED) {
++		fprintf(stderr, "Cannot set loopback: driver failed to set loopback");
++		return 1;
++	}
++
++	return 0;
++}
++
+ #ifndef TEST_ETHTOOL
+ int send_ioctl(struct cmd_context *ctx, void *cmd)
+ {
+@@ -5933,6 +5984,17 @@ static const struct option args[] = {
+ 		.func	= do_nway_rst,
+ 		.help	= "Restart N-WAY negotiation"
+ 	},
++	{
++		.opts   = "-b|--show-loopback",
++		.func   = do_gloopback,
++		.help   = "Show device loopback mode",
++	},
++	{
++		.opts   = "-B|--config-loopback",
++		.func   = do_sloopback,
++		.help   = "{EN|Dis}able device loopback",
++		.xhelp  = "     [ on|off ]\n",
++	},
+ 	{
+ 		.opts	= "-p|--identify",
+ 		.func	= do_phys_id,
+diff --git a/uapi/linux/ethtool.h b/uapi/linux/ethtool.h
+index de358df..5aad5dc 100644
+--- a/uapi/linux/ethtool.h
++++ b/uapi/linux/ethtool.h
+@@ -216,11 +216,13 @@ struct ethtool_wolinfo {
+ 	__u8	sopass[SOPASS_MAX];
+ };
+ 
++#ifndef __phoenix__
+ /* for passing single values */
+ struct ethtool_value {
+ 	__u32	cmd;
+ 	__u32	data;
+ };
++#endif
+ 
+ #define PFC_STORM_PREVENTION_AUTO	0xffff
+ #define PFC_STORM_PREVENTION_DISABLE	0
