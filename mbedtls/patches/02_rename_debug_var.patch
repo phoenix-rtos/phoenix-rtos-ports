@@ -7,6 +7,6 @@ diff -ur '--exclude=*.git' mbedtls-2.28.0/programs/ssl/ssl_context_info.c mbedtl
  char conf_dtls_proto = 1;               /* MBEDTLS_SSL_PROTO_DTLS from mbedTLS configuration */
 -char debug = 0;                         /* flag for debug messages */
 +/* 'debug' has been already defined as syscall in Phoenix-RTOS */
-+static char debug = 0;                         /* flag for debug messages */
++static char debug = 0;                  /* flag for debug messages */
  const char alloc_err[] = "Cannot allocate memory\n";
  const char buf_ln_err[] = "Buffer does not have enough data to complete the parsing\n";
