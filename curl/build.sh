@@ -24,10 +24,14 @@ fi
 #
 # Configure
 #
+CONFIGURE_PARAMS=(--host="${HOST}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver \
+		--disable-ipv6 --prefix="$PREFIX_CURL_INSTALL" --disable-ntlm-wb --without-zlib)
+
+[[ "$PORTS_CURL_USE_MBEDTLS" = "y" ]] && CONFIGURE_PARAMS+=( --without-ssl --with-mbedtls )
+
 if [ ! -f "$PREFIX_PORT_BUILD/config.status" ]; then
 	( cd "$PREFIX_PORT_BUILD" && PKG_CONFIG="" "$PREFIX_CURL_SRC/configure" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-		--host="${HOST}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver \
-		--disable-ipv6 --prefix="$PREFIX_CURL_INSTALL" --disable-ntlm-wb --without-zlib )
+	"${CONFIGURE_PARAMS[@]}")
 fi
 
 #
