@@ -1,0 +1,60 @@
+diff --git a/cognit/include/cf_parser.h b/cognit/include/cf_parser.h
+index d2d1512..138bace 100644
+--- a/cognit/include/cf_parser.h
++++ b/cognit/include/cf_parser.h
+@@ -15,7 +15,7 @@
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <cognit_frontend_cli.h>
++#include "cognit_frontend_cli.h"
+ 
+ /***************** DEFINES AND MACROS *********************/
+ #define JSON_ERR_CODE_OK           0
+diff --git a/cognit/include/cognit_frontend_cli.h b/cognit/include/cognit_frontend_cli.h
+index ca63d78..d399a3c 100644
+--- a/cognit/include/cognit_frontend_cli.h
++++ b/cognit/include/cognit_frontend_cli.h
+@@ -14,9 +14,9 @@
+ #include <stdio.h>
+ #include <stdint.h>
+ #include <stdbool.h>
+-#include <cJSON.h>
+-#include <cognit_config.h>
+-#include <faas_parser.h>
++#include "cJSON.h"
++#include "cognit_config.h"
++#include "faas_parser.h"
+ 
+ /***************** DEFINES AND MACROS *********************/
+ #define MAX_ENERGY_SCHEDULING_POLICIES 1
+diff --git a/cognit/include/device_runtime.h b/cognit/include/device_runtime.h
+index 46c1420..8008fb0 100644
+--- a/cognit/include/device_runtime.h
++++ b/cognit/include/device_runtime.h
+@@ -13,9 +13,9 @@
+ /********************** INCLUDES **************************/
+ #include <stdio.h>
+ #include <stdbool.h>
+-#include <cognit_frontend_cli.h>
+-#include <cognit_config.h>
+-#include <device_runtime_state_machine.h>
++#include "cognit_frontend_cli.h"
++#include "cognit_config.h"
++#include "device_runtime_state_machine.h"
+ /***************** DEFINES AND MACROS *********************/
+ #define FAAS_MAX_SEND_PAYLOD_SIZE 16384 // 16KB
+ 
+diff --git a/cognit/include/faas_parser.h b/cognit/include/faas_parser.h
+index 7398d03..65c763e 100644
+--- a/cognit/include/faas_parser.h
++++ b/cognit/include/faas_parser.h
+@@ -15,7 +15,7 @@
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <pb_parser.h>
++#include "pb_parser.h"
+ 
+ /***************** DEFINES AND MACROS *********************/
+ #define JSON_ERR_CODE_OK           0
