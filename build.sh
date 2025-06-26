@@ -64,6 +64,7 @@ ports=(
 	"fs_mark"
 	"coremark"
 	"coreMQTT"
+	"heatshrink"
 )
 
 
