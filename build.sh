@@ -66,6 +66,7 @@ ports=(
 	"coremark_pro"
 	"coreMQTT"
 	"lsb_vsx"
+	"heatshrink"
 )
 
 
