@@ -1,0 +1,14 @@
+# JOE (wrongly, from POSIX point of view) assumes that malloc(0) always returns a unique pointer
+diff -ruN a/joe/utils.c b/joe/utils.c
+--- a/joe/utils.c	2025-01-28 16:45:28.638164837 +0100
++++ b/joe/utils.c	2025-03-06 17:37:30.336833266 +0100
+@@ -215,6 +215,9 @@
+ 
+ void *joe_malloc(ptrdiff_t size)
+ {
++	if (size == 0) {
++		size++;
++	}
+ 	void *p = malloc((size_t)size);
+ 	if (!p)
+ 		ttsig(-1);
