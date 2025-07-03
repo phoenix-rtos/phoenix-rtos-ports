@@ -13,6 +13,9 @@ PKG_MIRROR_URL2="https://files.phoesys.com/ports/${LSB_VSX}/lts_vsx-pcts2.0beta.
 PREFIX_LSB_VSX_MARKERS="${PREFIX_PORT_BUILD}/markers"
 PREFIX_LSB_VSX_FILES="${PREFIX_PORT_BUILD}/files"
 
+# Disable parallel building as it is not supported and may cause build failures
+export MAKEFLAGS="${MAKEFLAGS}${MAKEFLAGS:+ }-j1"
+
 apply_patches() {
 	local patchfile
 
