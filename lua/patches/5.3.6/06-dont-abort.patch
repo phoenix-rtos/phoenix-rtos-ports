@@ -1,0 +1,45 @@
+# Add option to replace abort() with pthread_exit() in event of unhandled lua
+# panic. This is to protect a multithreaded process from getting killed if other
+# threads are sane
+diff -ruN a/src/ldo.c b/src/ldo.c
+--- a/src/ldo.c	2025-07-15 14:44:32.482563916 +0200
++++ b/src/ldo.c	2025-07-15 14:44:01.989917605 +0200
+@@ -14,6 +14,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#ifdef LUA_PTHREAD_EXIT_ON_PANIC
++#include <pthread.h>
++#endif
++
+ #include "lua.h"
+ 
+ #include "lapi.h"
+@@ -127,7 +131,11 @@
+         lua_unlock(L);
+         g->panic(L);  /* call panic function (last chance to jump out) */
+       }
++#ifdef LUA_PTHREAD_EXIT_ON_PANIC
++      pthread_exit(NULL);
++#else
+       abort();
++#endif
+     }
+   }
+ }
+diff -ruN a/src/luaconf.h b/src/luaconf.h
+--- a/src/luaconf.h	2025-07-15 14:44:32.482563916 +0200
++++ b/src/luaconf.h	2025-07-15 14:44:01.988917551 +0200
+@@ -46,6 +46,12 @@
+ 
+ 
+ /*
++@@ LUA_PTHREAD_EXIT_ON_PANIC replaces abort() on panic with pthread_exit().
++*/
++/* #define LUA_PTHREAD_EXIT_ON_PANIC */
++
++
++/*
+ ** By default, Lua on Windows use (some) specific Windows features
+ */
+ #if !defined(LUA_USE_C89) && defined(_WIN32) && !defined(_WIN32_WCE)
