@@ -1,0 +1,34 @@
+diff -ruN a/src/loadlib.c b/src/loadlib.c
+--- a/src/loadlib.c	2025-07-18 10:56:10.062797427 +0200
++++ b/src/loadlib.c	2025-07-18 11:01:38.953330709 +0200
+@@ -732,7 +732,11 @@
+ 
+ static void createsearcherstable (lua_State *L) {
+   static const lua_CFunction searchers[] =
+-    {searcher_preload, searcher_Lua, searcher_C, searcher_Croot, NULL};
++    {searcher_preload,
++#if !defined(LUA_EXCLUDE_FILE_SEARCHERS)
++    searcher_Lua, searcher_C, searcher_Croot,
++#endif
++    NULL};
+   int i;
+   /* create 'searchers' table */
+   lua_createtable(L, sizeof(searchers)/sizeof(searchers[0]) - 1, 0);
+diff -ruN a/src/luaconf.h b/src/luaconf.h
+--- a/src/luaconf.h	2025-07-18 10:56:10.063797498 +0200
++++ b/src/luaconf.h	2025-07-18 11:02:48.101512489 +0200
+@@ -61,6 +61,14 @@
+ 
+ 
+ /*
++@@ LUA_EXCLUDE_FILE_SEARCHERS excludes file searches from searchers table
++** used when loading modules. In effect, the package.preload is the only
++** available source of modules, making Lua incapable of lurking the fs.
++*/
++/* #define LUA_EXCLUDE_FILE_SEARCHERS */
++
++
++/*
+ ** By default, Lua on Windows use (some) specific Windows features
+ */
+ #if !defined(LUA_USE_C89) && defined(_WIN32) && !defined(_WIN32_WCE)
