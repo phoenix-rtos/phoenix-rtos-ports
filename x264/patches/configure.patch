@@ -1,0 +1,12 @@
+--- x264_org/configure	2024-09-06 10:29:54.767763739 +0200
++++ x264/configure	2024-09-06 10:35:58.053941778 +0200
+@@ -680,7 +680,8 @@
+         ;;
+     *linux*)
+         SYS="LINUX"
+-        define HAVE_MALLOC_H
++        # Phoenix-RTOS does not support malloc.h
++        # define HAVE_MALLOC_H
+         libm="-lm"
+         ;;
+     gnu*)
