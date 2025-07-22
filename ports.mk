@@ -3,11 +3,29 @@
 # Copyright 2025 Phoenix Systems
 #
 
+PORTS_SUPPORTED_VERSIONS :=
+PORTS_SUPPORTED_VERSIONS += openssl=1.1.1a
+
+
 PORTS_DEFAULT_VERSIONS :=
 PORTS_DEFAULT_VERSIONS += openssl=1.1.1a
 
 
 PORTS_VERSIONS := $(PORTS_DEFAULT_VERSIONS) $(PORTS_DEFAULT_VERSIONS_PROJECT)
+
+
+PORTS_INVALID_VERSIONS=$(filter-out $(PORTS_SUPPORTED_VERSIONS),$(PORTS_DEFAULT_VERSIONS))
+
+ifneq ($(PORTS_INVALID_VERSIONS), )
+ $(error Invalid versions in PORTS_DEFAULT_VERSIONS: $(PORTS_INVALID_VERSIONS))
+endif
+
+
+PORTS_INVALID_VERSIONS_PROJECT=$(filter-out $(PORTS_SUPPORTED_VERSIONS),$(PORTS_DEFAULT_VERSIONS_PROJECT))
+
+ifneq ($(PORTS_INVALID_VERSIONS_PROJECT), )
+ $(error Invalid versions in PORTS_DEFAULT_VERSIONS_PROJECT: $(PORTS_INVALID_VERSIONS_PROJECT))
+endif
 
 
 # Obtain unique ports (without versions)
@@ -24,7 +42,11 @@ $(foreach PORT\
 endef
 
 
-$(error $(call ports_last_version,$(PORTS_VERSIONS) $(LOCAL_PORTS_VERSIONS)))
+define check_default_versions
+$(foreach PORT\
+	,$(PORTS_VERSIONS)\
+	,$(call check_default_version, $(PORT)))
+endef
 
 
 define ports_versions
@@ -33,7 +55,7 @@ endef
 
 
 define port_to_folder
-ports/$(subst =,/,$(1))
+ports/$(subst =,/,$(strip $(1)))
 endef
 
 
