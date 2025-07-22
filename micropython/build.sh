@@ -77,6 +77,8 @@ export CFLAGS_EXTRA="${CFLAGS} -DUPYTH_STACKSZ=${UPYTH_STACKSZ} -DUPYTH_HEAPSZ=$
 # clear original ld-format ldflags/cflags
 export LDFLAGS=""
 export CFLAGS=""
+# disable default -Os optimalization (GCC 14.2 errors)
+export COPT="-O0"
 
 # TODO: Remove when updating micropython to v1.23.0+.
 # Fix for GCC 14, see https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1318
