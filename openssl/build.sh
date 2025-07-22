@@ -10,10 +10,13 @@ PREFIX_OPENSSL_SRC="${PREFIX_PORT_BUILD}/${OPENSSL}"
 PREFIX_OPENSSL_INSTALL="$PREFIX_PORT_BUILD/install"
 PREFIX_OPENSSL_MARKERS="$PREFIX_PORT_BUILD/markers/"
 
+PREFIX_H+="/ports/openssl/1.1.1a"
+PREFIX_A+="/ports/openssl/1.1.1a"
+
 #
 # Download and unpack
 #
-mkdir -p "$PREFIX_PORT_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS"
+mkdir -p "$PREFIX_PORT_BUILD" "$PREFIX_OPENSSL_INSTALL" "$PREFIX_OPENSSL_MARKERS" "${PREFIX_H}" "${PREFIX_A}"
 if [ ! -f "$PREFIX_PORT/${OPENSSL}.tar.gz" ]; then
 	if ! wget "$PKG_URL" -P "${PREFIX_PORT}" --no-check-certificate; then
 		wget "$PKG_MIRROR_URL" -P "${PREFIX_PORT}" --no-check-certificate
