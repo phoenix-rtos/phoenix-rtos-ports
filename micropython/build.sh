@@ -2,7 +2,7 @@
 
 set -e
 
-UPYTH_VER="1.15" # TODO: on update to 1.23.0+ remove MICROPY_NLR_SETJMP define below
+UPYTH_VER="1.15"
 UPYTH="micropython-${UPYTH_VER}"
 PKG_URL="https://github.com/micropython/micropython/releases/download/v${UPYTH_VER}/${UPYTH}.tar.xz"
 PKG_MIRROR_URL="https://files.phoesys.com/ports/${UPYTH}.tar.xz"
@@ -77,10 +77,6 @@ export CFLAGS_EXTRA="${CFLAGS} -DUPYTH_STACKSZ=${UPYTH_STACKSZ} -DUPYTH_HEAPSZ=$
 # clear original ld-format ldflags/cflags
 export LDFLAGS=""
 export CFLAGS=""
-
-# TODO: Remove when updating micropython to v1.23.0+.
-# Fix for GCC 14, see https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1318
-export CFLAGS_EXTRA="${CFLAGS_EXTRA} -DMICROPY_NLR_SETJMP=1"
 
 
 #
