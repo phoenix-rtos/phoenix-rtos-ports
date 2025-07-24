@@ -62,7 +62,7 @@ b_port_apply_patches() {
 	local patch_subdir="${2:-.}"
 
 	local patch_dir="${PREFIX_PORT}/patches/${patch_subdir}"
-	local marker_dir="${PREFIX_PORT_BUILD}/markers/${patch_subdir}"
+	local marker_dir="${PREFIX_PORT_BUILD}/_markers/${patch_subdir}"
 	if [ -d "${patch_dir}" ]; then
 		mkdir -p "${marker_dir}"
 	fi

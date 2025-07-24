@@ -3,6 +3,7 @@
 # Copyright 2025 Phoenix Systems
 #
 
+# TODO: invoke port_manager via $(shell ...) here instead to discover supported versions?
 PORTS_SUPPORTED_VERSIONS :=
 PORTS_SUPPORTED_VERSIONS += openssl=1.1.1a
 
@@ -28,13 +29,15 @@ ifneq ($(PORTS_INVALID_VERSIONS_PROJECT), )
 endif
 
 
-# Obtain unique ports (without versions)
+# Obtain unique ports (without versions) from PORTS_VERSIONS_LIST
+# $(call ports_uniq, PORTS_VERSIONS_LIST)
 define ports_uniq
 $(sort $(foreach PORT_VERSION, $(1),$(word 1,$(subst =, ,$(PORT_VERSION)))))
 endef
 
 
-# Use only the last definition of each port
+# Use only the last definition of each port from PORTS_VERSIONS_LIST
+# $(call ports_last_version, PORTS_VERSIONS_LIST)
 define ports_last_version
 $(foreach PORT\
   ,$(call ports_uniq, $(1))\
@@ -55,15 +58,15 @@ endef
 
 
 define port_to_folder
-ports/$(subst =,/,$(strip $(1)))
+$(PREFIX_BUILD_VERSIONED)/$(subst =,-,$(strip $(1)))
 endef
 
 
 define ports_iflags
-$(foreach PORT, $(call ports_versions), -I$(PREFIX_H)$(call port_to_folder,$(PORT)))
+$(foreach PORT, $(call ports_versions), -I$(call port_to_folder,$(PORT))/include)
 endef
 
 
-define ports_lflags
-$(foreach PORT, $(call ports_versions), -L$(PREFIX_A)$(call port_to_folder,$(PORT)))
+define ports_ldir
+$(foreach PORT, $(call ports_versions), $(call port_to_folder,$(PORT))/lib)
 endef
