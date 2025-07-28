@@ -1,0 +1,53 @@
+diff --git a/mith/al/include/al_smp.h b/mith/al/include/al_smp.h
+index 866dc2e..e5fd525 100644
+--- a/mith/al/include/al_smp.h
++++ b/mith/al/include/al_smp.h
+@@ -42,9 +42,10 @@ Please refer to LICENSE.md for the specific license agreement that pertains to t
+ 	#define al_cond_wait(a,b) pthread_cond_wait((a),(b))
+ 	#define al_cond_destroy(a) pthread_cond_destroy(a)
+ 
+-	#define al_thread_create(_thread, _start_r, _arg) pthread_create(_thread,NULL,_start_r,_arg)
+ 	#define al_thread_join(a,b) pthread_join(a,b)
+ 
++int al_thread_create(al_thread_t * thread, void *(*start_routine)(void *), void * arg);
++
+ #else /* pthread library not availble */
+ #if USE_SINGLE_CONTEXT
+ 	typedef void *al_thread_t;		/* dummy */
+diff --git a/mith/al/src/al_smp.c b/mith/al/src/al_smp.c
+index ed4d909..4931461 100644
+--- a/mith/al/src/al_smp.c
++++ b/mith/al/src/al_smp.c
+@@ -114,13 +114,6 @@ Destroy a condition previously initialized by <al_cond_init>
+ int al_cond_destroy(al_cond_t *cond) {
+ 	return pthread_cond_destroy((pthread_cond_t *)cond);
+ }
+-/* Function: al_thread_create
+-Description:
+-Create a thread for execution.
+-*/
+-int al_thread_create(al_thread_t * thread, void *(*start_routine)(void *), void * arg) {
+-	return pthread_create((pthread_t *)thread,NULL,start_routine,arg);
+-}
+ /* Function: al_thread_join
+ Description:
+ Wait for a thread to complete.
+@@ -132,6 +125,18 @@ int al_thread_join(al_thread_t al_thread, void **thread_return) {
+ }
+ #endif
+ 
++/* Function: al_thread_create
++Description:
++Create a thread for execution.
++*/
++int al_thread_create(al_thread_t * thread, void *(*start_routine)(void *), void * arg) {
++	/* Set big stack size - necessary for running XML test */
++	pthread_attr_t attr;
++	pthread_attr_init(&attr);
++	pthread_attr_setstacksize(&attr, 0x1000);
++	return pthread_create((pthread_t *)thread,&attr,start_routine,arg);
++}
++
+ 
+ void al_set_hardware_info(char *pdescription) {
+ 	e_s32 tmp;

@@ -14,7 +14,27 @@ if ! [ -d "${PREFIX_PORT_SRC}" ]; then
 	tar xzf "${PREFIX_PORT}/${archive_filename}.tar.gz" --strip-components 1 -C "${PREFIX_PORT_SRC}"
 fi
 
-b_port_apply_patches "${PREFIX_PORT_SRC}"
+patch_dir="${PREFIX_PORT}/patches/"
+marker_dir="${PREFIX_PORT_BUILD}/markers/"
+if [ -d "${patch_dir}" ]; then
+	mkdir -p "${marker_dir}"
+fi
+
+# Restores the initial value of nullglob option upon function return
+trap "$(shopt -p nullglob)" RETURN
+shopt -s nullglob
+
+if [ "$DISABLE_PARSER_BENCHMARK" == "y" ]; then
+	patchfile="${patch_dir}"/01-small_stack_size.patch
+else
+	patchfile="${patch_dir}"/01-stack_size.patch
+fi
+
+if [ ! -f "${marker_dir}/$(basename "${patchfile}").applied" ]; then
+	echo "applying patch: ${patchfile}"
+	patch -d "${PREFIX_PORT_SRC}" -p1 < "${patchfile}"
+	touch "${marker_dir}/$(basename "${patchfile}").applied"
+fi
 
 cp -a "${PREFIX_PORT}/make/"*.mak "${PREFIX_PORT_SRC}/util/make/"
 

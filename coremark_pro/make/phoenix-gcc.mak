@@ -56,7 +56,8 @@ endif
 
 # LINKER SECTION
 
-LINKER_FLAGS = $(CFLAGS) $(LDFLAGS) -Wl,-z,stack-size=4096
+LINKER_FLAGS = $(CFLAGS) $(LDFLAGS) 
+#-Wl,-z,stack-size=32768
 
 # LIBRARIAN SECTION
 LIBRARY_FLAGS = scr
