@@ -1,0 +1,53 @@
+--- contrib_orginal/ports/unix/port/netif/sio.c	2024-01-09 16:16:39.406560629 +0100
++++ contrib/ports/unix/port/netif/sio.c	2024-01-11 13:57:17.473232246 +0100
+@@ -44,7 +44,7 @@
+ #include <fcntl.h>
+ #include <signal.h>
+ #include <string.h>
+-#include <sys/signal.h>
++#include <signal.h>
+ #include <sys/types.h>
+ 
+ #ifndef LWIP_HAVE_SLIPIF
+@@ -161,11 +161,20 @@
+ 	}
+ 	/* Make the file descriptor asynchronous (the manual page says only
+ 	O_APPEND and O_NONBLOCK, will work with F_SETFL...) */
+-       	if ( fcntl( fd, F_SETFL, FASYNC ) != 0)
++
++
++/*
++ * FASYNC is not standardized by OPEN GROUP and not supported by Phoenix-RTOS
++ * Comment out this code to make it compile, this code is excluded anyway since PPP_SUPPORT is defined
++ */
++
++/*
++	if ( fcntl( fd, F_SETFL, FASYNC ) != 0)
+ 	{
+ 		perror( device );
+ 		exit( -1 );
+ 	}
++*/
+ #else
+        	if ( fcntl( fd, F_SETFL, 0 ) != 0)
+ 	{
+@@ -175,6 +184,19 @@
+ 
+ #endif /* ! (PPP_SUPPORT || LWIP_HAVE_SLIPIF) */
+ 
++
++/*
++ * Phoenix-RTOS patch
++ *
++ * CRTSCTS termios cflag is BSD specific,
++ * This compilation is for Phoenix-RTOS which does not support this flag.
++ * This macro has a chance to be forward compatible if Phoenix-RTOS will support it in the future.
++ */
++#ifndef CRTSCTS
++#define CRTSCTS 0
++#endif
++
++
+ 	tcgetattr( fd,&oldtio ); /* save current port settings */
+ 	/* set new port settings */
+ 	/* see 'man termios' for further settings */
