@@ -15,10 +15,18 @@ index 866dc2e..e5fd525 100644
  #if USE_SINGLE_CONTEXT
  	typedef void *al_thread_t;		/* dummy */
 diff --git a/mith/al/src/al_smp.c b/mith/al/src/al_smp.c
-index ed4d909..4931461 100644
+index ed4d909..fdd797a 100644
 --- a/mith/al/src/al_smp.c
 +++ b/mith/al/src/al_smp.c
-@@ -114,13 +114,6 @@ Destroy a condition previously initialized by <al_cond_init>
+@@ -26,6 +26,7 @@ Please refer to LICENSE.md for the specific license agreement that pertains to t
+ #endif
+ #include "th_lib.h"
+ #include "al_smp.h"
++#include <limits.h>
+ 
+ #if (HAVE_PTHREAD==1) && (USE_SINGLE_CONTEXT!=1) && (USE_NATIVE_PTHREAD==0)
+ /* Function: al_mutex_init
+@@ -114,13 +115,6 @@ Destroy a condition previously initialized by <al_cond_init>
  int al_cond_destroy(al_cond_t *cond) {
  	return pthread_cond_destroy((pthread_cond_t *)cond);
  }
@@ -32,7 +40,7 @@ index ed4d909..4931461 100644
  /* Function: al_thread_join
  Description:
  Wait for a thread to complete.
-@@ -132,6 +125,18 @@ int al_thread_join(al_thread_t al_thread, void **thread_return) {
+@@ -132,6 +126,21 @@ int al_thread_join(al_thread_t al_thread, void **thread_return) {
  }
  #endif
  
@@ -41,10 +49,13 @@ index ed4d909..4931461 100644
 +Create a thread for execution.
 +*/
 +int al_thread_create(al_thread_t * thread, void *(*start_routine)(void *), void * arg) {
-+	/* Set big stack size - necessary for running XML test */
++	/*
++	Set big stack size - necessary for running XML test - on targets with enough memory
++	On low-memory targets set a smaller size that will fit in memory and allow at least some tests to run
++	*/
 +	pthread_attr_t attr;
 +	pthread_attr_init(&attr);
-+	pthread_attr_setstacksize(&attr, 64 * 0x1000);
++	pthread_attr_setstacksize(&attr, PAGE_SIZE <= 0x200 ? 0x1000 : 64 * 0x1000);
 +	return pthread_create((pthread_t *)thread,&attr,start_routine,arg);
 +}
 +
