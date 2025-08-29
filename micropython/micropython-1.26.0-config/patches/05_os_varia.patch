@@ -1,0 +1,22 @@
+diff -Naur micropython-1.26.0/ports/unix/modsocket.c micropython-phoenix/ports/unix/modsocket.c
+--- micropython-1.26.0/ports/unix/modsocket.c	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/modsocket.c	2025-08-29 16:22:06.189880054 +0200
+@@ -37,6 +37,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#include <sys/time.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <netdb.h>
+@@ -53,6 +54,10 @@
+ #include "extmod/vfs.h"
+ #include <poll.h>
+ 
++#ifndef MSG_DONTROUTE
++#define MSG_DONTROUTE   0x04 //PHOENIX CHANGE: missing in phoenix
++#endif
++
+ /*
+   The idea of this module is to implement reasonable minimum of
+   socket-related functions to write typical clients and servers.

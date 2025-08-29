@@ -1,0 +1,20 @@
+diff -Naur micropython-1.26.0/ports/unix/Makefile micropython-phoenix/ports/unix/Makefile
+--- micropython-1.26.0/ports/unix/Makefile	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/Makefile	2025-08-29 16:22:02.518980345 +0200
+@@ -44,7 +44,7 @@
+ INC += -I$(BUILD)
+ 
+ # compiler settings
+-CWARN = -Wall -Werror
++CWARN = -Wall
+ CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
+ CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(COPT) -I$(VARIANT_DIR) $(CFLAGS_EXTRA)
+ 
+@@ -213,6 +213,7 @@
+ 	modsocket.c \
+ 	modffi.c \
+ 	modjni.c \
++	$(addprefix lib/libm_dbl/, $(addsuffix .c, $(PHOENIX_MATH_ABSENT))) \
+ 	$(wildcard $(VARIANT_DIR)/*.c)
+ 
+ SHARED_SRC_C += $(addprefix shared/,\
