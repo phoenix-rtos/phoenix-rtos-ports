@@ -1,0 +1,12 @@
+diff -Naur micropython-1.26.0/ports/unix/unix_mphal.c micropython-phoenix/ports/unix/unix_mphal.c
+--- micropython-1.26.0/ports/unix/unix_mphal.c  2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/unix_mphal.c 2025-09-04 10:14:50.396103182 +0200
+@@ -253,7 +253,7 @@
+     #ifdef _HAVE_GETRANDOM
+     RAISE_ERRNO(getrandom(buf, n, 0), errno);
+     #else
+-    int fd = open("/dev/random", O_RDONLY);
++    int fd = open("/dev/urandom", O_RDONLY);
+     RAISE_ERRNO(fd, errno);
+     RAISE_ERRNO(read(fd, buf, n), errno);
+     close(fd);

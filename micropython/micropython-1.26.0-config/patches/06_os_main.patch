@@ -1,0 +1,21 @@
+diff -Naur micropython-1.26.0/ports/unix/main.c micropython-phoenix/ports/unix/main.c
+--- micropython-1.26.0/ports/unix/main.c	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/main.c	2025-08-29 16:22:09.860500327 +0200
+@@ -62,7 +62,7 @@
+ #if MICROPY_ENABLE_GC
+ // Heap size of GC heap (if enabled)
+ // Make it larger on a 64 bit machine, because pointers are larger.
+-long heap_size = 1024 * 1024 * (sizeof(mp_uint_t) / 4);
++long heap_size = UPYTH_HEAPSZ * (sizeof(mp_uint_t) / 4);
+ #endif
+ 
+ // Number of heaps to assign by default if MICROPY_GC_SPLIT_HEAP=1
+@@ -479,7 +479,7 @@
+     #endif
+ 
+     // Define a reasonable stack limit to detect stack overflow.
+-    mp_uint_t stack_size = 40000 * (sizeof(void *) / 4);
++    mp_uint_t stack_size = UPYTH_STACKSZ * (sizeof(void *) / 4);
+     #if defined(__arm__) && !defined(__thumb2__)
+     // ARM (non-Thumb) architectures require more stack.
+     stack_size *= 2;

@@ -1,20 +1,20 @@
-diff -Naur micropython-1.15/lib/libm_dbl/libm.h micropython-phoenix/lib/libm_dbl/libm.h
---- micropython-1.15/lib/libm_dbl/libm.h	2021-04-18 16:27:07.000000000 +0200
-+++ micropython-phoenix/lib/libm_dbl/libm.h	2021-06-30 11:48:28.972943094 +0200
-@@ -17,6 +17,7 @@
- 
- #define FLT_EVAL_METHOD 0
- 
-+#ifndef FORCE_EVAL 
+diff -Naur micropython-1.26.0/lib/libm_dbl/libm.h micropython-phoenix/lib/libm_dbl/libm.h
+--- micropython-1.26.0/lib/libm_dbl/libm.h	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/lib/libm_dbl/libm.h	2025-08-28 17:12:50.928543430 +0200
+@@ -20,6 +20,7 @@
+ typedef float float_t;
+ typedef double double_t;
+
++#ifndef FORCE_EVAL
  #define FORCE_EVAL(x) do {                        \
  	if (sizeof(x) == sizeof(float)) {         \
  		volatile float __x;               \
-@@ -32,6 +33,21 @@
+@@ -35,6 +36,21 @@
                  (void)__x;                        \
  	}                                         \
  } while(0)
-+#endif 
-+ 
++#endif
++
 +typedef double double_t;
 +
 +/* Phoenix-RTOS libphoenix absent functions TO BE SUBSTITUTED */
@@ -28,6 +28,6 @@ diff -Naur micropython-1.15/lib/libm_dbl/libm.h micropython-phoenix/lib/libm_dbl
 +double tgamma(double x);
 +double lgamma(double x);
 +double copysign(double x, double y);
- 
+
  /* Get two 32 bit ints from a double.  */
  #define EXTRACT_WORDS(hi,lo,d)                    \
