@@ -12,7 +12,8 @@ MICROPY_USE_READLINE = 1
 MICROPY_PY_BTREE = 0
 
 # _thread module using pthreads
-MICROPY_PY_THREAD = 0
+MICROPY_PY_THREAD = 0 # PHOENIX missing semaphore.h
+MICROPY_PY_THREAD_GIL = 0
 
 # Subset of CPython termios module
 MICROPY_PY_TERMIOS = 0
@@ -23,8 +24,8 @@ MICROPY_PY_SOCKET = 1
 # ffi module requires libffi (libffi-dev Debian package)
 MICROPY_PY_FFI = 0
 
-# ussl module requires one of the TLS libraries below
-MICROPY_PY_USSL = 1
+# ssl module requires one of the TLS libraries below
+MICROPY_PY_SSL = 1
 # axTLS has minimal size but implements only a subset of modern TLS
 # functionality, so may have problems with some servers.
 MICROPY_SSL_AXTLS = 1
@@ -38,3 +39,9 @@ MICROPY_PY_JNI = 0
 # Avoid using system libraries, use copies bundled with MicroPython
 # as submodules (currently affects only libffi).
 MICROPY_STANDALONE = 0
+
+MICROPY_ROM_TEXT_COMPRESSION = 0
+
+MICROPY_VFS_FAT = 1
+MICROPY_VFS_LFS1 = 1
+MICROPY_VFS_LFS2 = 1
