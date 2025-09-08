@@ -1,0 +1,111 @@
+--- a/core/shared/platform/linux/platform_internal.h
++++ b/core/shared/platform/linux/platform_internal.h
+@@ -18,7 +18,7 @@
+ #include <ctype.h>
+ #include <pthread.h>
+ #include <signal.h>
+-#include <semaphore.h>
++// #include <semaphore.h>
+ #include <limits.h>
+ #include <dirent.h>
+ #include <fcntl.h>
+@@ -31,20 +31,74 @@
+ #include <sys/stat.h>
+ #include <sys/mman.h>
+ #include <sys/time.h>
+-#include <sys/timeb.h>
++// #include <sys/timeb.h>
+ #include <sys/uio.h>
+ #include <sys/ioctl.h>
+ #include <sys/socket.h>
+ #include <sys/resource.h>
++#include <sys/threads.h> // Header file from libphoenix
++#include <arpa/inet.h> // Header file from libphoenix
+
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+
+-#ifndef BH_PLATFORM_LINUX
+-#define BH_PLATFORM_LINUX
++#ifndef BH_PLATFORM_PHOENIX
++#define BH_PLATFORM_PHOENIX
+ #endif
+
++/* Config definitions */
++#define DISABLE_CLOCK_NANOSLEEP
++
++/* Missing definitions */
++double nearbyint(double x);
++float nearbyintf(float x);
++#define MAX_PATH_LEN PATH_MAX
++
++/* Definitions from lwip */
++#define IP_MULTICAST_LOOP  7
++#define IP_ADD_MEMBERSHIP  3
++#define IP_DROP_MEMBERSHIP 4
++
++typedef struct ip_mreq {
++    struct in_addr imr_multiaddr; /* IP multicast address of group */
++    struct in_addr imr_interface; /* local IP address of interface */
++} ip_mreq;
++
++/* Additional math includes */
++
++double atan(double x);
++double atan2(double y, double x);
++double sqrt(double x);
++double floor(double x);
++double ceil(double x);
++double fmin(double x, double y);
++double fmax(double x, double y);
++double rint(double x);
++double fabs(double x);
++double trunc(double x);
++float sqrtf(float x);
++float floorf(float x);
++float ceilf(float x);
++float fminf(float x, float y);
++float fmaxf(float x, float y);
++float rintf(float x);
++float fabsf(float x);
++float truncf(float x);
++int isnan(double x);
++double pow(double x, double y);
++double scalbn(double x, int n);
++
++#ifndef BH_HAS_SIGNBIT
++int signbit(double x);
++#endif
++
++unsigned long long int strtoull(const char *nptr, char **endptr, int base);
++double strtod(const char *nptr, char **endptr);
++float strtof(const char *nptr, char **endptr);
++
++#define BH_HAS_SQRT
++
+ /* Stack size of applet threads's native part.  */
+ #define BH_APPLET_PRESERVED_STACK_SIZE (32 * 1024)
+
+@@ -55,12 +109,19 @@
+ typedef pthread_mutex_t korp_mutex;
+ typedef pthread_cond_t korp_cond;
+ typedef pthread_t korp_thread;
+-typedef pthread_rwlock_t korp_rwlock;
+-typedef sem_t korp_sem;
++typedef struct {
++    char writing;
++    int readers;
++    korp_mutex mx;
++    korp_cond cond;
++} korp_rwlock;
++typedef semaphore_t korp_sem;
+
+ #define OS_THREAD_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+
++#ifdef TARGET_HAS_TLS
+ #define os_thread_local_attribute __thread
++#endif
+
+ #define bh_socket_t int
+

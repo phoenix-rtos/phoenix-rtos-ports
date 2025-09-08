@@ -1,0 +1,508 @@
+--- a/core/shared/platform/common/posix/posix_file.c	2025-09-15 11:11:18.000000000 +0200
++++ b/core/shared/platform/common/posix/posix_file.c	2025-09-30 10:40:35.862576656 +0200
+@@ -7,7 +7,7 @@
+ #include "libc_errno.h"
+ #include <unistd.h>
+ 
+-#if !defined(__APPLE__) && !defined(ESP_PLATFORM)
++#if !defined(__APPLE__) && !defined(ESP_PLATFORM) && !defined(phoenix) // Phoenix has no preadv/pwritev
+ #define CONFIG_HAS_PWRITEV 1
+ #define CONFIG_HAS_PREADV 1
+ #else
+@@ -15,7 +15,7 @@
+ #define CONFIG_HAS_PREADV 0
+ #endif
+ 
+-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(ESP_PLATFORM)
++#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(ESP_PLATFORM) && !defined(phoenix) // Phoenix has no fdatasync
+ #define CONFIG_HAS_FDATASYNC 1
+ #else
+ #define CONFIG_HAS_FDATASYNC 0
+@@ -34,7 +34,7 @@
+ #endif
+ #endif
+ 
+-#if !defined(__APPLE__) && !defined(ESP_PLATFORM) && !defined(__COSMOPOLITAN__)
++#if !defined(__APPLE__) && !defined(ESP_PLATFORM) && !defined(__COSMOPOLITAN__) && !defined(phoenix) // Phoenix has no posix_fallocate
+ #define CONFIG_HAS_POSIX_FALLOCATE 1
+ #else
+ #define CONFIG_HAS_POSIX_FALLOCATE 0
+@@ -66,12 +66,105 @@
+ #define STDERR_FILENO 2
+ #endif
+ 
++#define ATIM 3
++#define MTIM 12
++
++
++size_t dirpaths_length = 0;
++char** dirpaths = NULL;
++
++
++void __attribute__((destructor)) clear_paths()
++{
++    free(dirpaths);
++}
++
++void remove_path(int fd)
++{
++    if(fd < (int)dirpaths_length) {
++        free(dirpaths[fd]);
++        dirpaths[fd] = NULL;
++    }
++}
++
++char* get_path(int fd)
++{
++    if(fd >= (int)dirpaths_length) {
++        return NULL;
++    }
++    return dirpaths[fd];
++}
++
++int set_path(int fd, const char* path)
++{
++    int previous_length = dirpaths_length;
++    char* cwd;
++    if(fd >= (int)dirpaths_length) {
++        dirpaths = realloc(dirpaths, fd * 2 * sizeof(char*));
++        if(!dirpaths)
++            return -ENOMEM;
++        memset(dirpaths + previous_length, 0, fd * 2 - previous_length);
++        dirpaths_length = fd * 2;
++    }
++    if(path[0] == '/')
++        dirpaths[fd] = strdup(path);
++    else {
++        cwd = getcwd(NULL, 0);
++        if(asprintf(&dirpaths[fd], "%s%s%s", cwd, cwd[strlen(cwd) - 1] != '/' ? "/" : "", path) <= 0)
++        {
++            free(cwd);
++            return -errno;
++        }
++        free(cwd);
++    }
++    return 0;
++}
++
++char* resolve_fd_path_ex(int fd, const char* relative_path, int resolve_last_symlink, int allow_missing_leaf)
++{
++    char *fd_path;
++    char* buffer;
++	int fd_len, rel_len = strlen(relative_path);
++    buffer = malloc(MAX_PATH_LEN);
++    if(!buffer)
++        return NULL;
++    if(relative_path[0] == '/')
++		memcpy(buffer, relative_path, rel_len);
++    else {
++        fd_path = get_path(fd);
++        if(!fd_path) {
++            return NULL;
++        }
++        fd_len = strlen(fd_path);
++		if(fd_len + rel_len > MAX_PATH_LEN) {
++			errno = ENAMETOOLONG;
++			return NULL;
++		}
++        memcpy(buffer, fd_path, fd_len);
++        if(buffer[fd_len - 1] != '/')
++            buffer[fd_len++] = '/';
++		memcpy(buffer + fd_len, relative_path, rel_len);
++    }
++    resolve_path(buffer, buffer, resolve_last_symlink, allow_missing_leaf);
++    return buffer;
++}
++
++char* resolve_fd_path(int fd, const char* relative_path, int resolve_last_symlink)
++{
++    char *res = resolve_fd_path_ex(fd, relative_path, resolve_last_symlink, 0);
++    return res;
++}
++
++char* resolve_nonexisting_fd_path(int fd, const char* relative_path)
++{
++    char *res = resolve_fd_path_ex(fd, relative_path, 0, 1);
++    return res;
++}
++
+ // Converts a POSIX timespec to a WASI timestamp.
+ static __wasi_timestamp_t
+ convert_timespec(const struct timespec *ts)
+ {
+-    if (ts->tv_sec < 0)
+-        return 0;
+     if ((__wasi_timestamp_t)ts->tv_sec >= UINT64_MAX / 1000000000)
+         return UINT64_MAX;
+     return (__wasi_timestamp_t)ts->tv_sec * 1000000000
+@@ -145,45 +238,43 @@
+ }
+ 
+ static void
+-convert_timestamp(__wasi_timestamp_t in, struct timespec *out)
+-{
+-    // Store sub-second remainder.
+-#if defined(__SYSCALL_SLONG_TYPE)
+-    out->tv_nsec = (__SYSCALL_SLONG_TYPE)(in % 1000000000);
+-#else
+-    out->tv_nsec = (long)(in % 1000000000);
+-#endif
+-    in /= 1000000000;
+-
+-    // Clamp to the maximum in case it would overflow our system's time_t.
+-    out->tv_sec = (time_t)in < BH_TIME_T_MAX ? (time_t)in : BH_TIME_T_MAX;
+-}
+-
+-// Converts the provided timestamps and flags to a set of arguments for
+-// futimens() and utimensat().
+-static void
+-convert_utimens_arguments(__wasi_timestamp_t st_atim,
++convert_utimes_arguments(__wasi_timestamp_t st_atim,
+                           __wasi_timestamp_t st_mtim,
+-                          __wasi_fstflags_t fstflags, struct timespec *ts)
++                          __wasi_fstflags_t fstflags, 
++                          struct stat *st, struct timeval *tv)
+ {
++    uint64_t now;
++    if ((fstflags & __WASI_FILESTAT_SET_ATIM_NOW) || (fstflags & __WASI_FILESTAT_SET_MTIM_NOW)) {
++        os_clock_time_get(__WASI_CLOCK_REALTIME, 0, &now);
++        now /= 1000;
++    }
++    /* Missing UTIME_NOW and UTIME_OMIT flags in phoenix */
+     if ((fstflags & __WASI_FILESTAT_SET_ATIM_NOW) != 0) {
+-        ts[0].tv_nsec = UTIME_NOW;
++        tv[0].tv_sec = now / 1000000;
++        tv[0].tv_usec = now % 1000000;
+     }
+     else if ((fstflags & __WASI_FILESTAT_SET_ATIM) != 0) {
+-        convert_timestamp(st_atim, &ts[0]);
++        st_atim /= 1000;
++        tv[0].tv_sec = st_atim / 1000000;
++        tv[0].tv_usec = st_atim % 1000000;
+     }
+     else {
+-        ts[0].tv_nsec = UTIME_OMIT;
++        tv[0].tv_sec = st->st_atim.tv_sec;
++        tv[0].tv_usec = st->st_atim.tv_nsec / 1000;
+     }
+ 
+     if ((fstflags & __WASI_FILESTAT_SET_MTIM_NOW) != 0) {
+-        ts[1].tv_nsec = UTIME_NOW;
++        tv[1].tv_sec = now / 1000000;
++        tv[1].tv_usec = now % 1000000;
+     }
+     else if ((fstflags & __WASI_FILESTAT_SET_MTIM) != 0) {
+-        convert_timestamp(st_mtim, &ts[1]);
++        st_mtim /= 1000;
++        tv[0].tv_sec = st_mtim / 1000000;
++        tv[0].tv_usec = st_mtim % 1000000;
+     }
+     else {
+-        ts[1].tv_nsec = UTIME_OMIT;
++        tv[1].tv_sec = st->st_mtim.tv_sec;
++        tv[1].tv_usec = st->st_mtim.tv_nsec / 1000;
+     }
+ }
+ 
+@@ -205,11 +296,12 @@
+ os_fstatat(os_file_handle handle, const char *path,
+            struct __wasi_filestat_t *buf, __wasi_lookupflags_t lookup_flags)
+ {
++    char* resolved_path = resolve_fd_path(handle, path, lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW);
+     struct stat stat_buf;
+-    int ret = fstatat(handle, path, &stat_buf,
+-                      (lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW)
+-                          ? AT_SYMLINK_FOLLOW
+-                          : AT_SYMLINK_NOFOLLOW);
++
++    int ret = lstat(resolved_path, &stat_buf);
++
++    free(resolved_path);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -314,14 +406,23 @@
+ __wasi_errno_t
+ os_open_preopendir(const char *path, os_file_handle *out)
+ {
++    struct stat buf;
++
++    stat(path, &buf);
++    if(!S_ISDIR(buf.st_mode)) {
++        errno = ENOTDIR;
++        return convert_errno(errno);
++    }
+ 
+-    int fd = open(path, O_RDONLY | O_DIRECTORY, 0);
++    int fd = open(path, O_RDONLY, 0);
+ 
+     if (fd < 0)
+         return convert_errno(errno);
+ 
+     *out = fd;
+ 
++    set_path(fd, path);
++
+     return __WASI_ESUCCESS;
+ }
+ 
+@@ -330,14 +431,14 @@
+           __wasi_fdflags_t fs_flags, __wasi_lookupflags_t lookup_flags,
+           wasi_libc_file_access_mode read_write_mode, os_file_handle *out)
+ {
++    struct stat statbuf;
++    char* resolved_path;
+     int open_flags = 0;
+ 
+     // Convert open flags.
+     if ((oflags & __WASI_O_CREAT) != 0) {
+         open_flags |= O_CREAT;
+     }
+-    if ((oflags & __WASI_O_DIRECTORY) != 0)
+-        open_flags |= O_DIRECTORY;
+     if ((oflags & __WASI_O_EXCL) != 0)
+         open_flags |= O_EXCL;
+     if ((oflags & __WASI_O_TRUNC) != 0) {
+@@ -371,8 +472,17 @@
+ #endif
+     }
+ 
+-    if ((lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW) == 0) {
+-        open_flags |= O_NOFOLLOW;
++    resolved_path = resolve_fd_path(handle, path, 0);
++    lstat(resolved_path, &statbuf);
++    if((lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW) && S_ISLNK(statbuf.st_mode))
++    {
++        errno = ELOOP;
++        return convert_errno(errno);
++    }
++
++    if ((oflags & __WASI_O_DIRECTORY) != 0 && !S_ISDIR(statbuf.st_mode)) {
++        errno = ENOTDIR;
++        return convert_errno(errno);
+     }
+ 
+     switch (read_write_mode) {
+@@ -389,40 +499,19 @@
+             return __WASI_EINVAL;
+     }
+ 
+-    int fd = openat(handle, path, open_flags, 0666);
++    int fd = open(resolved_path, open_flags, 0666);
+ 
+     if (fd < 0) {
+         int openat_errno = errno;
+-        // Linux returns ENXIO instead of EOPNOTSUPP when opening a socket.
+-        if (openat_errno == ENXIO) {
+-            struct stat sb;
+-            int ret = fstatat(handle, path, &sb,
+-                              (lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW)
+-                                  ? 0
+-                                  : AT_SYMLINK_NOFOLLOW);
+-            return ret == 0 && S_ISSOCK(sb.st_mode) ? __WASI_ENOTSUP
+-                                                    : __WASI_ENXIO;
+-        }
+-        // Linux returns ENOTDIR instead of ELOOP when using
+-        // O_NOFOLLOW|O_DIRECTORY on a symlink.
+-        if (openat_errno == ENOTDIR
+-            && (open_flags & (O_NOFOLLOW | O_DIRECTORY)) != 0) {
+-            struct stat sb;
+-            int ret = fstatat(handle, path, &sb, AT_SYMLINK_NOFOLLOW);
+-            if (S_ISLNK(sb.st_mode)) {
+-                return __WASI_ELOOP;
+-            }
+-            (void)ret;
+-        }
+-        // FreeBSD returns EMLINK instead of ELOOP when using O_NOFOLLOW on
+-        // a symlink.
+-        if ((lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW) == 0
+-            && openat_errno == EMLINK)
+-            return __WASI_ELOOP;
+ 
++        free(resolved_path);
+         return convert_errno(openat_errno);
+     }
+ 
++    if(S_ISDIR(statbuf.st_mode))
++        set_path(fd, resolved_path);
++    free(resolved_path);
++
+     *out = fd;
+ 
+     return __WASI_ESUCCESS;
+@@ -465,6 +554,8 @@
+     if (ret < 0)
+         return convert_errno(errno);
+ 
++    remove_path(handle);
++
+     return __WASI_ESUCCESS;
+ }
+ 
+@@ -638,10 +729,16 @@
+ os_futimens(os_file_handle handle, __wasi_timestamp_t access_time,
+             __wasi_timestamp_t modification_time, __wasi_fstflags_t fstflags)
+ {
+-    struct timespec ts[2];
+-    convert_utimens_arguments(access_time, modification_time, fstflags, ts);
++    struct timeval tv[2];
++    struct stat st;
++
++    if (!(fstflags & ATIM) || !(fstflags & MTIM)) {
++        fstat(handle, &st);
++    }
+ 
+-    int ret = futimens(handle, ts);
++    convert_utimes_arguments(access_time, modification_time, fstflags, &st, tv);
++
++    int ret = futimes(handle, tv);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -655,18 +752,24 @@
+              __wasi_timestamp_t modification_time, __wasi_fstflags_t fstflags,
+              __wasi_lookupflags_t lookup_flags)
+ {
+-    struct timespec ts[2];
+-    convert_utimens_arguments(access_time, modification_time, fstflags, ts);
++    char* resolved_path;
++    if(lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW)
++        resolved_path = resolve_fd_path(handle, path, 1);
++    else
++        resolved_path = resolve_fd_path(handle, path, 0);
++    struct timeval tv[2];
++    struct stat st;
++ 
++    if (!(fstflags & ATIM) || !(fstflags & MTIM)) {
++        fstat(handle, &st);
++    }
+ 
+-    int ret = utimensat(handle, path, ts,
+-                        (lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW)
+-                            ? 0
+-                            : AT_SYMLINK_NOFOLLOW);
++    convert_utimes_arguments(access_time, modification_time, fstflags, &st, tv);
+ 
+-    if (ret < 0)
+-        return convert_errno(errno);
++    __wasi_errno_t ret = utimes(resolved_path, tv);
+ 
+-    return __WASI_ESUCCESS;
++    free(resolved_path);
++    return ret;
+ }
+ 
+ __wasi_errno_t
+@@ -675,9 +778,15 @@
+ {
+     // Linux requires that the buffer size is positive. whereas POSIX does
+     // not. Use a fake buffer to store the results if the size is zero.
++
++    char* resolved_path = resolve_fd_path(handle, path, 0);
++
+     char fakebuf[1];
+-    ssize_t len = readlinkat(handle, path, bufsize == 0 ? fakebuf : buf,
+-                             bufsize == 0 ? sizeof(fakebuf) : bufsize);
++
++    ssize_t len = readlink(resolved_path, bufsize == 0 ? fakebuf : buf,
++                                bufsize == 0 ? sizeof(fakebuf) : bufsize);
++
++    free(resolved_path);
+ 
+     if (len < 0)
+         return convert_errno(errno);
+@@ -692,9 +801,13 @@
+           os_file_handle to_handle, const char *to_path,
+           __wasi_lookupflags_t lookup_flags)
+ {
+-    int ret = linkat(
+-        from_handle, from_path, to_handle, to_path,
+-        (lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW) ? AT_SYMLINK_FOLLOW : 0);
++    char* resolved_from = resolve_fd_path(from_handle, from_path, (lookup_flags & __WASI_LOOKUP_SYMLINK_FOLLOW));
++    char* resolved_to = resolve_nonexisting_fd_path(to_handle, to_path);
++
++    int ret = link(resolved_from, resolved_to);
++
++    free(resolved_from);
++    free(resolved_to);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -705,7 +818,11 @@
+ __wasi_errno_t
+ os_symlinkat(const char *old_path, os_file_handle handle, const char *new_path)
+ {
+-    int ret = symlinkat(old_path, handle, new_path);
++    char* resolved_path = resolve_fd_path(handle, new_path, 0);
++
++    int ret = symlink(old_path, resolved_path);
++
++    free(resolved_path);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -716,7 +833,11 @@
+ __wasi_errno_t
+ os_mkdirat(os_file_handle handle, const char *path)
+ {
+-    int ret = mkdirat(handle, path, 0777);
++    char* resolved_path = resolve_fd_path(handle, path, 0);
++
++    int ret = mkdir(resolved_path, 0777);
++
++    free(resolved_path);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -729,7 +850,13 @@
+             os_file_handle new_handle, const char *new_path)
+ {
+ 
+-    int ret = renameat(old_handle, old_path, new_handle, new_path);
++    char* resolved_old = resolve_fd_path(old_handle, old_path, 0);
++    char* resolved_new = resolve_nonexisting_fd_path(new_handle, new_path);
++
++    int ret = rename(resolved_old, resolved_new);
++
++    free(resolved_old);
++    free(resolved_new);
+ 
+     if (ret < 0)
+         return convert_errno(errno);
+@@ -740,33 +867,11 @@
+ __wasi_errno_t
+ os_unlinkat(os_file_handle handle, const char *path, bool is_dir)
+ {
+-    int ret = unlinkat(handle, path, is_dir ? AT_REMOVEDIR : 0);
++    char* resolved_path = resolve_fd_path(handle, path, 0);
+ 
+-#ifndef __linux__
+-    if (ret < 0) {
+-        // Non-Linux implementations may return EPERM when attempting to remove
+-        // a directory without REMOVEDIR. While that's what POSIX specifies,
+-        // it's less useful. Adjust this to EISDIR. It doesn't matter that this
+-        // is not atomic with the unlinkat, because if the file is removed and a
+-        // directory is created before fstatat sees it, we're racing with that
+-        // change anyway and unlinkat could have legitimately seen the directory
+-        // if the race had turned out differently.
+-        if (errno == EPERM) {
+-            struct stat statbuf;
+-            if (fstatat(handle, path, &statbuf, AT_SYMLINK_NOFOLLOW) == 0
+-                && S_ISDIR(statbuf.st_mode)) {
+-                errno = EISDIR;
+-            }
+-        }
+-        // POSIX permits either EEXIST or ENOTEMPTY when the directory is not
+-        // empty. Map it to ENOTEMPTY.
+-        else if (errno == EEXIST) {
+-            errno = ENOTEMPTY;
+-        }
++    int ret = is_dir ? rmdir(resolved_path) : unlink(resolved_path);
+ 
+-        return convert_errno(errno);
+-    }
+-#endif
++    free(resolved_path);
+ 
+     if (ret < 0)
+         return convert_errno(errno);

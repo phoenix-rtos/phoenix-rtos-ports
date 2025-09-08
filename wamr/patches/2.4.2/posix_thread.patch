@@ -1,0 +1,320 @@
+--- a/core/shared/platform/common/posix/posix_thread.c	2025-09-15 11:11:18.000000000 +0200
++++ b/core/shared/platform/common/posix/posix_thread.c	2025-09-30 10:39:24.418864763 +0200
+@@ -28,6 +28,13 @@
+ static os_thread_local_attribute os_signal_handler signal_handler;
+ #endif
+ 
++#define SEM_MAP_LEN 128
++typedef struct sem_entry {
++	korp_sem sem;
++	char* name;
++	struct sem_entry* next;
++} sem_entry_t;
++
+ static void *
+ os_thread_wrapper(void *arg)
+ {
+@@ -52,8 +59,6 @@
+ #if BH_DEBUG != 0
+ #if defined __APPLE__
+     pthread_setname_np("wamr");
+-#else
+-    pthread_setname_np(pthread_self(), "wamr");
+ #endif
+ #endif
+     start_func(thread_arg);
+@@ -212,56 +217,142 @@
+     return BHT_OK;
+ }
+ 
++static sem_entry_t *sem_hash_map[SEM_MAP_LEN] = { NULL };
++static korp_mutex hash_map_guard;
++
++static void __attribute__((constructor)) initialize_guard()
++{
++	os_mutex_init(&hash_map_guard);
++}
++
++static void __attribute__((destructor)) close_guard()
++{
++	os_mutex_destroy(&hash_map_guard);
++}
++
++static unsigned long sem_djb2_hash(const char* str)
++{
++	unsigned long hash = 5381;
++	int c;
++	while ((c = *str++)) {
++		hash = ((hash << 5) + hash) + c;
++	}
++	return hash % SEM_MAP_LEN;
++}
++
+ korp_sem *
+ os_sem_open(const char *name, int oflags, int mode, int val)
+ {
+-    return sem_open(name, oflags, mode, val);
++	(void)oflags;
++	(void)mode;
++	int hash = sem_djb2_hash(name);
++	os_mutex_lock(&hash_map_guard);
++	sem_entry_t *entry = sem_hash_map[hash];
++	while (NULL != entry && strcmp(entry->name, name) != 0)
++	{
++		entry = entry->next;
++	}
++	if (entry) {
++		os_mutex_unlock(&hash_map_guard);
++		return &(entry->sem);
++	}
++	entry = (sem_entry_t*)malloc(sizeof(sem_entry_t));
++	if(!entry) {
++		os_mutex_unlock(&hash_map_guard);
++		return NULL;
++	}
++	entry->name = strdup(name);
++	if(!(entry->name))
++	{
++		free(entry);
++		os_mutex_unlock(&hash_map_guard);
++		return NULL;
++	}
++	if(semaphoreCreate(&entry->sem, val) != EOK)
++	{
++		os_mutex_unlock(&hash_map_guard);
++		free(entry);
++		return NULL;
++	}
++	entry->next = sem_hash_map[hash];
++	sem_hash_map[hash] = entry;
++	os_mutex_unlock(&hash_map_guard);
++	return &entry->sem;
+ }
+ 
+ int
+ os_sem_close(korp_sem *sem)
+ {
+-    return sem_close(sem);
++	return BHT_OK;
+ }
+ 
+ int
+ os_sem_wait(korp_sem *sem)
+ {
+-    return sem_wait(sem);
++	assert(sem);
++	return semaphoreDown(sem, 0);
+ }
+ 
+ int
+ os_sem_trywait(korp_sem *sem)
+ {
+-    return sem_trywait(sem);
++	assert(sem);
++	int val;
++	mutexLock(sem->mutex);
++	val = sem->v;
++	if(val > 0)
++		--(sem->v);
++	mutexUnlock(sem->mutex);
++	if(val > 0)
++		return 0;
++	errno = EAGAIN;
++	return -1;
+ }
+ 
+ int
+ os_sem_post(korp_sem *sem)
+ {
+-    return sem_post(sem);
++	assert(sem);
++	return semaphoreUp(sem);
+ }
+ 
+ int
+ os_sem_getvalue(korp_sem *sem, int *sval)
+ {
+-#if defined(__APPLE__)
+-    /*
+-     * macOS doesn't have working sem_getvalue.
+-     * It's marked as deprecated in the system header.
+-     * Mock it up here to avoid compile-time deprecation warnings.
+-     */
+-    errno = ENOSYS;
+-    return -1;
+-#else
+-    return sem_getvalue(sem, sval);
+-#endif
++	assert(sem);
++	int ret;
++	mutexLock(sem->mutex);
++	ret = sem->v;
++	mutexUnlock(sem->mutex);
++	return ret;
+ }
+ 
+ int
+ os_sem_unlink(const char *name)
+ {
+-    return sem_unlink(name);
++	int hash = sem_djb2_hash(name);
++	sem_entry_t **entry = &(sem_hash_map[hash]);
++	sem_entry_t *tmp;
++
++	os_mutex_lock(&hash_map_guard);
++
++	while (*entry != NULL && strcmp((*entry)->name, name) != 0)
++	{
++		entry = &((*entry)->next);
++	}
++	if(entry == NULL)
++	{
++		os_mutex_unlock(&hash_map_guard);
++		errno = ENOENT;
++		return BHT_ERROR;
++	}
++	tmp = *entry;
++	*entry = (*entry)->next;
++	free(tmp->name);
++	os_mutex_unlock(&hash_map_guard);
++	semaphoreDone(&tmp->sem);
++	free(tmp);
++	return BHT_OK;
+ }
+ 
+ static void
+@@ -304,6 +395,8 @@
+ int
+ os_cond_reltimedwait(korp_cond *cond, korp_mutex *mutex, uint64 useconds)
+ {
++	assert(cond);
++	assert(mutex);
+     int ret;
+     struct timespec abstime;
+ 
+@@ -342,14 +435,17 @@
+     return BHT_OK;
+ }
+ 
++/* Phoenix has no rwlock implementation, using custom */
++
+ int
+ os_rwlock_init(korp_rwlock *lock)
+ {
+     assert(lock);
+-
+-    if (pthread_rwlock_init(lock, NULL) != BHT_OK)
++	lock->readers = 0;
++	lock->writing = 0;
++	if (os_mutex_init(&lock->mx) || os_cond_init(&lock->cond)) {
+         return BHT_ERROR;
+-
++	}
+     return BHT_OK;
+ }
+ 
+@@ -357,43 +453,65 @@
+ os_rwlock_rdlock(korp_rwlock *lock)
+ {
+     assert(lock);
+-
+-    if (pthread_rwlock_rdlock(lock) != BHT_OK)
++	if (os_mutex_lock(&lock->mx)) {
+         return BHT_ERROR;
+-
+-    return BHT_OK;
++	}
++	while (lock->writing) {
++		if (os_cond_wait(&lock->cond, &lock->mx)) {
++			return BHT_ERROR;
++		}
++	}
++	lock->readers++;
++	return os_mutex_unlock(&lock->mx);
+ }
+ 
+ int
+ os_rwlock_wrlock(korp_rwlock *lock)
+ {
+     assert(lock);
+-
+-    if (pthread_rwlock_wrlock(lock) != BHT_OK)
++	if (os_mutex_lock(&lock->mx)) {
+         return BHT_ERROR;
+-
+-    return BHT_OK;
++	}
++	while (lock->writing || lock->readers > 0) {
++		if (os_cond_wait(&lock->cond, &lock->mx)) {
++			return BHT_ERROR;
++		}
++	}
++	lock->writing = 1;
++	return os_mutex_unlock(&lock->mx);
+ }
+ 
+ int
+ os_rwlock_unlock(korp_rwlock *lock)
+ {
+     assert(lock);
+-
+-    if (pthread_rwlock_unlock(lock) != BHT_OK)
++	if (os_mutex_lock(&lock->mx)) {
+         return BHT_ERROR;
+-
+-    return BHT_OK;
++	}
++	if (lock->writing) {
++		lock->writing = 0;
++		if (os_cond_broadcast(&lock->cond)) {
++			return BHT_ERROR;
++		}
++	}
++	else {
++		lock->readers--;
++		if (lock->readers == 0) {
++			if (os_cond_broadcast(&lock->cond)) {
++				return BHT_ERROR;
++			}
++		}
++	}
++	return os_mutex_unlock(&lock->mx);
+ }
+ 
+ int
+ os_rwlock_destroy(korp_rwlock *lock)
+ {
+     assert(lock);
+-
+-    if (pthread_rwlock_destroy(lock) != BHT_OK)
++	if (os_mutex_destroy(&lock->mx) || os_cond_destroy(&lock->cond)) {
+         return BHT_ERROR;
+-
++	}
+     return BHT_OK;
+ }
+ 
+@@ -425,13 +543,12 @@
+ uint8 *
+ os_thread_get_stack_boundary()
+ {
+-    pthread_t self;
+ #ifdef __linux__
+     pthread_attr_t attr;
+     size_t guard_size;
+ #endif
+     uint8 *addr = NULL;
+-    size_t stack_size, max_stack_size;
++	size_t max_stack_size;
+     int page_size;
+ 
+ #if defined(os_thread_local_attribute)
+@@ -440,7 +557,7 @@
+ #endif
+ 
+     page_size = getpagesize();
+-    self = pthread_self();
++	// self = pthread_self();
+     max_stack_size =
+         (size_t)(APP_THREAD_STACK_SIZE_MAX + page_size - 1) & ~(page_size - 1);
+ 
