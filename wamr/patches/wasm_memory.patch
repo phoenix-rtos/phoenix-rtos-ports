@@ -1,0 +1,27 @@
+diff --git a/core/iwasm/common/wasm_memory.c b/core/iwasm/common/wasm_memory.c
+index 59d478c9..e70cbf79 100644
+--- a/core/iwasm/common/wasm_memory.c
++++ b/core/iwasm/common/wasm_memory.c
+@@ -1501,7 +1501,8 @@ wasm_mremap_linear_memory(void *mapped_mem, uint64 old_size, uint64 new_size,
+         new_mem = os_mremap(mapped_mem, old_size, new_size);
+     }
+     else {
+-        new_mem = os_mmap(NULL, new_size, MMAP_PROT_NONE, MMAP_MAP_NONE,
++        /* mprotect fix */
++        new_mem = os_mmap(NULL, new_size, MMAP_PROT_READ | MMAP_PROT_WRITE, MMAP_MAP_NONE,
+                           os_get_invalid_handle());
+     }
+     if (!new_mem) {
+@@ -1517,8 +1518,10 @@ wasm_mremap_linear_memory(void *mapped_mem, uint64 old_size, uint64 new_size,
+     }
+ #endif
+ 
+-    if (os_mprotect(new_mem, commit_size, MMAP_PROT_READ | MMAP_PROT_WRITE)
+-        != 0) {
++    /* mprotect fix */
++
++    if (os_mprotect(new_mem, new_size, MMAP_PROT_NONE) != 0 ||
++        os_mprotect(new_mem, commit_size, MMAP_PROT_READ | MMAP_PROT_WRITE) != 0) {
+         wasm_munmap_linear_memory(new_mem, new_size, new_size);
+         return NULL;
+     }
