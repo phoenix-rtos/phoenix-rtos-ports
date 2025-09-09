@@ -67,6 +67,7 @@ ports=(
 	"coreMQTT"
 	"lsb_vsx"
 	"heatshrink"
+	"smolrtsp"
 )
 
 
