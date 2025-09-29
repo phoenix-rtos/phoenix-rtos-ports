@@ -1,13 +1,19 @@
 # problem: IP_PMTUDISC_WANT undefined on phoenix-rtos
 diff -ruN a/src/transport/udp.c b/src/transport/udp.c
 --- a/src/transport/udp.c	2025-08-19 10:13:41.341623698 +0200
-+++ b/src/transport/udp.c	2025-08-19 10:14:09.342016325 +0200
-@@ -106,7 +106,7 @@
- 
-     const int enable_pmtud = 1;
-     if (setsockopt(
--            fd, IPPROTO_IP, IP_PMTUDISC_WANT, &enable_pmtud,
-+            fd, IPPROTO_IP, 0, &enable_pmtud,
-             sizeof enable_pmtud) == -1) {
-         perror("setsockopt IP_PMTUDISC_WANT");
++++ b/src/transport/udp.c	2025-09-29 09:26:49.622229888 +0200
+@@ -104,14 +104,6 @@
          goto fail;
+     }
+ 
+-    const int enable_pmtud = 1;
+-    if (setsockopt(
+-            fd, IPPROTO_IP, IP_PMTUDISC_WANT, &enable_pmtud,
+-            sizeof enable_pmtud) == -1) {
+-        perror("setsockopt IP_PMTUDISC_WANT");
+-        goto fail;
+-    }
+-
+     return fd;
+ 
+ fail:
