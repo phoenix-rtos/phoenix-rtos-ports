@@ -48,6 +48,9 @@ if [ ! -f "$PREFIX_PORT_BUILD/config.h" ]; then
 	LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 	WITH_ZLIB="no" && [ "$PORTS_ZLIB" = "y" ] && WITH_ZLIB="yes"
 
+	# Increase the stack size. A 32 kB array allocated on the stack was causing a stack overflow on the Phoenix-RTOS.
+	LDFLAGS="${LDFLAGS} -z stack-size=65536"
+
 	( cd "$PREFIX_LIGHTTPD_SRC" && "./autogen.sh" )
 	( cd "$PREFIX_PORT_BUILD" && "$PREFIX_LIGHTTPD_SRC/configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 		-C --disable-ipv6 --disable-mmap --with-bzip2=no \
