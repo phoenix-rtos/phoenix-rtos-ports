@@ -1,0 +1,13 @@
+# Incompatible %T symbol with Phoenix-RTOS strftime() function
+diff -ruN a/src/http_date.c b/src/http_date.c
+--- a/src/http_date.c	2025-10-08 12:33:20.197908805 +0200
++++ b/src/http_date.c	2025-10-08 13:46:22.498541532 +0200
+@@ -271,6 +271,8 @@
+     struct tm tm;
+   #ifdef __MINGW32__
+     const char fmt[] = "%a, %d %b %Y %H:%M:%S GMT"; /*IMF-fixdate fmt*/
++  #elif defined(PHOENIX)
++    const char fmt[] = "%a, %d %b %Y %H:%M:%S GMT";   
+   #else
+     const char fmt[] = "%a, %d %b %Y %T GMT";       /*IMF-fixdate fmt*/
+   #endif

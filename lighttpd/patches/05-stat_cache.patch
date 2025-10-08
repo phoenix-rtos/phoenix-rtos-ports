@@ -1,0 +1,36 @@
+# Allocating an 8 kB array on the stack caused a stack overflow in Phoenix-RTOS.
+diff -ruN a/src/stat_cache.c b/src/stat_cache.c
+--- a/src/stat_cache.c	2025-10-08 09:37:50.568273253 +0200
++++ b/src/stat_cache.c	2025-10-08 13:27:40.256358027 +0200
+@@ -13,6 +13,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <errno.h>
++#include <stdio.h>
+ #include <fcntl.h>
+ 
+ #if defined(HAVE_SYS_XATTR_H)
+@@ -1490,7 +1491,11 @@
+ static void stat_cache_periodic_cleanup(const time_t max_age, const unix_time64_t cur_ts) {
+     splay_tree *sptree = sc.files;
+     int max_ndx, i;
+-    int keys[8192]; /* 32k size on stack */
++    int *keys = (int*)malloc(sizeof(int) * 8192);
++    if (!keys) {
++        fprintf(stderr, "malloc: %s\n", strerror(errno));
++        return;
++    }
+     do {
+         if (!sptree) break;
+         max_ndx = 0;
+@@ -1499,8 +1504,9 @@
+             sptree = splaytree_splay_nonnull(sptree, keys[i]);
+             sptree = stat_cache_sptree_node_free(sptree);
+         }
+-    } while (max_ndx == sizeof(keys)/sizeof(int));
++    } while (max_ndx == 8192);
+     sc.files = sptree;
++    free(keys);
+ }
+ 
+ void stat_cache_trigger_cleanup(void) {

@@ -1,0 +1,15 @@
+# dup2() on STDERR_FILENO didn't work due to some deeper issue
+diff -ruN a/src/fdevent.c b/src/fdevent.c
+--- a/src/fdevent.c	2025-10-08 09:23:21.385906963 +0200
++++ b/src/fdevent.c	2025-10-08 13:36:45.778312394 +0200
+@@ -412,8 +412,10 @@
+         return -1;
+     if (STDOUT_FILENO != fdevent_dup2_close_clrfd_cloexec(fdout, STDOUT_FILENO))
+         return -1;
++    #ifndef PHOENIX
+     if (STDERR_FILENO != fdevent_dup2_close_clrfd_cloexec(fderr, STDERR_FILENO))
+         return -1;
++    #endif
+   #else
+     if (STDIN_FILENO != fdevent_dup2_close_clrfd_cloexec(fdin, STDIN_FILENO,
+                                                          fdin == fdout
