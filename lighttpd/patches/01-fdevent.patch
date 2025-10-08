@@ -1,0 +1,19 @@
+# Incompatible flag values with Phoenix-RTOS POLL
+diff -ruN a/src/fdevent.h b/src/fdevent.h
+--- a/src/fdevent.h	2025-10-08 13:44:36.849888475 +0200
++++ b/src/fdevent.h	2025-10-08 15:30:15.361371895 +0200
+@@ -40,6 +40,14 @@
+ #define FDEVENT_NVAL   0x1000
+ #define FDEVENT_RDHUP  0x2000
+ 
++#elif defined(__phoenix__)
++#define FDEVENT_IN     0x0001
++#define FDEVENT_PRI    0x0008
++#define FDEVENT_OUT    0x0010
++#define FDEVENT_ERR    0x0080
++#define FDEVENT_HUP    0x0100
++#define FDEVENT_NVAL   0x0200
++#define FDEVENT_RDHUP  0x2000
+ #else
+ #define FDEVENT_IN     0x0001
+ #define FDEVENT_PRI    0x0002

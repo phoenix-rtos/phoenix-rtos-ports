@@ -1,0 +1,55 @@
+# Flag FIONREAD from ioctl() return -1. Temporary fix: use hardcoded value instead
+diff -ruN a/src/http-header-glue.c b/src/http-header-glue.c
+--- a/src/http-header-glue.c	2025-10-08 09:42:13.738259706 +0200
++++ b/src/http-header-glue.c	2025-10-09 08:24:45.068790709 +0200
+@@ -1324,6 +1324,41 @@
+     size_t avail;
+     /*size_t total = 0;*/
+     do {
++        /**
++         * Issue: ioctl() with FIONREAD flag returns -1
++         * The issue has been risen on libphoenix github (#446)
++         * https://github.com/phoenix-rtos/libphoenix/issues/446
++         * 
++         * Temporary fix: don't check the number of bytes to read, rather use hardcoded 'toread' value 
++         */
++        #ifdef __phoenix__
++        unsigned int toread = 4096;
++        avail = buffer_string_space(b);
++
++        if (r->conf.stream_response_body & FDEVENT_STREAM_RESPONSE_BUFMIN) {
++            off_t cqlen = chunkqueue_length(&r->write_queue);
++            if (cqlen + (off_t)toread > 65536 - 4096) {
++                if (!r->con->is_writable) {
++                    fdevent_fdnode_event_clr(r->con->srv->ev, fdn, FDEVENT_IN);
++                }
++                if (cqlen >= 65536-1) {
++
++
++                    if (buffer_is_blank(b))
++                        chunk_buffer_yield(b);
++                    return HANDLER_GO_ON;
++                }
++                toread = 65536 - 1 - (unsigned int)cqlen;
++            }
++        }
++
++        if (avail < toread) {
++            avail = toread < opts->max_per_read && avail
++                ? avail-1+toread
++                : toread;
++            avail = chunk_buffer_prepare_append(b, avail);
++        }
++        #else
+         unsigned int toread = 0;
+         avail = buffer_string_space(b);
+ 
+@@ -1408,7 +1443,7 @@
+               : toread;
+             avail = chunk_buffer_prepare_append(b, avail);
+         }
+-
++        #endif
+       #ifdef _WIN32
+         n = recv(fd, b->ptr+buffer_clen(b), avail, 0);
+         if (n == SOCKET_ERROR) {
