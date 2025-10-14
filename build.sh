@@ -45,12 +45,16 @@ reset_env() {
 
 
 PORTS_DB="${PREFIX_BUILD}/ports.json"
-PORT_MANAGER="${PREFIX_PROJECT}/phoenix-rtos-ports/port_manager.py"
 PORT_MANAGER_FLAGS=(
 	"--db=${PORTS_DB}"
 	"-v"
 )
+PORT_MANAGER="${PREFIX_PROJECT}/phoenix-rtos-ports/port_manager.py"
 PREFIX_PORTS_BUILD_ROOT="${PREFIX_BUILD}/port-sources"
+
+function port_manager() {
+	"${PORT_MANAGER}" "${PORT_MANAGER_FLAGS[@]}" "$@"
+}
 
 function load_port_def() {
 	local def_path="${1?def_path missing}"
@@ -132,15 +136,16 @@ function _build_port() {
 
 	local to_build
 
-	to_build="$("${PORT_MANAGER}" --list-deps-to-install "${name}-${version}" \
-		--optional "${PORT_MANAGER_FLAGS[@]}")"
+	port_manager resolve "${name}-${version}"
+
+	to_build="$(port_manager query deps-to-install "${name}-${version}")"
 
 	for dep_port_def_dir in ${to_build}; do
 		build_port "${dep_port_def_dir}" "${name}-${version}"
 	done
 
-	to_build="$("${PORT_MANAGER}" --list-deps-to-install "${name}-${version}" \
-		--optional "${PORT_MANAGER_FLAGS[@]}" --quiet)"
+	echo "${name}-${version}"
+	to_build="$(port_manager query deps-to-install "${name}-${version}")"
 
 	if [ -n "${to_build}" ]; then
 		b_die "dependencies are still not installed: ${to_build}"
@@ -159,8 +164,7 @@ function _build_port() {
 	fi
 
 	local port_install_path
-	port_install_path="$("${PORT_MANAGER}" --get-install-path "${name}-${version}" \
-		"${PORT_MANAGER_FLAGS[@]}")"
+	port_install_path="$(port_manager query install-path "${name}-${version}")"
 	export PREFIX_PORT_INSTALL="${port_install_path}"
 	PREFIX_H="${PREFIX_PORT_INSTALL}/include"
 	PREFIX_A="${PREFIX_PORT_INSTALL}/lib"
@@ -169,6 +173,17 @@ function _build_port() {
 	mkdir -p "${PREFIX_A}"
 
 	# shellcheck disable=2317 # may be used in p_* functions
+	# b_optional_dir(dep_name)
+	#  Returns installation directory of an optional dependency named ${dep_name}.
+	#  This directory is a root to `lib` and `include` directories containing
+	#  dependency libraries and headers. If optional dependency is not installed,
+	#  returns empty string.
+	function b_optional_dir() {
+		local dependency_name="${1?dependency_name}"
+		port_manager query dep-install-path "${name}-${version}" "${dependency_name}"
+	}
+
+	# shellcheck disable=2317 # as above
 	# b_dependency_dir(dep_name)
 	#  Returns installation directory of a required dependency named ${dep_name}.
 	#  This directory is a root to `lib` and `include` directories containing
@@ -177,20 +192,11 @@ function _build_port() {
 	#  wrong!).
 	function b_dependency_dir() {
 		local dependency_name="${1?dependency_name}"
-		"${PORT_MANAGER}" --resolve-dep "${name}-${version}" "${dependency_name}" \
-			"${PORT_MANAGER_FLAGS[@]}"
-	}
-
-	# shellcheck disable=2317 # as above
-	# b_optional_dir(dep_name)
-	#  Returns installation directory of an optional dependency named ${dep_name}.
-	#  This directory is a root to `lib` and `include` directories containing
-	#  dependency libraries and headers. If optional dependency is not installed,
-	#  returns empty string.
-	function b_optional_dir() {
-		local dependency_name="${1?dependency_name}"
-		"${PORT_MANAGER}" --resolve-dep "${name}-${version}" "${dependency_name}" \
-			--optional "${PORT_MANAGER_FLAGS[@]}"
+		local res="$(b_optional_dir "${dependency_name}")"
+		if [[ -z "$res" ]]; then
+			b_die "dependency for ${dependency_name} required but not installed!"
+		fi
+		echo "${res}"
 	}
 
 	# TODO: p_clean() ?
@@ -206,7 +212,7 @@ function _build_port() {
 		p_build_test
 	fi
 
-	"${PORT_MANAGER}" --mark-as-installed "${name}-${version}" "${PORT_MANAGER_FLAGS[@]}"
+	port_manager installed "${name}-${version}"
 }
 
 function build_port() {
@@ -214,11 +220,6 @@ function build_port() {
 }
 
 b_log "Discovering ports"
-
-# TODO: don't destroy db on every run
-if [ -f "${PORTS_DB}" ]; then
-	rm -v "${PORTS_DB}"
-fi
 
 for port_dir in "${PREFIX_PROJECT}/phoenix-rtos-ports"/*; do
 	port_def="${port_dir}/port.def.sh"
@@ -252,11 +253,11 @@ for port_dir in "${PREFIX_PROJECT}/phoenix-rtos-ports"/*; do
 		echo "size: ${size}"
 		echo "conflicts: ${conflicts}"
 
-		"${PORT_MANAGER}" --discover-port "${name}-${version}" --def-dir "${port_dir}" \
-			--add-depends "${depends}" \
-			--add-optional "${optional}" \
-			--add-conflicts "${conflicts}" \
-			"${PORT_MANAGER_FLAGS[@]}"
+		port_manager \
+			discover "${name}-${version}" --def-dir "${port_dir}" \
+			--requires "${depends}" \
+			--optional "${optional}" \
+			--conflicts "${conflicts}"
 	fi
 done
 
@@ -273,5 +274,10 @@ for file in "${PREFIX_PROJECT}/phoenix-rtos-ports"/*; do
 		fi
 	)
 done
+
+b_log "Ports installed"
+
+echo "Installed packages:"
+port_manager query summary
 
 exit 0

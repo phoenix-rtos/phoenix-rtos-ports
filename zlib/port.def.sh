@@ -34,7 +34,7 @@ p_build() {
 
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/build/Makefile" ]; then
 		mkdir -p "${PREFIX_PORT_WORKDIR}/build"
-		(cd "${PREFIX_PORT_WORKDIR}/build" && cmake -DCMAKE_INSTALL_PREFIX="${PREFIX_PORT_INSTALL}" -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_EXAMPLES=ON -DSKIP_INSTALL_MAN=ON .. && make install)
+		(cd "${PREFIX_PORT_WORKDIR}/build" && cmake -DCMAKE_INSTALL_PREFIX="${PREFIX_PORT_INSTALL}" -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_EXAMPLES=ON -DSKIP_INSTALL_MAN=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .. && make install)
 	fi
 
 	(cd "${PREFIX_PORT_WORKDIR}/build" && make install)
