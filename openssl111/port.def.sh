@@ -15,7 +15,7 @@
 	license="OpenSSL"
 	license_file="LICENSE"
 
-	conflicts="openssl3*"
+	conflicts="openssl3>=0.0"
 	depends=""
 	optional=""
 }
