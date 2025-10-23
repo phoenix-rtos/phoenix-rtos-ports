@@ -1,0 +1,30 @@
+--- lsb_vsx/test_sets/SRC/common/vtools/chmog.c	2025-05-08 13:50:18.000000000 +0200
++++ lsb_vsx.host/test_sets/SRC/common/vtools/chmog.c	2025-10-21 17:15:42.039340310 +0200
+@@ -103,7 +103,8 @@
+ 
+ char	*ms;
+ struct	stat	stbuf;
+-int	uid, gid;
++int	uid = -1;
++int	gid = -1;
+ int	mve, cpy;
+ 
+ char	*userlist[]  = { "root", "vsx0", "vsx1", "vsx2", NULL };
+@@ -133,13 +134,13 @@
+ 
+ 	if (strcmp(argv[2], "-") == 0)
+ 		uid = -1;
+-	else
+-		uid = checkuser(argv[2]);
++	// else
++	// 	uid = checkuser(argv[2]);
+ 
+ 	if (strcmp(argv[3], "-") == 0)
+ 		gid = -1;
+-	else
+-		gid = checkgrp(argv[3]);
++	// else
++	// 	gid = checkgrp(argv[3]);
+ 
+ 	if (strcmp(argv[4], "-m") == 0)
+ 		mve++;

@@ -188,7 +188,7 @@ if [ ! -f "${PREFIX_LSB_VSX_MARKERS}/host_VSX/host_VSX.built" ]; then
 	export HOME
 	cd "${TET_ROOT}/test_sets"; sh setup_testsets.sh
 	cp -p "${HOME}/BIN/vbuild" "${PREFIX_PORT_BUILD}/host_bin/vbuild"
-	cp -p "${HOME}/tetbuild.cfg" "${PREFIX_PORT_BUILD}/host_config/tetbuild.cfg"
+	cp -p "${HOME}/SRC/BIN/chmog" "${PREFIX_PORT_BUILD}/host_bin/chmog"
 
 #
 # # Clean whole host build
@@ -283,10 +283,13 @@ then
 	PATH="${PREFIX_PORT_BUILD}/host_bin:$PATH"
 	export TET_ROOT TET_EXECUTE
 
+	# host utils used during building
+	cp "${PREFIX_PORT_BUILD}/host_bin/chmog" "${TET_ROOT}/test_sets/SRC/BIN/chmog"
+
 	echo -e "\n--- Building tests ---\n"
 	sed -e "s|^PATH=.*$|PATH=${PATH}|" \
 	    -e "s|^VSXDIR=.*$|VSXDIR=${TET_ROOT}/test_sets/SRC|" \
-	    "${PREFIX_PORT_BUILD}/host_config/tetbuild.cfg" > "${HOME}/tetbuild.cfg"
+	    "${PREFIX_PORT}/config/tetbuild.cfg" > "${HOME}/tetbuild.cfg"
 	cd "$HOME"; "${PREFIX_PORT_BUILD}/host_bin/tcc" -p -b -s "${PREFIX_PORT}/config/scen.bld"
 
 #
@@ -326,6 +329,6 @@ then
 # # Copy exec parameter file
 #
 
-	cp -p "${PREFIX_PORT}/config/ps_tetexec.cfg" "${PREFIX_ROOTFS}/root/lsb_vsx/test_sets/tetexec.cfg"
+	cp -p "${PREFIX_PORT}/config/tetexec.cfg" "${PREFIX_ROOTFS}/root/lsb_vsx/test_sets/TESTROOT/tetexec.cfg"
 	touch "${PREFIX_LSB_VSX_MARKERS}/tests.built"
 fi

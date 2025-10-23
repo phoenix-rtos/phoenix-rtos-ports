@@ -1,0 +1,41 @@
+--- lsb_vsx/test_sets/tset/POSIX.os/procprim/exec/common.c	2025-05-08 13:50:19.000000000 +0200
++++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/procprim/exec/common.c	2025-10-20 22:08:46.910889694 +0200
+@@ -112,22 +112,22 @@
+ public	void		init_exec();
+ public	int		sig_init();
+ public	void		sig_catch();
+-public	char		**save_p();
+-public	char		**save_p_ptr();
+-public	void		cmp_p();
+-public	void		cmp_p_ptr();
+-public	void		save_args();
+-public	void		save_envp();
+-public	void		save_fds();
+-public	void		save_ids();
+-public	void		save_sigs();
+-public	void		save_p_environ();
+-public	void		cmp_args();
+-public	void		cmp_envp();
+-public	void		cmp_fds();
+-public	void		cmp_ids();
+-public	void		cmp_sigs();
+-public	void		cmp_p_environ();
++static	char		**save_p();
++static	char		**save_p_ptr();
++static	void		cmp_p();
++static	void		cmp_p_ptr();
++static	void		save_args();
++static	void		save_envp();
++static	void		save_fds();
++static	void		save_ids();
++static	void		save_sigs();
++static	void		save_p_environ();
++static	void		cmp_args();
++static	void		cmp_envp();
++static	void		cmp_fds();
++static	void		cmp_ids();
++static	void		cmp_sigs();
++static	void		cmp_p_environ();
+ public	void		do_save();
+ public	void		do_cmp();
+ public	int		file_copy();
