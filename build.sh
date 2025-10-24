@@ -68,6 +68,7 @@ ports=(
 	"lsb_vsx"
 	"heatshrink"
 	"smolrtsp"
+	"ethtool"
 )
 
 
