@@ -1,41 +1,50 @@
-diff -Nuar openssl-1.1.1a-orig/Configurations/unix-Makefile.tmpl openssl-1.1.1a/Configurations/unix-Makefile.tmpl
---- openssl-1.1.1a-orig/Configurations/unix-Makefile.tmpl	2018-11-20 14:35:37.000000000 +0100
-+++ openssl-1.1.1a/Configurations/unix-Makefile.tmpl	2021-09-15 11:14:50.324333125 +0200
-@@ -497,21 +497,21 @@
- 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/include/openssl
- 	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+diff --git a/Configurations/unix-Makefile.tmpl b/Configurations/unix-Makefile.tmpl
+--- a/Configurations/unix-Makefile.tmpl
++++ b/Configurations/unix-Makefile.tmpl
+@@ -670,7 +670,7 @@ install_fips: build_sw $(INSTALL_FIPSMODULECONF)
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)"
+ 	@$(ECHO) "*** Installing FIPS module"
+ 	@$(ECHO) "install $(INSTALL_FIPSMODULE) -> $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)"
+-	@cp "$(INSTALL_FIPSMODULE)" "$(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new"
++	@cp -a "$(INSTALL_FIPSMODULE)" "$(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new"
+ 	@chmod 755 "$(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new"
+ 	@mv -f "$(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new" \
+ 	       "$(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)"
+@@ -743,21 +743,21 @@ install_dev: install_runtime_libs
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/openssl"
+ 	@ : {- output_off() if $disabled{uplink}; "" -}
  	@$(ECHO) "install $(SRCDIR)/ms/applink.c -> $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
--	@cp $(SRCDIR)/ms/applink.c $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-+	@cp -a $(SRCDIR)/ms/applink.c $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
- 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
- 	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+-	@cp $(SRCDIR)/ms/applink.c "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
++	@cp -a $(SRCDIR)/ms/applink.c "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
+ 	@chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
+ 	@ : {- output_on() if $disabled{uplink}; "" -}
  	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
  			  $(BLDDIR)/include/openssl/*.h; do \
  		fn=`basename $$i`; \
  		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
--		cp $$i $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
-+		cp -a $$i $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
- 		chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
+-		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
++		cp -a $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
+ 		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
  	done
- 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
  	@set -e; for l in $(INSTALL_LIBS); do \
  		fn=`basename $$l`; \
  		$(ECHO) "install $$l -> $(DESTDIR)$(libdir)/$$fn"; \
--		cp $$l $(DESTDIR)$(libdir)/$$fn.new; \
-+		cp -a $$l $(DESTDIR)$(libdir)/$$fn.new; \
- 		$(RANLIB) $(DESTDIR)$(libdir)/$$fn.new; \
- 		chmod 644 $(DESTDIR)$(libdir)/$$fn.new; \
- 		mv -f $(DESTDIR)$(libdir)/$$fn.new \
-@@ -530,7 +530,7 @@
- 		fi; \
- 		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
- 		$(ECHO) "install $$s2 -> $(DESTDIR)$(libdir)/$$fn2"; \
--		cp $$s2 $(DESTDIR)$(libdir)/$$fn2.new; \
-+		cp -a $$s2 $(DESTDIR)$(libdir)/$$fn2.new; \
- 		chmod 755 $(DESTDIR)$(libdir)/$$fn2.new; \
- 		mv -f $(DESTDIR)$(libdir)/$$fn2.new \
- 		      $(DESTDIR)$(libdir)/$$fn2; \
-@@ -539,7 +539,7 @@
+-		cp $$l "$(DESTDIR)$(libdir)/$$fn.new"; \
++		cp -a $$l "$(DESTDIR)$(libdir)/$$fn.new"; \
+ 		$(RANLIB) "$(DESTDIR)$(libdir)/$$fn.new"; \
+ 		chmod 644 "$(DESTDIR)$(libdir)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
+@@ -779,7 +779,7 @@ install_dev: install_runtime_libs
+ 		: {- output_off() unless windowsdll() or sharedaix() or sharedaix_solib(); output_on() if windowsdll() or sharedaix_solib(); "" -}; \
+ 		if [ "$$fn3" != "" ]; then \
+ 			$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
+-			cp $$s3 "$(DESTDIR)$(libdir)/$$fn3.new"; \
++			cp -a $$s3 "$(DESTDIR)$(libdir)/$$fn3.new"; \
+ 			chmod 755 "$(DESTDIR)$(libdir)/$$fn3.new"; \
+ 			mv -f "$(DESTDIR)$(libdir)/$$fn3.new" \
+ 			      "$(DESTDIR)$(libdir)/$$fn3"; \
+@@ -789,7 +789,7 @@ install_dev: install_runtime_libs
  		$(ECHO) "install $$s1 -> $$a"; \
  		if [ -f $$a ]; then ( trap "rm -rf /tmp/ar.$$$$" INT 0; \
  			mkdir /tmp/ar.$$$$; ( cd /tmp/ar.$$$$; \
@@ -44,63 +53,72 @@ diff -Nuar openssl-1.1.1a-orig/Configurations/unix-Makefile.tmpl openssl-1.1.1a/
  			for so in `$(AR) t $$a`; do \
  				$(AR) x $$a $$so; \
  				chmod u+w $$so; \
-@@ -554,13 +554,13 @@
- 	@ : {- output_on() if $disabled{shared}; "" -}
- 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)/pkgconfig
- 	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
--	@cp libcrypto.pc $(DESTDIR)$(libdir)/pkgconfig
-+	@cp -a libcrypto.pc $(DESTDIR)$(libdir)/pkgconfig
- 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
- 	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
--	@cp libssl.pc $(DESTDIR)$(libdir)/pkgconfig
-+	@cp -a libssl.pc $(DESTDIR)$(libdir)/pkgconfig
- 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
- 	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
--	@cp openssl.pc $(DESTDIR)$(libdir)/pkgconfig
-+	@cp -a openssl.pc $(DESTDIR)$(libdir)/pkgconfig
- 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
+@@ -806,14 +806,14 @@ install_dev: install_runtime_libs
+ 	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
+ 		fn=`basename $$e`; \
+ 		$(ECHO) "install $$e -> $(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+-		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
++		cp -a $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+ 		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
+ 	done
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(CMAKECONFIGDIR)
+ 	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
+ 		fn=`basename $$e`; \
+ 		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
+-		cp $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
++		cp -a $$e $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+ 		chmod 644 $(DESTDIR)$(CMAKECONFIGDIR)/$$fn; \
+ 	done
  
- uninstall_dev: uninstall_runtime_libs
-@@ -615,7 +615,7 @@
+@@ -881,7 +881,7 @@ install_engines: _install_modules_deps
  		if [ "$$e" = "dummy" ]; then continue; fi; \
  		fn=`basename $$e`; \
  		$(ECHO) "install $$e -> $(DESTDIR)$(ENGINESDIR)/$$fn"; \
--		cp $$e $(DESTDIR)$(ENGINESDIR)/$$fn.new; \
-+		cp -a $$e $(DESTDIR)$(ENGINESDIR)/$$fn.new; \
- 		chmod 755 $(DESTDIR)$(ENGINESDIR)/$$fn.new; \
- 		mv -f $(DESTDIR)$(ENGINESDIR)/$$fn.new \
- 		      $(DESTDIR)$(ENGINESDIR)/$$fn; \
-@@ -649,13 +649,13 @@
+-		cp $$e "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
++		cp -a $$e "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(ENGINESDIR)/$$fn.new" \
+ 		      "$(DESTDIR)$(ENGINESDIR)/$$fn"; \
+@@ -905,7 +905,7 @@ install_modules: _install_modules_deps
+ 		if [ "$$e" = "dummy" ]; then continue; fi; \
+ 		fn=`basename $$e`; \
+ 		$(ECHO) "install $$e -> $(DESTDIR)$(MODULESDIR)/$$fn"; \
+-		cp $$e "$(DESTDIR)$(MODULESDIR)/$$fn.new"; \
++		cp -a $$e "$(DESTDIR)$(MODULESDIR)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(MODULESDIR)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(MODULESDIR)/$$fn.new" \
+ 		      "$(DESTDIR)$(MODULESDIR)/$$fn"; \
+@@ -936,13 +936,13 @@ install_runtime_libs: build_libs
  		fn=`basename $$s`; \
  		: {- output_off() unless windowsdll(); "" -}; \
- 		$(ECHO) "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
--		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-+		cp -a $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		chmod 644 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
- 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+ 		$(ECHO) "install $$s -> $(DESTDIR)$(bindir)/$$fn"; \
+-		cp $$s "$(DESTDIR)$(bindir)/$$fn.new"; \
++		cp -a $$s "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(bindir)/$$fn.new" \
+ 		      "$(DESTDIR)$(bindir)/$$fn"; \
  		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
  		$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
--		cp $$s $(DESTDIR)$(libdir)/$$fn.new; \
-+		cp -a $$s $(DESTDIR)$(libdir)/$$fn.new; \
- 		chmod 755 $(DESTDIR)$(libdir)/$$fn.new; \
- 		mv -f $(DESTDIR)$(libdir)/$$fn.new \
- 		      $(DESTDIR)$(libdir)/$$fn; \
-@@ -670,7 +670,7 @@
+-		cp $$s "$(DESTDIR)$(libdir)/$$fn.new"; \
++		cp -a $$s "$(DESTDIR)$(libdir)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(libdir)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
+ 		      "$(DESTDIR)$(libdir)/$$fn"; \
+@@ -957,7 +957,7 @@ install_programs: install_runtime_libs build_programs
  		if [ "$$x" = "dummy" ]; then continue; fi; \
  		fn=`basename $$x`; \
- 		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
--		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-+		cp -a $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
- 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
-@@ -679,7 +679,7 @@
+ 		$(ECHO) "install $$x -> $(DESTDIR)$(bindir)/$$fn"; \
+-		cp $$x "$(DESTDIR)$(bindir)/$$fn.new"; \
++		cp -a $$x "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(bindir)/$$fn.new" \
+ 		      "$(DESTDIR)$(bindir)/$$fn"; \
+@@ -966,7 +966,7 @@ install_programs: install_runtime_libs build_programs
  		if [ "$$x" = "dummy" ]; then continue; fi; \
  		fn=`basename $$x`; \
- 		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
--		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-+		cp -a $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
- 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
- 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+ 		$(ECHO) "install $$x -> $(DESTDIR)$(bindir)/$$fn"; \
+-		cp $$x "$(DESTDIR)$(bindir)/$$fn.new"; \
++		cp -a $$x "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		chmod 755 "$(DESTDIR)$(bindir)/$$fn.new"; \
+ 		mv -f "$(DESTDIR)$(bindir)/$$fn.new" \
+ 		      "$(DESTDIR)$(bindir)/$$fn"; \
