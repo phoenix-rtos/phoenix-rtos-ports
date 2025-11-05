@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2025-05-08 13:50:18.989594058 +0200
-+++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/install.sh	2025-05-09 15:43:56.245766734 +0200
+--- lsb_vsx/test_sets/SRC/install/scripts/install.sh	2025-05-08 13:50:18.000000000 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/install.sh	2025-09-25 15:46:32.456299322 +0200
 @@ -1,4 +1,4 @@
 -: use Bourne Shell
 +#!/usr/bin/env bash
@@ -177,7 +177,184 @@
  # Set up the testroot 							#
  #									#
  #########################################################################
-@@ -681,14 +546,22 @@
+@@ -339,176 +204,6 @@
+ )
+ 
+ #########################################################################
+-#
+-# Create the TET/DTET config files
+-#
+-#########################################################################
+-
+-case $TEST_XNFS in
+-[yY])
+-	echo "
+-Creating tetbuild.cfg, tetexec.cfg, tetclean.cfg, tetdist.cfg and systems"
+-	;;
+-*)
+-	echo "
+-Creating tetbuild.cfg, tetexec.cfg and tetclean.cfg"
+-	;;
+-esac
+-
+-if test -f $HOME/tetbuild.cfg
+-then
+-	echo >&2 "*** existing tetbuild.cfg moved to oldbuild.cfg"
+-	rm -f $HOME/oldbuild.cfg
+-	mv $HOME/tetbuild.cfg $HOME/oldbuild.cfg &&
+-	$VSXDIR/install/scripts/editcfg.sh $HOME/oldbuild.cfg \
+-		< $VSXDIR/install/tetbuild.cfg | \
+-		$VSXDIR/install/scripts/editcfg.sh $VSXDIR/vsxparams \
+-		> $HOME/tetbuild.cfg
+-else
+-	$VSXDIR/install/scripts/editcfg.sh $VSXDIR/vsxparams \
+-		< $VSXDIR/install/tetbuild.cfg > $HOME/tetbuild.cfg
+-fi
+-
+-cat $VSXDIR/vsxparams > $tfile
+-packagelist=""
+-for subset in $SUBSETS
+-do
+-	CONFIG_PACKAGE=""
+-	. $VSXDIR/subsets/$subset/config_info
+-	case " $packagelist " in
+-	*" $CONFIG_PACKAGE "*) ;;
+-	*) packagelist="$packagelist $CONFIG_PACKAGE" ;;
+-	esac
+-done
+-echo "TEST_PACKAGES=\"$packagelist\"" >> $tfile
+-echo "VSX_CC=\"$CC\"" >> $tfile
+-echo "VSX_CFLAGS=\"$COPTS\"" >> $tfile
+-echo "VSX_LIBS=\"$MLIB $SYSLIBS $LDFLAGS\"" >> $tfile
+-case $TEST_XNFS in
+-[yY])
+-	templates=$VSXDIR/install/nfsexec.top
+-	for subset in $SUBSETS
+-	do
+-		templates="$templates $VSXDIR/subsets/$subset/nfs_params"
+-	done
+-	templates="$templates $VSXDIR/install/nfsexec.bot"
+-	;;
+-*)
+-	echo "VSX_NOSPC_DEV=\"$NOSPC_DEV\"" >> $tfile
+-	templates=$VSXDIR/install/tetexec.top
+-	for subset in $SUBSETS
+-	do
+-		templates="$templates $VSXDIR/subsets/$subset/exec_params"
+-	done
+-	templates="$templates $VSXDIR/install/tetexec.bot"
+-	;;
+-esac
+-if test -f $TET_EXECUTE/tetexec.cfg
+-then
+-	echo >&2 "*** existing tetexec.cfg moved to oldexec.cfg"
+-	rm -f $TET_EXECUTE/oldexec.cfg
+-	mv $TET_EXECUTE/tetexec.cfg $TET_EXECUTE/oldexec.cfg &&
+-	cat $templates | \
+-		$VSXDIR/install/scripts/editcfg.sh $TET_EXECUTE/oldexec.cfg | \
+-		$VSXDIR/install/scripts/editcfg.sh $tfile | \
+-		sed "s?{TET_EXECUTE}?$TET_EXECUTE?g" > $TET_EXECUTE/tetexec.cfg
+-else
+-	cat $templates | \
+-		$VSXDIR/install/scripts/editcfg.sh $tfile | \
+-		sed "s?{TET_EXECUTE}?$TET_EXECUTE?g" > $TET_EXECUTE/tetexec.cfg
+-fi
+-
+-if test -f $HOME/tetclean.cfg
+-then
+-	echo >&2 "*** existing tetclean.cfg moved to oldclean.cfg"
+-	rm -f $HOME/oldclean.cfg
+-	mv $HOME/tetclean.cfg $HOME/oldclean.cfg &&
+-	$VSXDIR/install/scripts/editcfg.sh $HOME/oldclean.cfg \
+-		< $VSXDIR/install/tetclean.cfg | \
+-		$VSXDIR/install/scripts/editcfg.sh $VSXDIR/vsxparams \
+-		> $HOME/tetclean.cfg
+-else
+-	$VSXDIR/install/scripts/editcfg.sh $VSXDIR/vsxparams \
+-		< $VSXDIR/install/tetclean.cfg > $HOME/tetclean.cfg
+-fi
+-
+-case $TEST_XNFS in
+-[yY])
+-	if test -f $HOME/tetdist.cfg
+-	then
+-		echo >&2 "*** existing tetdist.cfg moved to olddist.cfg"
+-		rm -f $HOME/olddist.cfg
+-		mv $HOME/tetdist.cfg $HOME/olddist.cfg
+-	fi
+-	echo "TET_REM001_TET_ROOT=\"$SERVER_TET_ROOT\"" > $tfile
+-	echo "TET_REM001_TET_TSROOT=\"$SERVER_TET_ROOT/vsx4\"" >> $tfile
+-	echo "TET_REM001_TET_EXECUTE=\"$SERVER_TET_ROOT/vsx4/TESTROOT\"" >> $tfile
+-	$VSXDIR/install/scripts/editcfg.sh $tfile \
+-		< $VSXDIR/install/tetdist.cfg > $HOME/tetdist.cfg
+-
+-	echo "0 $XNFS_CLIENT
+-1 $XNFS_SERVER" > $tfile
+-	if test -f $HOME/../systems
+-	then
+-		if cmp -s $HOME/../systems $tfile
+-		then
+-			rm -f $tfile
+-		else
+-			echo >&2 "*** existing systems file moved to systems.old"
+-			rm -f $HOME/../systems.old
+-			mv $HOME/../systems $HOME/../systems.old &&
+-			mv $tfile $HOME/../systems
+-		fi
+-	else
+-		mv $tfile $HOME/../systems
+-	fi
+-	;;
+-esac
+-
+-#########################################################################
+-#									#
+-# Create scenario files including the sections for the selected subsets	#
+-#									#
+-#########################################################################
+-echo "
+-Creating the scenario files scen.bld and scen.exec"
+-
+-NFS=
+-case $TEST_XNFS in
+-[Yy]) NFS=nfs ;;
+-esac
+-
+-if test -f $HOME/scen.bld
+-then
+-	echo "*** existing scen.bld moved to oldscen.bld"
+-	rm -f $HOME/oldscen.bld
+-	mv $HOME/scen.bld $HOME/oldscen.bld
+-fi
+-echo all > $HOME/scen.bld
+-for subset in $SUBSETS
+-do
+-	if test -f $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}bld
+-	then sed 1d $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}bld
+-	else sed 1d $VSXDIR/subsets/$subset/scen.${NFS}bld
+-	fi
+-done >> $HOME/scen.bld
+-
+-if test -f $HOME/scen.exec
+-then
+-	echo "*** existing scen.exec moved to oldscen.exec"
+-	rm -f $HOME/oldscen.exec
+-	mv $HOME/scen.exec $HOME/oldscen.exec
+-fi
+-echo all > $HOME/scen.exec
+-for subset in $SUBSETS
+-do
+-	if test -f $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}exec
+-	then sed 1d $VSXDIR/subsets/$subset/${TEST_MODE}.${NFS}exec
+-	else sed 1d $VSXDIR/subsets/$subset/scen.${NFS}exec
+-	fi
+-done >> $HOME/scen.exec
+-
+-#########################################################################
+ #									#
+ # Install userintf.c, rpcincs.h and testvars.h				#
+ #									#
+@@ -681,14 +376,22 @@
  	then	echo "$dir make succeeded"
  	else	echo "$dir make failed:"
  		cat make.$target

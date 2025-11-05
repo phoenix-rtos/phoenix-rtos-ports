@@ -1,0 +1,27 @@
+--- lsb_vsx/LSB.tools/userintf.c	2025-05-08 13:50:18.000000000 +0200
++++ lsb_vsx.phoenix/LSB.tools/userintf.c	2025-08-19 15:07:10.254439498 +0200
+@@ -584,7 +584,7 @@
+ #define STREAMS_PTY
+ #endif
+ 
+-/* #define CLONE_MPTY	/* uncomment if master pty's are obtained from a
++#define CLONE_MPTY	/* uncomment if master pty's are obtained from a
+ 		 	   clone device (e.g. /dev/ptmx) */
+ /* #define STREAMS_PTY	/* uncomment if pty's use STREAMS */
+ 
+@@ -644,8 +644,14 @@
+ 	}
+ #endif
+ 
+-	if (cntrl)
++	if (cntrl) {
+ 		*sfdp = openctl(slave, O_RDWR);
++		/* 
++		 * At this moment Phoenix-RTOS does not fully support job control, and handing
++		 * over control of the terminal to the given process group must be done manually
++		 */
++		tcsetpgrp(*sfdp, getpgrp());
++	}
+ 	else
+ 		*sfdp = open(slave, O_RDWR|O_NOCTTY);
+ 
