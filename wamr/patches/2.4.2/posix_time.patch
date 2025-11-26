@@ -1,0 +1,17 @@
+--- a/core/shared/platform/common/posix/posix_time.c
++++ b/core/shared/platform/common/posix/posix_time.c
+@@ -19,10 +19,6 @@
+ uint64
+ os_time_thread_cputime_us()
+ {
+-    struct timespec ts;
+-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) {
+-        return 0;
+-    }
+-
+-    return ((uint64)ts.tv_sec) * 1000 * 1000 + ((uint64)ts.tv_nsec) / 1000;
+-}
+\ No newline at end of file
++    /* Phoenix does not support CLOCK_THREAD_CPUTIME_ID flag */
++    return 0;
++}

@@ -1,0 +1,103 @@
+--- a/product-mini/platforms/linux/CMakeLists.txt	2025-09-15 11:11:18.000000000 +0200
++++ b/product-mini/platforms/linux/CMakeLists.txt	2025-09-25 15:53:48.579867600 +0200
+@@ -3,15 +3,17 @@
+ 
+ cmake_minimum_required (VERSION 3.14)
+ 
++SET(CMAKE_FIND_ROOT_PATH $ENV{PHOENIX_SYSROOT})
++
+ include(CheckPIESupported)
+ 
+-project (iwasm)
++project (iwasm C)
+ 
+ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+ 
+ set (CMAKE_VERBOSE_MAKEFILE OFF)
+ 
+-set (WAMR_BUILD_PLATFORM "linux")
++set (WAMR_BUILD_PLATFORM "phoenix")
+ 
+ # Reset default linker flags
+ set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+@@ -49,14 +51,19 @@
+   set(CMAKE_BUILD_TYPE Release)
+ endif ()
+ 
++if (DEFINED TARGET_HAS_TLS)
++  set(TARGET_HAS_TLS 1)
++  message(STATUS "Target supports thread local storage")
++endif ()
++
+ if (NOT DEFINED WAMR_BUILD_INTERP)
+   # Enable Interpreter by default
+   set (WAMR_BUILD_INTERP 1)
+ endif ()
+ 
+ if (NOT DEFINED WAMR_BUILD_AOT)
+-  # Enable AOT by default.
+-  set (WAMR_BUILD_AOT 1)
++  # Disable AOT by default.
++  set (WAMR_BUILD_AOT 0)
+ endif ()
+ 
+ if (NOT DEFINED WAMR_BUILD_JIT)
+@@ -95,8 +102,8 @@
+ endif ()
+ 
+ if (NOT DEFINED WAMR_BUILD_LIB_WASI_THREADS)
+-  # Disable wasi threads library by default
+-  set (WAMR_BUILD_LIB_WASI_THREADS 0)
++  # Enable wasi threads library by default
++  set (WAMR_BUILD_LIB_WASI_THREADS 1)
+ endif()
+ 
+ if (NOT DEFINED WAMR_BUILD_MINI_LOADER)
+@@ -125,12 +132,6 @@
+   set (WAMR_BUILD_SIMD 0)
+ endif ()
+ 
+-# if enable wasi-nn, both wasi-nn-backends and iwasm
+-# need to use same WAMR (dynamic) libraries
+-if (WAMR_BUILD_WASI_NN EQUAL 1)
+-  set (BUILD_SHARED_LIBS ON)
+-endif ()
+-
+ set (WAMR_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+ 
+ include (${WAMR_ROOT_DIR}/build-scripts/runtime_lib.cmake)
+@@ -139,10 +140,10 @@
+ 
+ set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
+ 
+-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wformat -Wformat-security -Wshadow")
++set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wformat -Wformat-security -Wshadow -Os")
+ # set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion -Wsign-conversion")
+ 
+-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat -Wformat-security -Wno-unused")
++set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat -Wformat-security -Wno-unused -Os")
+ 
+ if (WAMR_BUILD_TARGET MATCHES "X86_.*" OR WAMR_BUILD_TARGET STREQUAL "AMD_64")
+   if (NOT (CMAKE_C_COMPILER MATCHES ".*clang.*" OR CMAKE_C_COMPILER_ID MATCHES ".*Clang"))
+@@ -162,7 +163,11 @@
+ 
+ include (${SHARED_DIR}/utils/uncommon/shared_uncommon.cmake)
+ 
+-add_executable (iwasm main.c ${UNCOMMON_SHARED_SOURCE})
++file(GLOB_RECURSE NATIVE_LIBRARIES_SOURCE
++ "${CMAKE_CURRENT_SOURCE_DIR}/native_libs/*.c"
++)
++
++add_executable (iwasm main.c ${UNCOMMON_SHARED_SOURCE} ${NATIVE_LIBRARIES_SOURCE})
+ 
+ set_version_info (iwasm)
+ 
+@@ -192,7 +197,7 @@
+   POSITION_INDEPENDENT_CODE ON
+ )
+ 
+-target_link_libraries (vmlib ${LLVM_AVAILABLE_LIBS} ${UV_A_LIBS} -lm -ldl -lpthread)
++target_link_libraries (vmlib ${LLVM_AVAILABLE_LIBS} ${UV_A_LIBS} -lm -lpthread) # Removed -ldl because we don't support dynamic linking
+ 
+ install (TARGETS vmlib
+   EXPORT iwasmTargets

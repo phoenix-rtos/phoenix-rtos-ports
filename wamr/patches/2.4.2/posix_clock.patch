@@ -1,0 +1,35 @@
+--- a/core/shared/platform/common/posix/posix_clock.c
++++ b/core/shared/platform/common/posix/posix_clock.c
+@@ -40,8 +40,6 @@
+ static __wasi_timestamp_t
+ timespec_to_nanoseconds(const struct timespec *ts)
+ {
+-    if (ts->tv_sec < 0)
+-        return 0;
+     if ((__wasi_timestamp_t)ts->tv_sec >= UINT64_MAX / NANOSECONDS_PER_SECOND)
+         return UINT64_MAX;
+     return (__wasi_timestamp_t)ts->tv_sec * NANOSECONDS_PER_SECOND
+@@ -51,19 +49,9 @@
+ __wasi_errno_t
+ os_clock_res_get(__wasi_clockid_t clock_id, __wasi_timestamp_t *resolution)
+ {
+-    clockid_t nclock_id;
+-    __wasi_errno_t error = wasi_clockid_to_clockid(clock_id, &nclock_id);
+-
+-    if (error != __WASI_ESUCCESS)
+-        return error;
+-
+-    struct timespec ts;
+-    if (clock_getres(nclock_id, &ts) < 0)
+-        return convert_errno(errno);
+-
+-    *resolution = timespec_to_nanoseconds(&ts);
+-
+-    return error;
++    /* Phoenix has microsecond precision */
++    *resolution = 1000;
++    return convert_errno(EOK);
+ }
+ 
+ __wasi_errno_t
+
