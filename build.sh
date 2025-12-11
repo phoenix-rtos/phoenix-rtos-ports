@@ -88,4 +88,6 @@ for port in "${ports[@]}"; do
 )
 done
 
+[ "${PORTS_X264}" = "y" ] && ./phoenix-rtos-ports/x264/build.sh
+
 exit 0
