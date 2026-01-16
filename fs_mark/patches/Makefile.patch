@@ -1,0 +1,19 @@
+--- fs_mark-3.3/Makefile	2025-01-02 19:10:48.757969200 +0100
++++ fs_mark-3.3.phoenix/Makefile	2025-01-02 19:10:48.757969200 +0100
+@@ -14,14 +14,14 @@
+ CC ?= gcc
+ CFLAGS ?= -O2
+ LDFLAGS ?=
+-CFLAGS += -Wall -D_FILE_OFFSET_BITS=64
++CFLAGS += -Wall -D_FILE_OFFSET_BITS=64 -z stack-size=8192
+ 
+ all: fs_mark 
+ 
+ fs_mark.o: fs_mark.c fs_mark.h
+ 
+ fs_mark: fs_mark.o lib_timing.o
+-	$(CC) $(CFLAGS) -o fs_mark fs_mark.o lib_timing.o $(LDFLAGS)
++	$(CC) $(CPPFLAGS) $(CFLAGS) -o fs_mark fs_mark.o lib_timing.o $(LDFLAGS)
+ 
+ test: fs_mark
+ 	./fs_mark -d ${DIR1} -d ${DIR2} -s 51200 -n 4096
