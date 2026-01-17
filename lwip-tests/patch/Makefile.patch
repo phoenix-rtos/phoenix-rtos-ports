@@ -1,0 +1,41 @@
+--- contrib_orginal/ports/unix/check/Makefile	2024-01-09 16:16:39.402560579 +0100
++++ contrib/ports/unix/check/Makefile	2024-01-15 17:00:03.544552858 +0100
+@@ -33,7 +33,7 @@
+ .PHONY: all clean check
+ 
+ # The include path to sys_arch.h and lwipopts.h must be first, so this must be before Common.mk
+-CFLAGS=-DLWIP_NOASSERT_ON_ERROR -I/usr/include/check -I$(LWIPDIR)/../test/unit
++CFLAGS+=-DLWIP_NOASSERT_ON_ERROR -I$(LWIPDIR)/../../include/arch -I$(LWIPDIR)/../../include/default-opts/testsuite -I$(CHECK_H_PATH)
+ 
+ # Ignore 'too many arguments for format' warnings which happen with GCCs
+ # from check 0.15.2 on fail_if/fail_unless macros with text.
+@@ -46,18 +46,21 @@
+ endif
+ 
+ # Prevent compiling sys_arch.c of unix port because unit test provide their own port
+-SYSARCH?=
++PORTDIR = $(LWIPDIR)/../../port
++SYSARCH?=$(wildcard $(PORTDIR)/*.c)
+ include ../Common.mk
+ 
+-LDFLAGS:=-lcheck -lm $(LDFLAGS)
++LDFLAGS+= -lcheck --static
+ 
+ ifneq ($(UNAME_S),Darwin)
+ # check installed via brew on Darwin doesn't have a separate subunit library (must be statically linked)
+-LDFLAGS+=-lsubunit
++# Subunit not ported, tests can work without it
++# LDFLAGS+=-lsubunit
+ endif
+ 
+ TESTDIR=$(LWIPDIR)/../test/unit
+ include $(TESTDIR)/Filelists.mk
++include $(LWIPDIR)/../test/unit/Filelists.mk
+ TESTOBJS=$(notdir $(TESTFILES:.c=.o))
+ 
+ clean:
+@@ -83,4 +86,3 @@
+ endif
+ 
+ check: lwip_unittests
+-	@./lwip_unittests
