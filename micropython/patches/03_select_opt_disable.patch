@@ -1,0 +1,12 @@
+diff -Naur micropython-1.26.0/ports/unix/variants/mpconfigvariant_common.h micropython-phoenix/ports/unix/variants/mpconfigvariant_common.h
+--- micropython-1.26.0/ports/unix/variants/mpconfigvariant_common.h	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/variants/mpconfigvariant_common.h	2025-08-29 16:21:58.881782196 +0200
+@@ -111,7 +111,7 @@
+ #endif
+ 
+ // The "select" module is enabled by default, but disable select.select().
+-#define MICROPY_PY_SELECT_POSIX_OPTIMISATIONS (1)
++#define MICROPY_PY_SELECT_POSIX_OPTIMISATIONS (0)
+ #define MICROPY_PY_SELECT_SELECT       (0)
+ 
+ // Enable the "websocket" module.

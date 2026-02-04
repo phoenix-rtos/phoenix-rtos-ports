@@ -414,7 +414,7 @@ class InstallableCandidate(Candidate):
         if self._conflicts:
             # If port is conflictable, it has a special installation directory
             prefix = ensure_getenv("PREFIX_BUILD_VERSIONED")
-            return f"{prefix}/{self._name}-{str(self._version)}"
+            return os.path.join(prefix, f"{self._name}-{str(self._version)}")
         else:
             # Otherwise, it is treated like normal libs
             prefix = ensure_getenv("PREFIX_BUILD")
@@ -581,6 +581,9 @@ class DependencyManager:
                 name, rname, constraints),
         )
 
+        if not args.def_dir:
+            raise ValueError(f"Empty definition directory")
+
         self.add_candidate(
             InstallableCandidate(name, version, req, conflicts, args.def_dir)
         )
@@ -638,6 +641,16 @@ class DependencyManager:
             if isinstance(candidate, InstallableCandidate):
                 iprint("installed:", candidate.installed)
                 iprint("install path:", candidate.install_path)
+
+        def iter_namever_deps(namever: str) -> Iter[Candidate]:
+            name, version = parse_namever(namever)
+            candidate = self.lookup_candidate(
+                name, version, candidate_type=InstallableCandidate
+            )
+            logger.debug(self.mapping)
+            for dep in candidate.iter_dependencies():
+                yield self.mapping[namever][dep.name]
+
         try:
             match args.args:
                 case ["summary"]:
@@ -676,17 +689,20 @@ class DependencyManager:
                     )
                     print(candidate.install_path)
                 case ["deps-to-install", namever]:
-                    name, version = parse_namever(namever)
-                    candidate = self.lookup_candidate(
-                        name, version, candidate_type=InstallableCandidate
-                    )
-                    logger.debug(self.mapping)
-                    for dep in candidate.iter_dependencies():
-                        dep_candidate = self.mapping[namever][dep.name]
+                    for dep_candidate in iter_namever_deps(namever):
                         if not dep_candidate.installed:
                             print(dep_candidate.definition_path)
+                case ["deps-pkg-config-path", namever]:
+                    res = set()
+                    for dep_candidate in iter_namever_deps(namever):
+                        res.add(os.path.join(dep_candidate.install_path, "lib", "pkgconfig"))
+                    print(":".join(list(res)))
                 case ["dep-install-path", namever, dep_name]:
-                    print(self.mapping[namever][dep_name].install_path)
+                    dep = self.mapping[namever][dep_name]
+                    if dep.installed:
+                        print(self.mapping[namever][dep_name].install_path)
+                    else:
+                        print()
                 case []:
                     logger.error("""Must pass query arguments.
 Examples:
