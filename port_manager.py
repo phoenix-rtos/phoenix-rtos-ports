@@ -2,7 +2,7 @@
 #
 # Port dependency manager
 #
-# Copyright 2025 Phoenix Systems
+# Copyright 2026 Phoenix Systems
 # Author: Adam Greloch
 #
 
@@ -14,6 +14,14 @@ import operator
 import resolvelib
 import os
 import jsonpickle
+import yaml
+import time
+
+from pathlib import Path
+
+import termios
+
+import subprocess
 
 from colorama import Fore, Style
 from enum import Enum
@@ -28,6 +36,7 @@ from functools import cache, cmp_to_key
 # https://pip.pypa.io/en/stable/topics/more-dependency-resolution/
 
 from collections.abc import Iterable
+from collections import deque
 from typing import (
     Any,
     Protocol,
@@ -92,6 +101,7 @@ class Candidate:
 KT = TypeVar("KT")  # Identifier.
 RT = TypeVar("RT")  # Requirement.
 CT = TypeVar("CT")  # Candidate.
+
 
 Matches = Union[Iterable[CT], Callable[[], Iterable[CT]]]
 
@@ -161,6 +171,8 @@ T = TypeVar("T")
 
 Constraint = Tuple[str, PhxVersion]
 
+
+PORTS_DIR = Path(__file__).parent
 
 def parse_requirements(s: str, f: Callable[[str, list[Constraint]], T]) -> list[T]:
     requirements_objects = []
@@ -374,10 +386,19 @@ class InstallableCandidate(Candidate):
         self._requirements = requirements
         self._conflicts = conflicts
         self._definition_path = definition_path
+        self._use_flags = []
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def use_flags(self) -> List[str]:
+        return self._use_flags
+
+    @use_flags.setter
+    def use_flags(self, flags) -> None:
+        self._use_flags = flags
 
     def __repr__(self):
         return f"{self._name}-{self.version}"
@@ -409,6 +430,12 @@ class InstallableCandidate(Candidate):
                 return True
         return False
 
+    def is_optional(self, candidate: Candidate) -> bool:
+        for req in self._requirements:
+            if req.name == candidate.name and req.is_satisfied_by(candidate) and isinstance(req, OptionalRequirement):
+                return True
+        return False
+
     @property
     def install_path(self) -> str:
         if self._conflicts:
@@ -435,7 +462,7 @@ class Logger:
     def _print(self, fmt: str, level: LogLevel, color: Fore, sep: str = " ", **kwargs):
         if level.value >= self.print_level.value:
             print(
-                color + f"{level.name}: " + Style.RESET_ALL + fmt,
+                color + f"{level.name}: " + Style.RESET_ALL + fmt + color + Style.RESET_ALL,
                 file=sys.stderr,
                 **kwargs,
             )
@@ -506,9 +533,7 @@ class DependencyManager:
         self.candidates: dict[str, dict[str, Candidate]] = dict()
         self.mapping: dict[str, dict[str, Candidate]] = dict()
         self.db_path = None
-
-    CANDIDATES_FILE = "ports.json"
-    TREE_FILE = "mapping.json"
+        self.roll_logs = False
 
     def get_db_file_path(self, filename: str) -> str:
         if not self.db_path:
@@ -563,42 +588,31 @@ class DependencyManager:
                 raise TypeError(f"{candidate} is not of type {candidate_type}")
         return candidate
 
-    def cmd_discover(self, args: Namespace) -> None:
-        self.read_candidates()
+    def discover_port(self, namever, def_dir, requires, optional, conflicts):
+        name, version = parse_namever(namever)
 
-        def safe_join(s):
-            return " ".join(s) if s else ""
+        req = parse_requirements(requires, BaseRequirement)
+        req += parse_requirements(optional, OptionalRequirement)
 
-        name, version = parse_namever(args.namever)
-
-        req = parse_requirements(safe_join(args.requires), BaseRequirement)
-        req += parse_requirements(safe_join(args.optional),
-                                  OptionalRequirement)
-
-        conflicts = parse_requirements(
-            safe_join(args.conflicts),
+        conflicts = parse_requirements(conflicts,
             lambda rname, constraints: ConflictRequirement(
                 name, rname, constraints),
         )
 
-        if not args.def_dir:
+        if not def_dir:
             raise ValueError(f"Empty definition directory")
 
         self.add_candidate(
-            InstallableCandidate(name, version, req, conflicts, args.def_dir)
+            InstallableCandidate(name, version, req, conflicts, def_dir)
         )
 
-        self.write_candidates()
 
-    def cmd_resolve(self, args: Namespace) -> None:
-        self.read_candidates()
-
+    def resolve(self, cands) -> None:
         user_requirements = dict()
 
-        for namever in args.namevers:
-            name, version = parse_namever(namever)
-            user_requirements[namever] = BaseRequirement(
-                name, [("==", version)])
+        for cand in cands:
+            user_requirements[str(cand)] = BaseRequirement(
+                cand.name, [("==", cand.version)])
 
         provider = PhxProvider(self.candidates)
         reporter = MyReporter(provider)
@@ -609,7 +623,6 @@ class DependencyManager:
             try:
                 resolver = resolvelib.Resolver(provider, reporter)
                 for namever, ureq in user_requirements.items():
-                    logger.debug("resolving", ureq)
                     result = resolver.resolve([ureq])
                     self.mapping[namever] = result.mapping
                 logger.debug(self.mapping)
@@ -621,35 +634,20 @@ class DependencyManager:
                     self.candidates = prev_candidates
                     raise
 
-        self.write_candidates()
-
     def cmd_query(self, args: Namespace) -> None:
         self.read_candidates()
 
-        def print_candidate(candidate: Candidate, indent=0):
-            def iprint(*args):
-                print(indent * " " + " ".join(map(str, args)))
-
-            iprint("name:", name)
-            iprint("version:", candidate.version)
-            iprint("requirements:", candidate.iter_dependencies())
-            iprint("conflicts:", candidate.iter_conflicts())
-            iprint("definition directory:", candidate.definition_path)
-            namever = f"{name}-{candidate.version}"
+        def print_cand(cand: Candidate, indent=0):
+            print("name:", name)
+            print("version:", cand.version)
+            print("requirements:", cand.iter_dependencies())
+            print("conflicts:", cand.iter_conflicts())
+            print("definition:", cand.definition_path)
             if namever in self.mapping:
-                iprint("mapping:", self.mapping[namever])
-            if isinstance(candidate, InstallableCandidate):
-                iprint("installed:", candidate.installed)
-                iprint("install path:", candidate.install_path)
-
-        def iter_namever_deps(namever: str) -> Iter[Candidate]:
-            name, version = parse_namever(namever)
-            candidate = self.lookup_candidate(
-                name, version, candidate_type=InstallableCandidate
-            )
-            logger.debug(self.mapping)
-            for dep in candidate.iter_dependencies():
-                yield self.mapping[namever][dep.name]
+                print("mapping:", self.mapping[str(cand)])
+            if isinstance(cand, InstallableCandidate):
+                print("installed:", cand.installed)
+                print("install path:", cand.install_path)
 
         try:
             match args.args:
@@ -689,12 +687,12 @@ class DependencyManager:
                     )
                     print(candidate.install_path)
                 case ["deps-to-install", namever]:
-                    for dep_candidate in iter_namever_deps(namever):
+                    for dep_candidate in self.iter_namever_deps(namever):
                         if not dep_candidate.installed:
                             print(dep_candidate.definition_path)
                 case ["deps-pkg-config-path", namever]:
                     res = set()
-                    for dep_candidate in iter_namever_deps(namever):
+                    for dep_candidate in self.iter_namever_deps(namever):
                         res.add(os.path.join(dep_candidate.install_path, "lib", "pkgconfig"))
                     print(":".join(list(res)))
                 case ["dep-install-path", namever, dep_name]:
@@ -724,19 +722,160 @@ Possible queries:
             )
             sys.exit(1)
 
-    def cmd_installed(self, args: Namespace) -> None:
+    def iter_cand_deps(self, cand: Candidate) -> Iter[Candidate]:
+        # TODO: drop the namever from self.mapping
+        for dep in cand.iter_dependencies():
+            yield self.mapping[str(cand)][dep.name]
+
+    def iter_namever_deps(self, namever: str) -> Iter[Candidate]:
+        name, version = parse_namever(namever)
+        candidate = self.lookup_candidate(
+            name, version, candidate_type=InstallableCandidate
+        )
+        logger.debug(self.mapping)
+        yield self.iter_cand_deps(candidate)
+
+    def install_cand(self, cand: BaseCandidate, dep_of: BaseCandidate | None=None):
+        r_fd, w_fd = os.pipe()
+
+        info = f"Installing {cand}"
+        extra = []
+
+        if dep_of:
+            extra.append(f"dependency of {dep_of}")
+
+        if len(cand.use_flags) > 0:
+            extra.append(f"USE flags: " + " ".join(cand.use_flags))
+
+        if len(extra) > 0:
+            info += f" ({", ".join(extra)})"
+
+        logger.info(info)
+
+        port_env = os.environ.copy()
+        port_env["PREFIX_PORT_INSTALL"] = cand.install_path
+
+        for use_flag in cand.use_flags:
+            port_env[f"USE_{use_flag}"] = "y"
+
+        logger.info(f"Prepare {cand}")
+
+        proc = subprocess.Popen(["bash", PORTS_DIR / "prepare_port.sh",
+                                 cand.definition_path, str(w_fd)],
+                                pass_fds=(w_fd,), close_fds=True, env=port_env)
+
+        os.close(w_fd)
+        with os.fdopen(r_fd) as r:
+            env_output = r.read()
+        proc.wait()
+
+        for line in env_output.split('\0'):
+            if '=' in line:
+                key, value = line.split('=', 1)
+                port_env[key] = value
+
+        self.resolve([cand])
+
+        # install required dependencies
+        for dep_candidate in self.iter_cand_deps(cand):
+            if not dep_candidate.installed:
+                if cand.is_optional(dep_candidate):
+                    logger.warning(f"{dep_candidate} is an optional dependency for {cand} that must be explicitely enabled")
+                else:
+                    self.install_cand(dep_candidate, cand)
+
+        pkg_config_path_set = set()
+        for dep_candidate in self.iter_cand_deps(cand):
+            env_name=f"PORT_DEP_{dep_candidate.name}"
+            if dep_candidate.installed:
+                port_env[env_name] = dep_candidate.install_path
+                pkg_config_path_set.add(os.path.join(dep_candidate.install_path, "lib", "pkgconfig"))
+            else:
+                port_env[env_name] = ""
+
+            logger.debug(env_name, dep_candidate.install_path if dep_candidate.installed else "<empty>")
+
+        port_env["PKG_CONFIG_PATH"] = ":".join(list(pkg_config_path_set))
+
+        cmd = ["bash", PORTS_DIR / "build_port.sh", cand.definition_path]
+
+        logger.info(f"Build {cand}")
+
+        if self.roll_logs:
+            proc = subprocess.Popen(cmd, env=port_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            last_lines = deque(maxlen=5)
+
+            for line in proc.stdout:
+                sys.stdout.write("\033[F" * len(last_lines))
+                last_lines.append(line.rstrip()[:os.get_terminal_size()[0] * 8 // 10 ])
+
+                for l in last_lines:
+                    sys.stdout.write(Fore.BLUE + "> \033[K" + l + "\n" +
+                        Style.RESET_ALL)
+
+                sys.stdout.flush()
+
+            proc.wait()
+        else:
+            subprocess.run(cmd, env=port_env)
+
+        logger.info(f"Installed {cand}")
+        cand.mark_as_installed()
+
+    def cmd_build(self, args: Namespace) -> None:
         self.read_candidates()
 
-        name, version = parse_namever(args.namever)
-        candidadate = self.lookup_candidate(name, version)
+        start = time.time()
 
-        if isinstance(candidadate, InstallableCandidate):
-            candidadate.mark_as_installed()
-            logger.info(f"{candidadate} marked as installed")
-        else:
-            raise ValueError(f"{candidadate} is not installable")
+        # TODO: cache this step?
+        for port_def in PORTS_DIR.rglob("port.def.sh"):
+            result = subprocess.run(
+                ["bash", PORTS_DIR / "load_port_def.sh", port_def],
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode != 0:
+                sys.exit("bad port_def")
+
+            dct = jsonpickle.decode(result.stdout)
+            logger.debug(dct)
+
+            self.discover_port(dct['namever'], port_def,
+                               dct['requires'], dct['optional'],
+                               dct['conflicts'])
+
+        with open(args.ports_yaml, "r", encoding="utf-8") as f:
+            ports_dict = yaml.safe_load(f)
+
+            cands = []
+
+            # set USE flags
+            for port in ports_dict['ports']:
+                # TODO: select specific version?
+                cand = next(iter(self.candidates[port['name']].values()))
+                if 'use' in port:
+                    cand.use_flags = port['use']
+
+                cands.append(cand)
+
+            for cand in cands:
+                uses = "(" + " ".join(cand.use_flags) + ")" if len(cand.use_flags) > 0 else "" 
+                self.install_cand(cand)
+
+
+        namevers = []
+        for name, versions in self.candidates.items():
+            for candidate in versions.values():
+                if isinstance(candidate, InstallableCandidate) and candidate.installed:
+                    namevers.append(f"{name}-{candidate.version}")
+
+        stop = time.time()
+        logger.info(f"Done in {stop - start:.2f} s. Installed ports:", " ".join(namevers))
 
         self.write_candidates()
+
 
     def build_argument_parser(self) -> ArgumentParser:
         parser = ArgumentParser()
@@ -745,44 +884,18 @@ Possible queries:
 
         parser.add_argument("--db", help="specify database directory")
         parser.add_argument("-v", action="store_true")
+        parser.add_argument("-r", action="store_true", default=False, help="roll build logs (i.e. for interactive environment)")
         parser.add_argument("--quiet", action="store_true")
 
         subparsers = parser.add_subparsers(title="subcommands")
-        discover = subparsers.add_parser(
-            "discover", help="add port to dep tree")
-        discover.add_argument("namever", help=namever_help)
-        discover.set_defaults(func=self.cmd_discover)
-
-        discover.add_argument("--def-dir", help="add port def dir")
-        discover.add_argument(
-            "--requires", nargs="*", help="add dependencies to the discovered port"
-        )
-        discover.add_argument(
-            "--optional",
-            nargs="*",
-            help="add optional dependencies to the discovered port",
-        )
-        discover.add_argument(
-            "--conflicts", nargs="*", help="add conflicts to the discovered port"
-        )
-
-        resolve = subparsers.add_parser(
-            "resolve", help="perform dependency resolution")
-        resolve.add_argument("namevers", nargs="*", help=namever_help)
-        resolve.set_defaults(func=self.cmd_resolve)
-
-        resolve.add_argument(
-            "--optional", help="resolve as optional", action="store_true"
-        )
-
-        installed = subparsers.add_parser(
-            "installed", help="mark port as installed")
-        installed.add_argument("namever", help=namever_help)
-        installed.set_defaults(func=self.cmd_installed)
-
         query = subparsers.add_parser("query", help="query port information")
         query.add_argument("args", nargs="*")
         query.set_defaults(func=self.cmd_query)
+
+        build = subparsers.add_parser(
+            "build", help="build ports based on ports.yaml config")
+        build.add_argument("ports_yaml")
+        build.set_defaults(func=self.cmd_build)
 
         return parser
 
@@ -798,6 +911,8 @@ Possible queries:
             logger.set_level(LogLevel.VERBOSE)
         if args.quiet:
             logger.set_level(LogLevel.NONE)
+        if args.r:
+            self.roll_logs = True
 
         return args
 

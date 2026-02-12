@@ -23,7 +23,7 @@
 p_prepare() {
   b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}"
 
-  if [ "${PORTS_LUA_SAFE}" = "y" ]; then
+  if [ "${USE_LUA_SAFE}" = "y" ]; then
     b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}/safe"
   fi
 }
