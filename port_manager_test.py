@@ -2,104 +2,23 @@
 #
 # Port dependency manager tests
 #
-# Copyright 2025 Phoenix Systems
+# Copyright 2026 Phoenix Systems
 # Author: Adam Greloch
 #
 
 import pytest
 import os
 
-import io
-from contextlib import redirect_stdout
-
-import tempfile
-
-from resolvelib.resolvers import ResolverException, ResolutionImpossible
-from port_manager import DependencyManager, LogLevel, logger
-
+from resolvelib.resolvers import (
+    ResolverException,
+    ResolutionImpossible,
+    ResolutionTooDeep,
+)
+from port_manager import DependencyManager, LogLevel, logger, PhxVersion
 
 PREFIX_BUILD = "normal_port_install_dir"
 PREFIX_BUILD_VERSIONED = "versioned_port_install_dir"
 PREFIX_PORTS = "ports"
-
-
-class Utils:
-    @staticmethod
-    def discover_port(
-        pm: DependencyManager,
-        port,
-        depends=None,
-        optional=None,
-        conflicts=None,
-        def_dir=None,
-        db=None,
-    ):
-        args = [""]
-        if db:
-            args += ["--db", db]
-        args += ["discover", port]
-        if depends:
-            args += ["--requires"] + depends
-        if optional:
-            args += ["--optional"] + optional
-        if conflicts:
-            args += ["--conflicts"] + conflicts
-        args += ["--def-dir", f"ports/{port}"]
-        pm.run(args)
-
-    @staticmethod
-    def resolve(pm: DependencyManager, ports, db=None):
-        args = [""]
-        if db:
-            args += ["--db", db]
-        args += ["resolve"] + ports
-        f = io.StringIO()
-        with redirect_stdout(f):
-            pm.run(args)
-        return f.getvalue().splitlines()
-
-    @staticmethod
-    def dep_install_path(pm: DependencyManager, port, dep_name, db=None):
-        args = [""]
-        if db:
-            args += ["--db", db]
-        args += ["query", "dep-install-path", port, dep_name]
-        f = io.StringIO()
-        with redirect_stdout(f):
-            pm.run(args)
-        return f.getvalue().splitlines()
-
-    @staticmethod
-    def list_deps_to_install(pm: DependencyManager, port):
-        args = ["", "query", "deps-to-install", port]
-        f = io.StringIO()
-        with redirect_stdout(f):
-            pm.run(args)
-        return f.getvalue().splitlines()
-
-    @staticmethod
-    def mark_as_installed(pm: DependencyManager, port):
-        args = ["", "installed", port]
-        pm.run(args)
-
-    @staticmethod
-    def is_installed(pm: DependencyManager, port):
-        args = ["", "query", "is-installed", port]
-        pm.run(args)
-
-    @staticmethod
-    def install_path(pm: DependencyManager, port):
-        args = ["", "query", "install-path", port]
-        f = io.StringIO()
-        with redirect_stdout(f):
-            pm.run(args)
-        return f.getvalue().splitlines()
-
-    @staticmethod
-    def assert_not_installed(pm: DependencyManager, port, dep_name):
-        with pytest.raises(SystemExit) as ex:
-            Utils.dep_install_path(pm, port, dep_name)
-        assert ex.value.args[0] != 0
 
 
 @pytest.fixture(scope="session")
@@ -110,201 +29,142 @@ def fix():
     yield
 
 
-def test_args_bad(fix):
-    pm = DependencyManager()
-    pytest.raises(
-        Exception, Utils.discover_port, pm, port="foo-1.2.3", depends=["bar-1.1.1"]
+def build_find_ports(dct):
+    def closure():
+        for name, port_def in dct.items():
+            port_def["namever"] = name
+            opt_fields = ["requires", "optional", "conflicts"]
+
+            for field in opt_fields:
+                if field not in port_def:
+                    port_def[field] = []
+
+            yield (port_def, os.path.join("somedir", name))
+
+    return closure
+
+
+def build_get_ports_to_build(dct):
+    def closure():
+        return dct
+
+    return closure
+
+
+def run_dry_build(all_ports, to_build):
+    pm = DependencyManager(
+        [],
+        get_ports_to_build=build_get_ports_to_build(to_build),
+        find_ports=build_find_ports(all_ports),
+        dry=True,
     )
-    pytest.raises(
-        Exception, Utils.discover_port, pm, port="foo-1.2.3", depends=["bar>>1.1.1"]
-    )
-    pytest.raises(
-        Exception, Utils.discover_port, pm, port="foo>=1.2.3", depends=["bar>=1.1.1"]
-    )
+    pm.cmd_build()
+    return pm
 
 
-def test_database_simple(fix):
-    with tempfile.TemporaryDirectory() as db_path:
-        db_file = os.path.join(db_path, "ports.json")
-
-        foo = "foo-1.9.3"
-        bar = "bar-2.0.0"
-        pm = DependencyManager()
-        Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"], db=db_file)
-        Utils.discover_port(pm, port=bar, db=db_file)
-
-        pm = DependencyManager()
-        with pytest.raises(ResolutionImpossible):
-            Utils.resolve(pm, ports=[foo])
-
-        pm = DependencyManager()
-        Utils.resolve(pm, ports=[foo], db=db_file)
-        assert [PREFIX_BUILD] == Utils.dep_install_path(
-            pm, port=foo, dep_name="bar", db=db_file
-        )
+def test_port_resolution_simple(fix):
+    all_ports = {"foo-1.2.3": {"requires": "bar>=1.1.1"}, "bar-2.0.0": {}}
+    to_build = {"ports": [{"name": "foo"}]}
+    run_dry_build(all_ports, to_build)
 
 
-def test_port_discovery_simple(fix):
-    pm = DependencyManager()
-    Utils.discover_port(pm, port="foo-1.2.3", depends=["bar>=1.1.1"])
-    Utils.discover_port(pm, port="bar-2.0.0")
+def test_port_resolution_depends_optional(fix):
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1", "optional": "baz>=3.2.1"},
+        "bar-2.0.0": {},
+    }
+    to_build = {"ports": [{"name": "foo"}]}
+    run_dry_build(all_ports, to_build)
+
+    all_ports["baz-3.2.1"] = {}
+    run_dry_build(all_ports, to_build)
 
 
-def test_port_discovery_depends_optional(fix):
-    pm = DependencyManager()
-    Utils.discover_port(
-        pm, port="foo-1.2.3", depends=["bar>=1.1.1"], optional=["baz>=3.2.1"]
-    )
-    Utils.discover_port(pm, port="bar-2.0.0")
-    Utils.discover_port(pm, port="baz-3.2.1")
-
-
-def test_port_discovery_conflicts(fix):
-    pm = DependencyManager()
-    Utils.discover_port(pm, port="foo-1.2.3", conflicts=["foo3>=0.0"])
-    Utils.resolve(pm, ports=["foo-1.2.3"])
-
-
-def test_conflicts_itself(fix):
-    pm = DependencyManager()
-    foo = "foo-1.2.3"
-    Utils.discover_port(pm, foo, conflicts=["foo>=0.0"])
-    pytest.raises(ResolutionImpossible, Utils.resolve, pm, ports=[foo])
-
-
-def test_resolution_simple(fix):
-    pm = DependencyManager()
-    foo = "foo-1.9.3"
-    bar = "bar-2.0.0"
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-    Utils.discover_port(pm, port=bar)
-    Utils.resolve(pm, ports=[foo])
-    assert [PREFIX_BUILD] == Utils.dep_install_path(pm, port=foo, dep_name="bar")
-
-
-def test_resolution_conflicting_simple(fix):
-    pm = DependencyManager()
-    foo = "foo-1.0.2"
-    bar = "bar-2.0.0"
-    barng = "barng-2.1.0"
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-    Utils.discover_port(pm, port=bar, conflicts=["barng>=2.1"])
-    Utils.discover_port(pm, port=barng, conflicts=["bar>=0.0"])
-    Utils.resolve(pm, ports=[foo])
-    assert [os.path.join(PREFIX_BUILD_VERSIONED, bar)] == Utils.dep_install_path(
-        pm, port=foo, dep_name="bar"
-    )
-
-
-def test_resolution_conflicting_version_alternatives(fix):
-    pm = DependencyManager()
-    foo = "foo-1.0.2"
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-
-    bar = "bar-2.0.0"
-    Utils.discover_port(pm, port=bar, conflicts=["barng>=0.0"])
-
-    barng = "barng-2.2.0"
-    Utils.discover_port(pm, port=barng, conflicts=["bar>=0.0"])
-
-    foo_v3 = "foo-3.2.0"
-    Utils.discover_port(pm, port=foo_v3, depends=["barng>=1.1.1"])
-
-    Utils.resolve(pm, ports=[foo, foo_v3])
-    assert [os.path.join(PREFIX_BUILD_VERSIONED, bar)] == Utils.dep_install_path(
-        pm, port=foo, dep_name="bar"
-    )
-    Utils.assert_not_installed(pm, port=foo, dep_name="barng")
-
-
-def test_resolution_conflicting_independent(fix):
-    pm = DependencyManager()
-    foo = "foo-1.0.2"
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-
-    bar = "bar-2.0.0"
-    Utils.discover_port(pm, port=bar, conflicts=["barng>=0.0"])
-
-    barng = "barng-2.2.0"
-    Utils.discover_port(pm, port=barng, conflicts=["bar>=0.0"])
-
-    baz = "baz-1.2.3"
-    Utils.discover_port(pm, port=baz, depends=["barng>=1.1.1"])
-
-    Utils.resolve(pm, ports=[foo, baz])
-    assert [os.path.join(PREFIX_BUILD_VERSIONED, bar)] == Utils.dep_install_path(
-        pm, port=foo, dep_name="bar"
-    )
-    Utils.assert_not_installed(pm, port=foo, dep_name="barng")
-
-    assert [os.path.join(PREFIX_BUILD_VERSIONED, barng)] == Utils.dep_install_path(
-        pm, port=baz, dep_name="barng"
-    )
-    Utils.assert_not_installed(pm, port=baz, dep_name="bar")
-
-
-def test_resolution_two_conflicts_in_single_port(fix):
-    pm = DependencyManager()
-
-    foo = "foo-1.0.2"
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-
-    bar = "bar-2.0.0"
-    Utils.discover_port(pm, port=bar, conflicts=["barng>=0.0"])
-
-    barng = "barng-2.2.0"
-    Utils.discover_port(pm, port=barng, conflicts=["bar>=0.0"])
-
-    baz = "baz-3.2.0"
-    Utils.discover_port(pm, port=baz, depends=["barng>=1.1.1"])
-
-    faz = "faz-4.2.0"
-    Utils.discover_port(pm, port=faz, depends=["baz>=1.1.1", "foo>=1.0"])
-
-    with pytest.raises(ResolverException):
-        Utils.resolve(pm, ports=[faz])
-
-
-def test_detect_pending_resolution(fix):
-    pm = DependencyManager()
-
-    foo = "foo-1.9.3"
-    Utils.discover_port(pm, port=foo)
-
-    with pytest.raises(SystemExit) as ex:
-        Utils.dep_install_path(pm, port=foo, dep_name="bar")
-    assert ex.value.args[0] != 0
-
-
-def test_resolution_optional(fix):
-    pm = DependencyManager()
-
-    foo = "foo-1.9.3"
-    Utils.discover_port(pm, port=foo, optional=["bar>=1.1.1"])
-    Utils.resolve(pm, ports=[foo])
-
-    with pytest.raises(SystemExit) as ex:
-        Utils.dep_install_path(pm, port=foo, dep_name="bar")
-    assert ex.value.args[0] != 0
-
-    bar = "bar-2.0.0"
-    Utils.discover_port(pm, port=bar)
-    Utils.resolve(pm, ports=[foo])
-
-    assert [PREFIX_BUILD] == Utils.dep_install_path(pm, port=foo, dep_name="bar")
-
-
-def test_resolution_unsatisfiable(fix):
-    foo = "foo-1.5.8"
-    bar = "bar-2.0.1"
-
-    pm = DependencyManager()
-    Utils.discover_port(pm, port=foo, depends=["bar==2.0.0"])
+def test_port_resolution_conflicts_itself(fix):
+    all_ports = {"foo-1.2.3": {"conflicts": "foo>=1.1.1"}}
+    to_build = {"ports": [{"name": "foo"}]}
 
     with pytest.raises(ResolutionImpossible):
-        Utils.resolve(pm, ports=[foo])
+        run_dry_build(all_ports, to_build)
 
-    port1_unsatisfiable_bar_deps = [
+
+def get_cand_from_namever(pm, namever):
+    name, _ = namever.split("-")
+    return pm.mapping[namever][name]
+
+
+def assert_version_mapping(pm, namever, exp_mappings):
+    name, ver = namever.split("-")
+    resolved_mapping = pm.mapping[namever]
+
+    assert len(resolved_mapping) == len(exp_mappings) + 1
+    assert resolved_mapping[name].version == PhxVersion(ver)
+
+    for dep_name, ver in exp_mappings.items():
+        assert resolved_mapping[dep_name].version == PhxVersion(ver)
+
+
+def test_port_resolution_independent_conflicts(fix):
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1"},
+        "bar-2.0.0": {"conflicts": "barng>=0.0"},
+        "barng-2.2.0": {"conflicts": "bar>=0.0"},
+        "foo-3.2.0": {"requires": "barng>=1.1.1"},
+    }
+
+    to_build = {
+        "ports": [
+            {"name": "foo", "version": "1.2.3"},
+            {"name": "foo", "version": "3.2.0"},
+        ]
+    }
+    pm = run_dry_build(all_ports, to_build)
+    assert_version_mapping(pm, "foo-1.2.3", {"bar": "2.0.0"})
+    assert_version_mapping(pm, "foo-3.2.0", {"barng": "2.2.0"})
+
+
+def test_port_resolution_independent_conflicts_choose_alternative(fix):
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1"},
+        "bar-2.0.0": {"conflicts": "barng>=0.0"},
+        "barng-2.2.0": {"conflicts": "bar>=0.0"},
+        "foo-3.2.0": {"requires": "barng>=1.1.1"},
+        "baz-1.1.1": {"requires": "foo>=1.1.1"},
+    }
+
+    to_build = {"ports": [{"name": "baz"}]}
+    pm = run_dry_build(all_ports, to_build)
+
+    # Resolver should pick alternative with newest version
+    assert_version_mapping(pm, "baz-1.1.1", {"foo": "3.2.0", "barng": "2.2.0"})
+
+
+def test_resolution_conflicting_port_dependencies(fix):
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1"},
+        "bar-2.0.0": {"conflicts": "barng>=0.0"},
+        "barng-2.2.0": {"conflicts": "bar>=0.0"},
+        "baz-3.2.0": {"requires": "barng>=1.1.1"},
+        "faz-4.2.0": {"requires": "foo>=1.0 baz>=1.0"},
+    }
+
+    to_build = {"ports": [{"name": "faz"}]}
+
+    with pytest.raises(ResolutionTooDeep):
+        run_dry_build(all_ports, to_build)
+
+
+def test_resolution_unsatisfiable_simple(fix):
+    all_ports = {"foo-1.2.3": {"requires": "bar>=1.1.1"}}
+
+    to_build = {"ports": [{"name": "foo"}]}
+
+    with pytest.raises(ResolutionImpossible):
+        run_dry_build(all_ports, to_build)
+
+
+def test_resolution_unsatisfiable_version(fix):
+    unsatisfiable_bar_requires = [
         "bar>=3.1.1",
         "bar<2.0.1",
         "bar<=2.0.0",
@@ -313,94 +173,57 @@ def test_resolution_unsatisfiable(fix):
         "bar==2.0.10",
     ]
 
-    for bar_dep in port1_unsatisfiable_bar_deps:
-        pm = DependencyManager()
-        Utils.discover_port(pm, port=foo, depends=[bar_dep])
-        Utils.discover_port(pm, port=bar)
+    for req in unsatisfiable_bar_requires:
+        all_ports = {
+            "foo-1.2.3": {"requires": req},
+            "bar-2.0.1": {},
+        }
+
+        to_build = {"ports": [{"name": "foo"}]}
 
         with pytest.raises(ResolutionImpossible):
-            Utils.resolve(pm, ports=[foo])
-
-
-def test_install_simple(fix):
-    pm = DependencyManager()
-    foo = "foo-1.9.3"
-    bar = "bar-2.0.0"
-
-    Utils.discover_port(pm, port=foo, depends=["bar>=1.1.1"])
-    Utils.discover_port(pm, port=bar)
-
-    Utils.resolve(pm, ports=[foo, bar])
-
-    assert [] == Utils.list_deps_to_install(pm, bar)
-    assert [os.path.join(PREFIX_PORTS, bar)] == Utils.list_deps_to_install(pm, foo)
-
-    with pytest.raises(SystemExit) as ex:
-        Utils.is_installed(pm, bar)
-    assert ex.value.args[0] != 0
-
-    Utils.mark_as_installed(pm, port=bar)
-
-    with pytest.raises(SystemExit) as ex:
-        Utils.is_installed(pm, bar)
-    assert ex.value.args[0] == 0
-
-    assert [] == Utils.list_deps_to_install(pm, foo)
-
-
-def test_install_unsatisfiable(fix):
-    pm = DependencyManager()
-    foo = "foo-1.9.3"
-    bar = "bar-2.0.0"
-
-    Utils.discover_port(pm, port=foo, depends=["bar>=3.1.1"])
-    Utils.discover_port(pm, port=bar)
-
-    with pytest.raises(ResolutionImpossible):
-        Utils.resolve(pm, ports=[foo])
-
-    Utils.mark_as_installed(pm, port=bar)
-
-    with pytest.raises(ResolutionImpossible):
-        Utils.resolve(pm, ports=[foo])
+            run_dry_build(all_ports, to_build)
 
 
 def test_install_path(fix):
-    pm = DependencyManager()
-    port1 = "foo-1.9.3"
-    port2 = "bar-2.0.0"
-    port3 = "baz-1.2.3"
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1"},
+        "bar-2.0.0": {"conflicts": "barng>=0.0"},
+    }
+    to_build = {"ports": [{"name": "foo"}]}
+    pm = run_dry_build(all_ports, to_build)
 
-    Utils.discover_port(pm, port=port1)
-    Utils.discover_port(pm, port=port2)
-
-    assert [PREFIX_BUILD] == Utils.install_path(pm, port1)
-    assert [PREFIX_BUILD] == Utils.install_path(pm, port2)
-
-    Utils.discover_port(pm, port=port3, conflicts=["bazng>=0.0"])
-    assert [os.path.join(PREFIX_BUILD_VERSIONED, port3)] == Utils.install_path(
-        pm, port3
+    assert PREFIX_BUILD == get_cand_from_namever(pm, "foo-1.2.3").install_path
+    assert (
+        os.path.join(PREFIX_BUILD_VERSIONED, "bar-2.0.0")
+        == get_cand_from_namever(pm, "bar-2.0.0").install_path
     )
 
 
 def test_install_bad_env(fix):
     del os.environ["PREFIX_BUILD"]
-    del os.environ["PREFIX_BUILD_VERSIONED"]
 
-    pm = DependencyManager()
+    all_ports = {"foo-1.2.3": {"requires": "bar>=1.1.1"}, "bar-2.0.0": {}}
+    to_build = {"ports": [{"name": "foo"}]}
 
-    port1 = "foo-1.9.3"
-    port2 = "bar-2.0.0"
-
-    Utils.discover_port(pm, port=port1)
     with pytest.raises(EnvironmentError) as ex:
-        Utils.install_path(pm, port1)
+        run_dry_build(all_ports, to_build)
     assert ex.value.args[0] == "PREFIX_BUILD undefined"
 
-    Utils.discover_port(pm, port=port2, conflicts=["barng>=0.0"])
+    os.environ["PREFIX_BUILD"] = PREFIX_BUILD
+
+    del os.environ["PREFIX_BUILD_VERSIONED"]
+
+    all_ports = {
+        "foo-1.2.3": {"requires": "bar>=1.1.1"},
+        "bar-2.0.0": {"conflicts": "barng>=0.0"},
+    }
+    to_build = {"ports": [{"name": "foo"}]}
     with pytest.raises(EnvironmentError) as ex:
-        Utils.install_path(pm, port2)
+        run_dry_build(all_ports, to_build)
     assert ex.value.args[0] == "PREFIX_BUILD_VERSIONED undefined"
 
-    os.environ["PREFIX_BUILD"] = PREFIX_BUILD
     os.environ["PREFIX_BUILD_VERSIONED"] = PREFIX_BUILD_VERSIONED
+
+
+# TODO: expose USE flags explicitely in port.def.sh

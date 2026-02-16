@@ -11,19 +11,20 @@
 from __future__ import annotations
 import sys
 import operator
-import resolvelib
+
 import os
-import jsonpickle
+import json
 import yaml
 import time
 
-from pathlib import Path
+import resolvelib
+from resolvelib.structs import RequirementInformation, State, KT, RT, CT
+from resolvelib.resolvers.criterion import Criterion
 
-import termios
+from pathlib import Path
 
 import subprocess
 
-from colorama import Fore, Style
 from enum import Enum
 
 import pyparsing as pp
@@ -44,10 +45,13 @@ from typing import (
     Iterator,
     Sequence,
     TypeVar,
-    Union,
     Callable,
     Tuple,
     Set,
+    List,
+    Iterable,
+    Generator,
+    Dict,
 )
 
 
@@ -66,56 +70,68 @@ class Requirement:
 
 
 class Candidate:
-    @property
-    def name(self) -> str:
-        """The name identifying this candidate in the resolver.
+    def __init__(
+        self,
+        name: str,
+        version: PhxVersion,
+        requirements: Iterable[Requirement],
+        conflicts: Iterable[ConflictRequirement],
+        definition_path: str,
+    ) -> None:
+        self.name = name
+        self.version = version
+        self.installed = False
+        self._requirements = requirements
+        self._conflicts = conflicts
+        self.definition_path = definition_path
+        self.use_flags: List[str] = []
+        self.build_tests = False
 
-        This is different from ``project_name`` if this candidate contains
-        extras, where ``project_name`` would not contain the ``[...]`` part.
-        """
-        raise NotImplementedError("Override in subclass")
+    def __repr__(self):
+        return f"{self.name}-{self.version}"
 
-    @property
-    def version(self) -> PhxVersion:
-        raise NotImplementedError("Override in subclass")
+    def iter_dependencies(self) -> Iterable[Requirement]:
+        return self._requirements
 
-    @property
-    def installed(self) -> bool:
-        raise NotImplementedError("Override in subclass")
+    def iter_conflicts(self) -> Iterable[ConflictRequirement]:
+        return self._conflicts
+
+    def conflicts_with(self, candidate: Candidate) -> bool:
+        for creq in self._conflicts:
+            if creq.is_satisfied_by(candidate):
+                return True
+        return False
+
+    def is_optional(self, candidate: Candidate) -> bool:
+        for req in self._requirements:
+            if (
+                req.name == candidate.name
+                and req.is_satisfied_by(candidate)
+                and isinstance(req, OptionalRequirement)
+            ):
+                return True
+        return False
 
     @property
     def install_path(self) -> str:
-        raise NotImplementedError("Override in subclass")
-
-    @property
-    def definition_path(self) -> str:
-        raise NotImplementedError("Override in subclass")
-
-    def iter_dependencies(self) -> Iterable[Requirement]:
-        raise NotImplementedError("Override in subclass")
-
-    def iter_conflicts(self) -> Iterable[ConflictRequirement]:
-        raise NotImplementedError("Override in subclass")
+        if self._conflicts:
+            # If port is conflictable, it has a special installation directory
+            prefix = ensure_getenv("PREFIX_BUILD_VERSIONED")
+            return os.path.join(prefix, f"{self.name}-{str(self.version)}")
+        else:
+            # Otherwise, it is treated like normal libs
+            prefix = ensure_getenv("PREFIX_BUILD")
+            return f"{prefix}"
 
 
-KT = TypeVar("KT")  # Identifier.
-RT = TypeVar("RT")  # Requirement.
-CT = TypeVar("CT")  # Candidate.
-
-
-Matches = Union[Iterable[CT], Callable[[], Iterable[CT]]]
-
-
-PreferenceInformation = resolvelib.structs.RequirementInformation[
-    Requirement, Candidate
-]
+PreferenceInformation = RequirementInformation[Requirement, Candidate]
 
 
 class Preference(Protocol):
     def __lt__(self, __other: Any) -> bool: ...
 
 
-class PhxVersion (Version):
+class PhxVersion(Version):
     def __str__(self) -> str:
         """
         A modified Version.__str__ that does not print added zeros in
@@ -174,6 +190,7 @@ Constraint = Tuple[str, PhxVersion]
 
 PORTS_DIR = Path(__file__).parent
 
+
 def parse_requirements(s: str, f: Callable[[str, list[Constraint]], T]) -> list[T]:
     requirements_objects = []
     if s:
@@ -194,8 +211,7 @@ def parse_requirements(s: str, f: Callable[[str, list[Constraint]], T]) -> list[
 
 class PhxProvider(resolvelib.AbstractProvider):
     def __init__(self, all_candidates: Mapping[str, Mapping[str, Candidate]]):
-        self.all_candidates: Mapping[str,
-                                     Mapping[str, Candidate]] = all_candidates
+        self.all_candidates: Mapping[str, Mapping[str, Candidate]] = all_candidates
         self.masked_requirements: Set[OptionalRequirement] = set()
 
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
@@ -213,7 +229,7 @@ class PhxProvider(resolvelib.AbstractProvider):
         information: Mapping[str, Iterator[PreferenceInformation]],
         backtrack_causes: Sequence[PreferenceInformation],
     ) -> Iterable[str]:
-        # TODO: when the performance becomes a problem, narrow selections to speed up the resolution
+        # TODO: when performance becomes a problem, narrow selections to speed up the resolution
         return identifiers
 
     def get_preference(
@@ -224,7 +240,7 @@ class PhxProvider(resolvelib.AbstractProvider):
         information: Mapping[str, Iterable[PreferenceInformation]],
         backtrack_causes: Sequence[PreferenceInformation],
     ) -> Preference:
-        # TODO: when the performance becomes a problem, add preferences to speed up the resolution
+        # TODO: when performance becomes a problem, add preferences to speed up the resolution
         return 0
 
     def find_matches(
@@ -246,17 +262,15 @@ class PhxProvider(resolvelib.AbstractProvider):
 
         res: list[Candidate] = []
         for candidate in self.all_candidates[identifier].values():
-            logger.debug(candidate, "requirements:",
-                         candidate.iter_dependencies())
+            logger.debug(candidate, "requirements:", candidate.iter_dependencies())
 
             if candidate in incompatibilities.values():
                 continue
             good = True
-            logger.debug(candidate, "conflict list:",
-                         candidate.iter_conflicts())
+            logger.debug(candidate, "conflict list:", candidate.iter_conflicts())
             for conflict in candidate.iter_conflicts():
                 if conflict.cname in requirements:
-                    logger.error(
+                    logger.debug(
                         candidate,
                         "conflicts with",
                         conflict.cname,
@@ -269,16 +283,20 @@ class PhxProvider(resolvelib.AbstractProvider):
                     logger.debug(candidate, "doesn't satisfy", requirement)
                     good = False
                     break
-            if good:
-                logger.debug(candidate, "satisfies", requirement)
-                res.append(candidate)
+                if good:
+                    logger.debug(candidate, "satisfies", requirement)
+                    res.append(candidate)
 
         logger.debug("resulting matches", res)
 
-        def cmp(a, b):
-            return (a > b) - (a < b)
+        def cmp_cands(a: Candidate, b: Candidate):
+            def cmp(a: PhxVersion, b: PhxVersion):
+                return (a > b) - (a < b)
 
-        return sorted(res, key=cmp_to_key(lambda a, b: cmp(a.version, b.version)))
+            return -cmp(a.version, b.version)
+
+        # Sort newer versions first
+        return sorted(res, key=cmp_to_key(cmp_cands))
 
     @staticmethod
     @cache
@@ -294,8 +312,10 @@ class PhxProvider(resolvelib.AbstractProvider):
         )
 
 
-def constraint_satisfied(candidate_version: PhxVersion, constraint: Tuple[str, PhxVersion]):
-    (relation, constraint_version) = constraint
+def constraint_satisfied(
+    candidate_version: PhxVersion, constraint: Tuple[str, PhxVersion]
+):
+    relation, constraint_version = constraint
     match relation:
         case ">=":
             op = operator.ge
@@ -366,86 +386,8 @@ def ensure_getenv(var: str):
 def parse_namever(namever: str) -> Tuple[str, PhxVersion]:
     elems = namever.split("-")
     if len(elems) != 2:
-        raise ValueError(
-            f"bad name-ver - expected NAME-VERSION, got '{namever}'")
+        raise ValueError(f"bad name-ver - expected NAME-VERSION, got '{namever}'")
     return (elems[0], PhxVersion(elems[1]))
-
-
-class InstallableCandidate(Candidate):
-    def __init__(
-        self,
-        name: str,
-        version: PhxVersion,
-        requirements: Iterable[Requirement],
-        conflicts: Iterable[ConflictRequirement],
-        definition_path: str,
-    ) -> None:
-        self._name = name
-        self._version = version
-        self._installed = False
-        self._requirements = requirements
-        self._conflicts = conflicts
-        self._definition_path = definition_path
-        self._use_flags = []
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def use_flags(self) -> List[str]:
-        return self._use_flags
-
-    @use_flags.setter
-    def use_flags(self, flags) -> None:
-        self._use_flags = flags
-
-    def __repr__(self):
-        return f"{self._name}-{self.version}"
-
-    @property
-    def installed(self) -> bool:
-        return self._installed
-
-    def mark_as_installed(self) -> None:
-        self._installed = True
-
-    @property
-    def version(self) -> PhxVersion:
-        return self._version
-
-    @property
-    def definition_path(self) -> str:
-        return self._definition_path
-
-    def iter_dependencies(self) -> Iterable[Requirement]:
-        return self._requirements
-
-    def iter_conflicts(self) -> Iterable[ConflictRequirement]:
-        return self._conflicts
-
-    def conflicts_with(self, candidate: Candidate) -> bool:
-        for creq in self._conflicts:
-            if creq.is_satisfied_by(candidate):
-                return True
-        return False
-
-    def is_optional(self, candidate: Candidate) -> bool:
-        for req in self._requirements:
-            if req.name == candidate.name and req.is_satisfied_by(candidate) and isinstance(req, OptionalRequirement):
-                return True
-        return False
-
-    @property
-    def install_path(self) -> str:
-        if self._conflicts:
-            # If port is conflictable, it has a special installation directory
-            prefix = ensure_getenv("PREFIX_BUILD_VERSIONED")
-            return os.path.join(prefix, f"{self._name}-{str(self._version)}")
-        else:
-            # Otherwise, it is treated like normal libs
-            prefix = ensure_getenv("PREFIX_BUILD")
-            return f"{prefix}"
 
 
 class LogLevel(Enum):
@@ -456,13 +398,22 @@ class LogLevel(Enum):
     NONE = 4
 
 
+class Color:
+    CYAN = "\033[0;36m"
+    BLUE = "\033[0;34m"
+    GREEN = "\033[0;32m"
+    YELLOW = "\033[1;33m"
+    RED = "\033[0;31m"
+    END = "\033[0m"
+
+
 class Logger:
     print_level: LogLevel = LogLevel.WARNING
 
-    def _print(self, fmt: str, level: LogLevel, color: Fore, sep: str = " ", **kwargs):
+    def _print(self, fmt: str, level: LogLevel, color: str, **kwargs):
         if level.value >= self.print_level.value:
             print(
-                color + f"{level.name}: " + Style.RESET_ALL + fmt + color + Style.RESET_ALL,
+                color + f"{level.name}: " + Color.END + fmt + color + Color.END,
                 file=sys.stderr,
                 **kwargs,
             )
@@ -472,22 +423,25 @@ class Logger:
 
     def debug(self, *fmt: object, sep: str = " ", **kwargs) -> None:
         self._print(
-            sep.join(map(str, fmt)), level=LogLevel.VERBOSE, color=Fore.GREEN, **kwargs
+            sep.join(map(str, fmt)), level=LogLevel.VERBOSE, color=Color.GREEN, **kwargs
         )
 
     def info(self, *fmt: object, sep: str = " ", **kwargs) -> None:
         self._print(
-            sep.join(map(str, fmt)), level=LogLevel.INFO, color=Fore.CYAN, **kwargs
+            sep.join(map(str, fmt)), level=LogLevel.INFO, color=Color.CYAN, **kwargs
         )
 
     def warning(self, *fmt: object, sep: str = " ", **kwargs) -> None:
         self._print(
-            sep.join(map(str, fmt)), level=LogLevel.WARNING, color=Fore.YELLOW, **kwargs
+            sep.join(map(str, fmt)),
+            level=LogLevel.WARNING,
+            color=Color.YELLOW,
+            **kwargs,
         )
 
     def error(self, *fmt: object, sep: str = " ", **kwargs) -> None:
         self._print(
-            sep.join(map(str, fmt)), level=LogLevel.ERROR, color=Fore.RED, **kwargs
+            sep.join(map(str, fmt)), level=LogLevel.ERROR, color=Color.RED, **kwargs
         )
 
 
@@ -506,63 +460,66 @@ class MyReporter(resolvelib.BaseReporter):
         self._redo = False
         return res
 
-    def ending(self, state: resolvelib.structs.State[RT, CT, KT]) -> None:
+    def ending(self, state: State[RT, CT, KT]) -> None:
         logger.debug("ending", state)
 
     def adding_requirement(self, requirement: RT, parent: CT | None) -> None:
         logger.debug("adding a requirement:", requirement, "parent:", parent)
 
-    def rejecting_candidate(
-        self, criterion: resolvelib.structs.Criterion[RT, CT], candidate: CT
-    ) -> None:
+    def rejecting_candidate(self, criterion: Criterion[RT, CT], candidate: CT) -> None:
         for req_info in criterion.information:
             req, parent = req_info.requirement, req_info.parent
             if isinstance(req, OptionalRequirement):
-                logger.debug(
-                    f"{parent} optional requirement for {
-                        req} unsatisfiable, dropping"
-                )
+                logger.debug(f"{parent} optional requirement for {
+                        req} unsatisfiable, dropping")
                 self._redo = True
                 self.provider.mask_optional(req)
             else:
                 logger.debug(f"{parent} requirement for {req} unsatisfiable")
 
 
+def find_ports_from_port_defs() -> Generator[Tuple[Dict[str, str], Path]]:
+    for port_def in PORTS_DIR.rglob("port.def.sh"):
+        result = subprocess.run(
+            ["bash", PORTS_DIR / "load_port_def.sh", port_def],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            sys.exit("bad port_def")
+
+        dct = json.loads(result.stdout)
+        logger.debug(dct)
+
+        assert isinstance(dct, dict)
+        yield (dct, port_def)
+
+
 class DependencyManager:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        argv,
+        find_ports=find_ports_from_port_defs,
+        get_ports_to_build=None,
+        dry=False,
+    ) -> None:
         self.candidates: dict[str, dict[str, Candidate]] = dict()
         self.mapping: dict[str, dict[str, Candidate]] = dict()
-        self.db_path = None
         self.roll_logs = False
+        self.find_ports = find_ports
+        self.args = self._parse_arguments(argv)
+        self.dry = dry
 
-    def get_db_file_path(self, filename: str) -> str:
-        if not self.db_path:
-            raise ValueError("db path empty")
-        return os.path.join(self.db_path, filename)
+        if get_ports_to_build:
+            self.get_ports_to_build = get_ports_to_build
+        else:
 
-    def set_db_path(self, path: str):
-        if path:
-            if path and os.path.exists(path) and not os.path.isfile(path):
-                raise ValueError(f"not a file: {path}")
-            self.db_path = path
+            def get_ports_to_build_from_ports_yaml() -> Dict[str, str | Dict[str, str]]:
+                with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
+                    return yaml.safe_load(f)
 
-    # WARN: this db I/O are obviously not concurrent-safe. if you plan to
-    # run the script concurrently, implement some sort of db file lock
-    # mechanism
-    # TODO: The db format should probably be optimized for performance and size
-    def read_candidates(self) -> None:
-        path = self.db_path
-        if path and os.path.exists(path):
-            with open(path, "r") as f:
-                (self.candidates, self.mapping) = jsonpickle.decode(f.read())
-
-    def write_candidates(self) -> None:
-        path = self.db_path
-        if path:
-            with open(path, "w+") as f:
-                json_text = jsonpickle.encode(
-                    (self.candidates, self.mapping), indent=2)
-                f.write(json_text)
+            self.get_ports_to_build = get_ports_to_build_from_ports_yaml
 
     def add_candidate(self, candidate: Candidate) -> None:
         name = candidate.name
@@ -572,21 +529,13 @@ class DependencyManager:
 
         self.candidates[name][version] = candidate
 
-        logger.debug(
-            f"added {candidate} reqs={
-                list(candidate.iter_dependencies())}"
-        )
+        logger.debug(f"added {candidate} reqs={
+                list(candidate.iter_dependencies())}")
 
         logger.debug(f"self.candidates={self.candidates}")
 
-    def lookup_candidate(
-        self, name: str, version: PhxVersion, candidate_type: type | None = None
-    ) -> Candidate:
-        candidate = self.candidates[name][str(version)]
-        if candidate_type:
-            if not isinstance(candidate, candidate_type):
-                raise TypeError(f"{candidate} is not of type {candidate_type}")
-        return candidate
+    def lookup_candidate(self, name: str, version: PhxVersion) -> Candidate:
+        return self.candidates[name][str(version)]
 
     def discover_port(self, namever, def_dir, requires, optional, conflicts):
         name, version = parse_namever(namever)
@@ -594,25 +543,23 @@ class DependencyManager:
         req = parse_requirements(requires, BaseRequirement)
         req += parse_requirements(optional, OptionalRequirement)
 
-        conflicts = parse_requirements(conflicts,
-            lambda rname, constraints: ConflictRequirement(
-                name, rname, constraints),
+        conflicts = parse_requirements(
+            conflicts,
+            lambda rname, constraints: ConflictRequirement(name, rname, constraints),
         )
 
         if not def_dir:
             raise ValueError(f"Empty definition directory")
 
-        self.add_candidate(
-            InstallableCandidate(name, version, req, conflicts, def_dir)
-        )
-
+        self.add_candidate(Candidate(name, version, req, conflicts, def_dir))
 
     def resolve(self, cands) -> None:
         user_requirements = dict()
 
         for cand in cands:
             user_requirements[str(cand)] = BaseRequirement(
-                cand.name, [("==", cand.version)])
+                cand.name, [("==", cand.version)]
+            )
 
         provider = PhxProvider(self.candidates)
         reporter = MyReporter(provider)
@@ -628,151 +575,58 @@ class DependencyManager:
                 logger.debug(self.mapping)
                 self.candidates = prev_candidates
                 break
+            except resolvelib.resolvers.ResolutionTooDeep as e:
+                logger.error(
+                    f"Requirements unsatisfiable despite {e.round_count} attempts"
+                )
+                raise
             except resolvelib.resolvers.ResolverException as e:
                 logger.error(type(e).__name__)
                 if not reporter.redo:
                     self.candidates = prev_candidates
                     raise
 
-    def cmd_query(self, args: Namespace) -> None:
-        self.read_candidates()
-
-        def print_cand(cand: Candidate, indent=0):
-            print("name:", name)
-            print("version:", cand.version)
-            print("requirements:", cand.iter_dependencies())
-            print("conflicts:", cand.iter_conflicts())
-            print("definition:", cand.definition_path)
-            if namever in self.mapping:
-                print("mapping:", self.mapping[str(cand)])
-            if isinstance(cand, InstallableCandidate):
-                print("installed:", cand.installed)
-                print("install path:", cand.install_path)
-
-        try:
-            match args.args:
-                case ["summary"]:
-                    namevers = []
-                    for name, versions in self.candidates.items():
-                        for candidate in versions.values():
-                            if isinstance(candidate, InstallableCandidate) and candidate.installed:
-                                namevers.append(f"{name}-{candidate.version}")
-                    print(" ".join(namevers))
-                case ["all"]:
-                    next = False
-                    for name, versions in self.candidates.items():
-                        for candidate in versions.values():
-                            if next:
-                                print("")
-                            print_candidate(candidate)
-                            next = True
-                case ["pkg", namever]:
-                    name, version = parse_namever(namever)
-                    candidate = self.lookup_candidate(name, version)
-                    print_candidate(candidate)
-                case ["name", namever]:
-                    name, version = parse_namever(namever)
-                    candidate = self.lookup_candidate(name, version)
-                    print(candidate.name)
-                case ["is-installed", namever]:
-                    name, version = parse_namever(namever)
-                    candidate = self.lookup_candidate(
-                        name, version, candidate_type=InstallableCandidate
-                    )
-                    sys.exit(0 if candidate.installed else 1)
-                case ["install-path", namever]:
-                    name, version = parse_namever(namever)
-                    candidate = self.lookup_candidate(
-                        name, version, candidate_type=InstallableCandidate
-                    )
-                    print(candidate.install_path)
-                case ["deps-to-install", namever]:
-                    for dep_candidate in self.iter_namever_deps(namever):
-                        if not dep_candidate.installed:
-                            print(dep_candidate.definition_path)
-                case ["deps-pkg-config-path", namever]:
-                    res = set()
-                    for dep_candidate in self.iter_namever_deps(namever):
-                        res.add(os.path.join(dep_candidate.install_path, "lib", "pkgconfig"))
-                    print(":".join(list(res)))
-                case ["dep-install-path", namever, dep_name]:
-                    dep = self.mapping[namever][dep_name]
-                    if dep.installed:
-                        print(self.mapping[namever][dep_name].install_path)
-                    else:
-                        print()
-                case []:
-                    logger.error("""Must pass query arguments.
-Examples:
-    query summary
-    query pkg busybox-1.27.2
-Possible queries:
-    summary
-    all
-    {pkg,name,is-installed,install-path,deps-to-install} <namever>
-    dep-install-path <namever> <dep_name>""")
-                    sys.exit(1)
-                case _ as arg:
-                    logger.error(f"unrecognized arguments: {" ".join(arg)}")
-                    sys.exit(1)
-        except KeyError as e:
-            logger.error(
-                f"package/dependency unrecognized: {e}"
-                + " - hint: did you run 'resolve' command before querying?"
-            )
-            sys.exit(1)
-
-    def iter_cand_deps(self, cand: Candidate) -> Iter[Candidate]:
-        # TODO: drop the namever from self.mapping
+    def iter_cand_deps(self, cand: Candidate) -> Generator[Candidate]:
+        mapped_deps = self.mapping[str(cand)]
         for dep in cand.iter_dependencies():
-            yield self.mapping[str(cand)][dep.name]
+            if dep.name not in mapped_deps:
+                # this is an optional dependency, otherwise resolver would
+                # raise resolution error earlier
+                continue
+            yield mapped_deps[dep.name]
 
-    def iter_namever_deps(self, namever: str) -> Iter[Candidate]:
+    def iter_namever_deps(self, namever: str) -> Generator[Candidate]:
         name, version = parse_namever(namever)
-        candidate = self.lookup_candidate(
-            name, version, candidate_type=InstallableCandidate
-        )
+        candidate = self.lookup_candidate(name, version)
         logger.debug(self.mapping)
-        yield self.iter_cand_deps(candidate)
+        return self.iter_cand_deps(candidate)
 
-    def install_cand(self, cand: BaseCandidate, dep_of: BaseCandidate | None=None):
+    def install_cand(self, cand: Candidate, dep_of: Candidate | None = None):
         r_fd, w_fd = os.pipe()
 
         info = f"Installing {cand}"
         extra = []
 
+        port_env = os.environ.copy()
+
         if dep_of:
             extra.append(f"dependency of {dep_of}")
 
         if len(cand.use_flags) > 0:
-            extra.append(f"USE flags: " + " ".join(cand.use_flags))
+            extra.append(f"+USE flags: " + " ".join(cand.use_flags))
+            for use_flag in cand.use_flags:
+                port_env[f"PORT_USE_{use_flag}"] = "y"
+
+        if cand.build_tests:
+            port_env["PORT_BUILD_TESTS"] = "y"
+            extra.append("+tests")
 
         if len(extra) > 0:
             info += f" ({", ".join(extra)})"
 
         logger.info(info)
 
-        port_env = os.environ.copy()
         port_env["PREFIX_PORT_INSTALL"] = cand.install_path
-
-        for use_flag in cand.use_flags:
-            port_env[f"USE_{use_flag}"] = "y"
-
-        logger.info(f"Prepare {cand}")
-
-        proc = subprocess.Popen(["bash", PORTS_DIR / "prepare_port.sh",
-                                 cand.definition_path, str(w_fd)],
-                                pass_fds=(w_fd,), close_fds=True, env=port_env)
-
-        os.close(w_fd)
-        with os.fdopen(r_fd) as r:
-            env_output = r.read()
-        proc.wait()
-
-        for line in env_output.split('\0'):
-            if '=' in line:
-                key, value = line.split('=', 1)
-                port_env[key] = value
 
         self.resolve([cand])
 
@@ -780,127 +634,193 @@ Possible queries:
         for dep_candidate in self.iter_cand_deps(cand):
             if not dep_candidate.installed:
                 if cand.is_optional(dep_candidate):
-                    logger.warning(f"{dep_candidate} is an optional dependency for {cand} that must be explicitely enabled")
+                    logger.warning(
+                        f"{dep_candidate} is an optional dependency for {cand} that must be explicitely enabled"
+                    )
                 else:
                     self.install_cand(dep_candidate, cand)
 
         pkg_config_path_set = set()
         for dep_candidate in self.iter_cand_deps(cand):
-            env_name=f"PORT_DEP_{dep_candidate.name}"
+            env_name = f"PORT_DEP_{dep_candidate.name}"
             if dep_candidate.installed:
                 port_env[env_name] = dep_candidate.install_path
-                pkg_config_path_set.add(os.path.join(dep_candidate.install_path, "lib", "pkgconfig"))
+                pkg_config_path_set.add(
+                    os.path.join(dep_candidate.install_path, "lib", "pkgconfig")
+                )
             else:
                 port_env[env_name] = ""
 
-            logger.debug(env_name, dep_candidate.install_path if dep_candidate.installed else "<empty>")
+            logger.debug(
+                env_name,
+                dep_candidate.install_path if dep_candidate.installed else "<empty>",
+            )
+
+        logger.info(f"Prepare {cand}")
+
+        if self.dry:
+            cand.installed = True
+            return
+
+        proc = subprocess.Popen(
+            ["bash", PORTS_DIR / "prepare_port.sh", cand.definition_path, str(w_fd)],
+            pass_fds=(w_fd,),
+            close_fds=True,
+            env=port_env,
+        )
+
+        os.close(w_fd)
+        with os.fdopen(r_fd) as r:
+            env_output = r.read()
+
+        if proc.wait() != 0:
+            logger.error(f"Preparing {cand} failed")
+            sys.exit(1)
+
+        for line in env_output.split("\0"):
+            if "=" in line:
+                key, value = line.split("=", 1)
+                port_env[key] = value
 
         port_env["PKG_CONFIG_PATH"] = ":".join(list(pkg_config_path_set))
 
-        cmd = ["bash", PORTS_DIR / "build_port.sh", cand.definition_path]
+        log_file_path = os.path.join(port_env["PREFIX_PORT_BUILD"], "build.log")
+
+        cmd = [
+            "bash",
+            str(PORTS_DIR / "build_port.sh"),
+            cand.definition_path,
+            log_file_path,
+        ]
 
         logger.info(f"Build {cand}")
 
         if self.roll_logs:
-            proc = subprocess.Popen(cmd, env=port_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-            last_lines = deque(maxlen=5)
-
-            for line in proc.stdout:
-                sys.stdout.write("\033[F" * len(last_lines))
-                last_lines.append(line.rstrip()[:os.get_terminal_size()[0] * 8 // 10 ])
-
-                for l in last_lines:
-                    sys.stdout.write(Fore.BLUE + "> \033[K" + l + "\n" +
-                        Style.RESET_ALL)
-
-                sys.stdout.flush()
-
-            proc.wait()
-        else:
-            subprocess.run(cmd, env=port_env)
-
-        logger.info(f"Installed {cand}")
-        cand.mark_as_installed()
-
-    def cmd_build(self, args: Namespace) -> None:
-        self.read_candidates()
-
-        start = time.time()
-
-        # TODO: cache this step?
-        for port_def in PORTS_DIR.rglob("port.def.sh"):
-            result = subprocess.run(
-                ["bash", PORTS_DIR / "load_port_def.sh", port_def],
-                capture_output=True,
-                text=True
+            proc = subprocess.Popen(
+                cmd,
+                env=port_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
             )
 
-            if result.returncode != 0:
-                sys.exit("bad port_def")
+            last_lines: deque[str] = deque(maxlen=5)
 
-            dct = jsonpickle.decode(result.stdout)
-            logger.debug(dct)
+            if proc.stdout:
+                for line in proc.stdout:
+                    sys.stdout.write("\033[F" * len(last_lines))
+                    last_lines.append(
+                        line.rstrip()[: os.get_terminal_size()[0] * 8 // 10]
+                    )
 
-            self.discover_port(dct['namever'], port_def,
-                               dct['requires'], dct['optional'],
-                               dct['conflicts'])
+                    for l in last_lines:
+                        sys.stdout.write(Color.BLUE + "> \033[K" + l + "\n" + Color.END)
 
-        with open(args.ports_yaml, "r", encoding="utf-8") as f:
-            ports_dict = yaml.safe_load(f)
+                    sys.stdout.flush()
 
-            cands = []
+            retcode = proc.wait()
+        else:
+            retcode = subprocess.run(cmd, env=port_env).returncode
 
-            # set USE flags
-            for port in ports_dict['ports']:
-                # TODO: select specific version?
-                cand = next(iter(self.candidates[port['name']].values()))
-                if 'use' in port:
-                    cand.use_flags = port['use']
+        if retcode != 0:
+            logger.error(
+                f"Building {cand} failed. Full logs written to {log_file_path}"
+            )
+            sys.exit(1)
 
-                cands.append(cand)
+        logger.info(f"Installed {cand}")
 
-            for cand in cands:
-                uses = "(" + " ".join(cand.use_flags) + ")" if len(cand.use_flags) > 0 else "" 
-                self.install_cand(cand)
+        cand.installed = True
 
+    def cmd_build(self) -> None:
+        start = time.time()
+
+        for dct, def_path in self.find_ports():
+            self.discover_port(
+                dct["namever"],
+                def_path,
+                dct["requires"],
+                dct["optional"],
+                dct["conflicts"],
+            )
+
+        ports_dict = self.get_ports_to_build()
+
+        if not ports_dict:
+            logger.error("empty ports.yaml")
+            sys.exit(1)
+
+        cands = []
+
+        build_all_tests = ports_dict.get("tests", False)
+
+        if "ports" not in ports_dict or not ports_dict["ports"]:
+            logger.error("no ports to install? (empty or no `ports:` in ports.yaml)")
+            sys.exit(1)
+
+        # set USE flags
+        for port in ports_dict["ports"]:
+            port_name = port["name"]
+            port_cands = self.candidates[port_name]
+            if "version" in port:
+                # normalize
+                ver = str(PhxVersion(port["version"]))
+
+                if ver in port_cands:
+                    cand = port_cands[ver]
+                else:
+                    logger.error(
+                        f"Version '{ver}' for '{port_name}' not found. Possible choices: {list(port_cands.keys())}"
+                    )
+                    sys.exit(1)
+            else:
+                # pick any
+                cand = next(iter(port_cands.values()))
+
+            cand.use_flags = port.get("use", [])
+            cand.build_tests = port.get("tests", False) or build_all_tests
+
+            cands.append(cand)
+
+        for cand in cands:
+            self.install_cand(cand)
 
         namevers = []
         for name, versions in self.candidates.items():
             for candidate in versions.values():
-                if isinstance(candidate, InstallableCandidate) and candidate.installed:
+                if candidate.installed:
                     namevers.append(f"{name}-{candidate.version}")
 
         stop = time.time()
-        logger.info(f"Done in {stop - start:.2f} s. Installed ports:", " ".join(namevers))
+        logger.info(
+            f"Done in {stop - start:.2f} s. Installed ports:", " ".join(namevers)
+        )
 
-        self.write_candidates()
-
-
-    def build_argument_parser(self) -> ArgumentParser:
+    def _build_argument_parser(self) -> ArgumentParser:
         parser = ArgumentParser()
 
-        namever_help = "e.g. 'foo-1.2'"
-
-        parser.add_argument("--db", help="specify database directory")
+        parser.add_argument("--res", help="specify destination metadata file")
         parser.add_argument("-v", action="store_true")
-        parser.add_argument("-r", action="store_true", default=False, help="roll build logs (i.e. for interactive environment)")
+        parser.add_argument(
+            "-r",
+            action="store_true",
+            default=False,
+            help="roll build logs (i.e. for interactive environment)",
+        )
         parser.add_argument("--quiet", action="store_true")
 
         subparsers = parser.add_subparsers(title="subcommands")
-        query = subparsers.add_parser("query", help="query port information")
-        query.add_argument("args", nargs="*")
-        query.set_defaults(func=self.cmd_query)
 
         build = subparsers.add_parser(
-            "build", help="build ports based on ports.yaml config")
+            "build", help="build ports based on ports.yaml config"
+        )
         build.add_argument("ports_yaml")
         build.set_defaults(func=self.cmd_build)
 
         return parser
 
-    def parse_arguments(self, argv: Sequence[str]) -> Namespace:
-        parser = self.build_argument_parser()
+    def _parse_arguments(self, argv: Sequence[str]) -> Namespace:
+        parser = self._build_argument_parser()
         if len(argv) == 1:
             parser.print_help()
         args = parser.parse_args(argv[1:])
@@ -916,16 +836,14 @@ Possible queries:
 
         return args
 
-    def run(self, argv: Sequence[str]) -> None:
-        args = self.parse_arguments(argv)
-        if "func" in args:
-            self.set_db_path(args.db)
-            args.func(args)
+    def run_cmd(self) -> None:
+        if "func" in self.args:
+            self.args.func()
 
 
 def main():
-    dm = DependencyManager()
-    dm.run(sys.argv)
+    dm = DependencyManager(sys.argv)
+    dm.run_cmd()
 
 
 if __name__ == "__main__":

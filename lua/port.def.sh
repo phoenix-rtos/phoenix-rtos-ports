@@ -18,12 +18,14 @@
   conflicts=""
   depends=""
   optional=""
+
+  iuse="safe"
 }
 
 p_prepare() {
   b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}"
 
-  if [ "${USE_LUA_SAFE}" = "y" ]; then
+  if b_use "safe"; then
     b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}/safe"
   fi
 }

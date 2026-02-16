@@ -1,75 +1,11 @@
 #!/bin/bash
 
-reset_env() {
-  # unset phoenix-rtos DEBUG variable as it changes how ports are compiled
-  unset DEBUG
+set -e
 
-  if [ "$TARGET_FAMILY" = "ia32" ]; then
-    HOST_TARGET="i386"
-    HOST="i386-pc-phoenix"
-  elif [[ "$TARGET_FAMILY" == "arm"* ]]; then
-    HOST_TARGET="arm"
-    HOST="arm-phoenix"
-  elif [ "$TARGET_FAMILY" = "sparcv8leon" ]; then
-    HOST_TARGET="sparc"
-    HOST="sparc-phoenix"
-  else
-    HOST_TARGET="$TARGET_FAMILY"
-    HOST="${TARGET_FAMILY}-phoenix"
-  fi
-  export HOST_TARGET HOST
+source_dir="$(dirname "${BASH_SOURCE[0]}")"
 
-  # use CFLAGS/LDFLAGS/STRIP taken from make
-  CFLAGS="${EXPORT_CFLAGS}"
-  LDFLAGS="${EXPORT_LDFLAGS}"
-  STRIP="${EXPORT_STRIP}"
-  export CFLAGS LDFLAGS STRIP
-
-  export PORTS_MIRROR_BASEURL="https://files.phoesys.com/ports/"
-
-  if [ -n "$PORTS_INSTALL_STRIPPED" ] && [ "$PORTS_INSTALL_STRIPPED" = "n" ]; then
-    export PREFIX_PROG_TO_INSTALL="$PREFIX_PROG"
-  else
-    export PREFIX_PROG_TO_INSTALL="$PREFIX_PROG_STRIPPED"
-  fi
-}
-
-
-function load_port_def() {
-  local def_path="${1?def_path missing}"
-
-  unset name
-  unset version
-  unset source
-  unset archive_filename
-  unset sha256
-  unset size
-
-  # must follow https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/
-  # https://spdx.org/licenses/
-  unset license
-  unset license_file
-
-  unset src_path
-
-  unset conflicts
-
-  unset depends
-  unset optional
-
-  # TODO: add host dependencies fields
-  uses=
-  test_uses=
-
-  unset p_common
-  unset p_prepare
-  unset p_build
-  unset p_build_test
-
-  source "${def_path}"
-}
-
-export -f load_port_def
+source "${source_dir}/port.subr"
+source "${source_dir}/port_internal.subr"
 
 PREFIX_PORTS_BUILD_ROOT="${PREFIX_BUILD?}/port-sources"
 
@@ -84,13 +20,13 @@ fi
 
 load_port_def "${def_path}"
 
+unset_internal_env
+
 export PREFIX_PORT="$(dirname ${def_path})"
 export PREFIX_PORT_BUILD="${PREFIX_PORTS_BUILD_ROOT?}/${name}-${version}"
 
 # shellcheck disable=1091
 source "${PREFIX_PROJECT?}/phoenix-rtos-ports/build.subr"
-
-# at this point the port.def.sh is assumed valid
 
 export PREFIX_PORT_WORKDIR="${PREFIX_PORT_BUILD?}/${src_path}"
 
@@ -133,4 +69,4 @@ mkdir -p "${PREFIX_A}"
 [[ $(type -t p_common) == function ]] && p_common # definition is optional
 p_prepare
 
-printenv -0 >&${fd}
+printenv -0 >&"${fd}"
