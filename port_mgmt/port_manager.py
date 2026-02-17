@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 #
-# Port dependency manager
+# Port management
+#
+# Port builder with dependency resolution
 #
 # Copyright 2026 Phoenix Systems
 # Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
 #
 
 # requires python 'resolvelib', 'pyparsing', and 'packaging' packages
@@ -77,6 +81,7 @@ class Candidate:
         requirements: Iterable[Requirement],
         conflicts: Iterable[ConflictRequirement],
         definition_path: str,
+        exposed_use_flags: List[str],
     ) -> None:
         self.name = name
         self.version = version
@@ -84,11 +89,19 @@ class Candidate:
         self._requirements = requirements
         self._conflicts = conflicts
         self.definition_path = definition_path
-        self.use_flags: List[str] = []
         self.build_tests = False
+        self.exposed_use_flags = exposed_use_flags
+        self.use_flags: List[str] = []
 
     def __repr__(self):
         return f"{self.name}-{self.version}"
+
+    def set_use_flags(self, flags):
+        diff = list(set(flags) - set(self.exposed_use_flags))
+        if diff:
+            logger.error(f"unrecognized flags for {self}:", diff)
+            sys.exit(1)
+
 
     def iter_dependencies(self) -> Iterable[Requirement]:
         return self._requirements
@@ -188,7 +201,8 @@ T = TypeVar("T")
 Constraint = Tuple[str, PhxVersion]
 
 
-PORTS_DIR = Path(__file__).parent
+PORT_MGMT_DIR = Path(__file__).parent
+PORTS_DIR = PORT_MGMT_DIR.parent
 
 
 def parse_requirements(s: str, f: Callable[[str, list[Constraint]], T]) -> list[T]:
@@ -481,7 +495,7 @@ class MyReporter(resolvelib.BaseReporter):
 def find_ports_from_port_defs() -> Generator[Tuple[Dict[str, str], Path]]:
     for port_def in PORTS_DIR.rglob("port.def.sh"):
         result = subprocess.run(
-            ["bash", PORTS_DIR / "load_port_def.sh", port_def],
+            ["bash", PORT_MGMT_DIR / "port_def_to_json.sh", port_def],
             capture_output=True,
             text=True,
         )
@@ -537,7 +551,7 @@ class DependencyManager:
     def lookup_candidate(self, name: str, version: PhxVersion) -> Candidate:
         return self.candidates[name][str(version)]
 
-    def discover_port(self, namever, def_dir, requires, optional, conflicts):
+    def discover_port(self, namever, def_dir, requires, optional, conflicts, iuse):
         name, version = parse_namever(namever)
 
         req = parse_requirements(requires, BaseRequirement)
@@ -551,7 +565,9 @@ class DependencyManager:
         if not def_dir:
             raise ValueError(f"Empty definition directory")
 
-        self.add_candidate(Candidate(name, version, req, conflicts, def_dir))
+        available_flags = iuse.split()
+
+        self.add_candidate(Candidate(name, version, req, conflicts, def_dir, available_flags))
 
     def resolve(self, cands) -> None:
         user_requirements = dict()
@@ -663,7 +679,7 @@ class DependencyManager:
             return
 
         proc = subprocess.Popen(
-            ["bash", PORTS_DIR / "prepare_port.sh", cand.definition_path, str(w_fd)],
+            ["bash", PORT_MGMT_DIR / "port_prepare.sh", cand.definition_path, str(w_fd)],
             pass_fds=(w_fd,),
             close_fds=True,
             env=port_env,
@@ -688,7 +704,7 @@ class DependencyManager:
 
         cmd = [
             "bash",
-            str(PORTS_DIR / "build_port.sh"),
+            str(PORT_MGMT_DIR / "port_build.sh"),
             cand.definition_path,
             log_file_path,
         ]
@@ -742,6 +758,7 @@ class DependencyManager:
                 dct["requires"],
                 dct["optional"],
                 dct["conflicts"],
+                dct["iuse"],
             )
 
         ports_dict = self.get_ports_to_build()
@@ -758,7 +775,7 @@ class DependencyManager:
             logger.error("no ports to install? (empty or no `ports:` in ports.yaml)")
             sys.exit(1)
 
-        # set USE flags
+        # set per-port options
         for port in ports_dict["ports"]:
             port_name = port["name"]
             port_cands = self.candidates[port_name]

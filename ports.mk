@@ -1,6 +1,12 @@
-# Makefile for Phoenix-RTOS 3
 #
-# Copyright 2025 Phoenix Systems
+# Port management
+#
+# Makefile-level support for port versioning
+#
+# Copyright 2025, 2026 Phoenix Systems
+# Author: Hubert Badocha, Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
 #
 
 # TODO: invoke port_manager via $(shell ...) here instead to discover supported versions?

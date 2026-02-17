@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# Port management
+#
+# Port preparation script (invoked by port_manager.py)
+#
+# Copyright 2026 Phoenix Systems
+# Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
 
 set -e
 

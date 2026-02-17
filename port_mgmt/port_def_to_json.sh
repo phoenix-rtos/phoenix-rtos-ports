@@ -1,38 +1,20 @@
 #!/usr/bin/env bash
+#
+# Port management
+#
+# port.def.sh to JSON loading script (invoked by port_manager.py)
+#
+# Copyright 2026 Phoenix Systems
+# Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
 
 def_path="${1?def_path missing}"
+source_dir="$(dirname "${BASH_SOURCE[0]}")"
 
-unset name
-unset version
-unset source
-unset archive_filename
-unset sha256
-unset size
-
-# must follow https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/
-# https://spdx.org/licenses/
-unset license
-unset license_file
-
-unset src_path
-
-unset conflicts
-
-unset depends
-unset optional
-
-# TODO: add host dependencies fields
-uses=
-test_uses=
-
-# TODO: add patch sources here instead of b_apply_patches
-
-unset p_common
-unset p_prepare
-unset p_build
-unset p_build_test
-
-source "${def_path}"
+source "${source_dir}/port_internal.subr"
+load_port_def "${def_path}"
 
 : "${name?name missing}"
 : "${version?version missing}"
@@ -60,4 +42,5 @@ jq -n \
   --arg requires "${depends}" \
   --arg optional "${optional}" \
   --arg conflicts "${conflicts}" \
-  '{namever: $namever, requires: $requires, optional: $optional, conflicts: $conflicts}'
+  --arg iuse "${iuse}" \
+  '{namever: $namever, requires: $requires, optional: $optional, conflicts: $conflicts, iuse: $iuse}'

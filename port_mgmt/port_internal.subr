@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
+#
+# Port management
+#
+# Internal helper functions
+#
+# Copyright 2026 Phoenix Systems
+# Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
 
-reset_env() {
+function reset_env() {
   # unset phoenix-rtos DEBUG variable as it changes how ports are compiled
   unset DEBUG
 

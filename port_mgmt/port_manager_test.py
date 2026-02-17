@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 #
-# Port dependency manager tests
+# Port management
+#
+# Tests for port builder with dependency resolution
 #
 # Copyright 2026 Phoenix Systems
 # Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
 #
 
 import pytest
 import os
 
 from resolvelib.resolvers import (
-    ResolverException,
     ResolutionImpossible,
     ResolutionTooDeep,
 )
@@ -225,5 +228,3 @@ def test_install_bad_env(fix):
 
     os.environ["PREFIX_BUILD_VERSIONED"] = PREFIX_BUILD_VERSIONED
 
-
-# TODO: expose USE flags explicitely in port.def.sh

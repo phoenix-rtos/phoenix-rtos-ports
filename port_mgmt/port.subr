@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+#
+# Port management
+#
+# Helper functions for port.def.sh
+#
+# Copyright 2026 Phoenix Systems
+# Author: Adam Greloch
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
 
 # shellcheck disable=2317 # may be used in p_* functions
 # b_optional_dir(dep_name)
@@ -27,9 +37,13 @@ function b_dependency_dir() {
   echo "${res}"
 }
 
+# b_use(flag_name)
+#  Returns 0 if flag is enabled and non-zero value otherwise.
 function b_use() {
   local use_flag_env_name="PORT_USE_${1?use_flag}"
   [ "${!use_flag_env_name}" = y ]
 }
+
+# TODO: add more USE flag helpers
 
 export -f b_optional_dir b_dependency_dir b_use
