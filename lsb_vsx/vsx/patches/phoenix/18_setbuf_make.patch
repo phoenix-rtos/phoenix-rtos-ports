@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/ANSI.os/streamio/setbuf/Makefile	2025-05-08 13:50:19.000000000 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/streamio/setbuf/Makefile	2025-09-25 20:26:09.366688833 +0200
+--- lsb_vsx/tset/ANSI.os/streamio/setbuf/Makefile	2025-05-08 13:50:19.000000000 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/streamio/setbuf/Makefile	2025-09-25 20:26:09.366688833 +0200
 @@ -66,7 +66,7 @@
  INCS =		-I$(TETINC) -I$(VSXINC) -I$(SYSINC)
  CFLOCAL =

@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/streamio/ungetc/ungetc.c	2024-10-16 15:22:06.485884602 +0200
 @@ -172,6 +172,22 @@
  	(void) unlink(t_file);
  }

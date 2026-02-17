@@ -493,7 +493,7 @@ class MyReporter(resolvelib.BaseReporter):
 
 
 def find_ports_from_port_defs() -> Generator[Tuple[Dict[str, str], Path]]:
-    for port_def in PORTS_DIR.rglob("port.def.sh"):
+    for port_def in PORTS_DIR.rglob("*.def.sh"):
         result = subprocess.run(
             ["bash", PORT_MGMT_DIR / "port_def_to_json.sh", port_def],
             capture_output=True,
@@ -778,6 +778,11 @@ class DependencyManager:
         # set per-port options
         for port in ports_dict["ports"]:
             port_name = port["name"]
+
+            if port_name not in self.candidates:
+                logger.error("unrecognized port:", port_name)
+                sys.exit(1)
+
             port_cands = self.candidates[port_name]
             if "version" in port:
                 # normalize

@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/ANSI.os/maths/exp/exp.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/exp/exp.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/exp/exp.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/exp/exp.c	2024-10-16 15:22:06.485884602 +0200
 @@ -235,7 +235,11 @@
  		PATH_TRACE; 
   	}
@@ -13,8 +13,8 @@
  
  	DBUG_VOID_RETURN;
  }
---- lsb_vsx/test_sets/tset/ANSI.os/maths/sinh/sinh.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/sinh/sinh.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/sinh/sinh.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/sinh/sinh.c	2024-10-16 15:22:06.485884602 +0200
 @@ -204,7 +204,12 @@
  	high = log(maxdble);
  	iterrs = 2000;
@@ -47,8 +47,8 @@
  	{
  		if (!failed)
  			xx_rpt(FAILURE);
---- lsb_vsx/test_sets/tset/ANSI.os/maths/cosh/cosh.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/cosh/cosh.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/cosh/cosh.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/cosh/cosh.c	2024-10-16 15:22:06.485884602 +0200
 @@ -175,7 +175,12 @@
  	high = log(maxdble);
  	iterrs = 2000;
@@ -81,8 +81,8 @@
  	{
  		if (!failed)
  			xx_rpt(FAILURE);
---- lsb_vsx/test_sets/tset/ANSI.os/maths/tanh/tanh.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/tanh/tanh.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/tanh/tanh.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/tanh/tanh.c	2024-10-16 15:22:06.485884602 +0200
 @@ -193,7 +193,12 @@
  	low = -log(maxdble);
  	iterrs=2000;
@@ -97,8 +97,8 @@
  	DBUG_VOID_RETURN;
  }
  
---- lsb_vsx/test_sets/tset/ANSI.os/maths/log/log.c	2024-09-18 15:22:06.625873504 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/log/log.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/log/log.c	2024-09-18 15:22:06.625873504 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/log/log.c	2024-10-16 15:22:06.485884602 +0200
 @@ -226,7 +226,12 @@
  		mlrantest(t1f,t1g,1);
  		PATH_TRACE;
@@ -127,8 +127,8 @@
  
  	DBUG_VOID_RETURN; 
  }
---- lsb_vsx/test_sets/tset/ANSI.os/maths/pow/pow.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/ANSI.os/maths/pow/pow.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/ANSI.os/maths/pow/pow.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/ANSI.os/maths/pow/pow.c	2024-10-16 15:22:06.485884602 +0200
 @@ -459,7 +459,13 @@
  	}
  #else

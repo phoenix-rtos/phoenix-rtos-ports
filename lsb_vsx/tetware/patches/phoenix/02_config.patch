@@ -1,6 +1,6 @@
 --- lsb_vsx/test_sets/SRC/install/scripts/config.sh	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.host/test_sets/SRC/install/scripts/config.sh 2024-10-16 15:22:06.485884602 +0200
-@@ -11,1289 +11,16 @@
++++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/config.sh	2024-10-16 15:22:06.485884602 +0200
+@@ -11,1288 +11,16 @@
  #		Outputs - Parameter File for Subsequent Phases		#
  #########################################################################
  
@@ -119,7 +119,7 @@
 -
 +VSXDIR="${HOME}/SRC"
  TGTDIR="$VSXDIR"
-+cp -f "${PREFIX_PORT_BUILD}/host_config/host_vsxparams" "${VSXDIR}/vsxparams"
++cp -f "${PREFIX_PORT_WORKDIR}/ps_config/ps_vsxparams" "${VSXDIR}/vsxparams"
 +. "${VSXDIR}/vsxparams"
  
 -while :
@@ -1290,25 +1290,37 @@
 -  done
 -  echo "w"
 -  echo "q" ) | ed - "$TGTDIR/vsxparams" 
--
+ 
  ################################################################################
  #									       #
- # determine missing #defines and #includes:				       #
-@@ -1340,11 +67,10 @@
+@@ -1304,8 +32,7 @@
+ Determining missing #defines and #includes ..."
+ 
+ cd "$TGTDIR"
+-export VSXDIR TEST_MODE TEST_XNFS SUBSETS INCDIRS CC COPTS
+-export DEFINES TGTDIR PATH
++export VSXDIR INCDIRS TEST_MODE TEST_XNFS SUBSETS CC COPTS DEFINES
+ $VSXDIR/install/scripts/incrpt.sh -c
+ 
+ ################################################################################
+@@ -1340,12 +67,10 @@
  	done
  
  	(
 -		sed "s/^all:.*/all:	privchk mktroot $dirgid_target install chmogpriv $filldisc_target $user_targets $fixed_targets/" \
-+		sed "s/^all:.*/all:	mktroot dirgid install/" \
- 			"$VSXDIR"/install/Makefile.top &&
- 		cd $VSXDIR/install/targets &&
+-			"$VSXDIR"/install/Makefile.top &&
+-		cd $VSXDIR/install/targets &&
 -		cat $dirgid_target $filldisc_target $user_targets \
 -			"$VSXDIR"/install/Makefile.mid $fixed_targets
+-	) > "$HOME"/Makefile
++		sed "s/^all:.*/all: mktroot dirgid install/" "${VSXDIR}/install/Makefile.top" && \
++		cd "${VSXDIR}/install/targets" &&
 +		cat dirgid "${VSXDIR}/install/Makefile.mid"
- 	) > "$HOME"/Makefile
++	) > "${HOME}/Makefile"
  		
  	;;
-@@ -1426,6 +152,3 @@
+ esac
+@@ -1426,6 +151,3 @@
  [nN]) ;;
  *) echo "The XNFS RPC headers config file is $TGTDIR/rpcincs.h" ;;
  esac

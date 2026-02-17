@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/POSIX.os/procprim/exec/common.c	2025-05-08 13:50:19.000000000 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/procprim/exec/common.c	2025-10-20 22:08:46.910889694 +0200
+--- lsb_vsx/tset/POSIX.os/procprim/exec/common.c	2025-05-08 13:50:19.000000000 +0200
++++ lsb_vsx.phoenix/tset/POSIX.os/procprim/exec/common.c	2025-10-20 22:08:46.910889694 +0200
 @@ -112,22 +112,22 @@
  public	void		init_exec();
  public	int		sig_init();

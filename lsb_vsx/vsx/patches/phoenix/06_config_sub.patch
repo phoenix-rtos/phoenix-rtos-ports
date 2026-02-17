@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/SRC/subsets/base/config_sub.sh	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.host/test_sets/SRC/subsets/base/config_sub.sh	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/SRC/subsets/base/config_sub.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/SRC/subsets/base/config_sub.sh	2024-10-16 15:22:06.485884602 +0200
 @@ -4,39 +4,6 @@
  # Ask for SIGNAL_SUPP if installing in a POSIX mode
  # and not testing XNFS

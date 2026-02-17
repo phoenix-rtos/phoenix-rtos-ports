@@ -26,11 +26,6 @@ unset_internal_env
 export PREFIX_H="${PREFIX_PORT_INSTALL}/include"
 export PREFIX_A="${PREFIX_PORT_INSTALL}/lib"
 
-license_file_path="${PREFIX_PORT_WORKDIR}/${license_file}"
-if [ ! -f "${license_file_path}" ]; then
-  b_die "license not found under ${license_file_path}"
-fi
-
 # TODO: p_clean() ?
 # [[ $(type -t p_common) == function ]] && p_common # definition is optional
 

@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/POSIX.os/procprim/kill/kill.c	2025-05-08 13:50:19.000000000 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/procprim/kill/kill.c	2025-10-20 18:38:13.984483792 +0200
+--- lsb_vsx/tset/POSIX.os/procprim/kill/kill.c	2025-05-08 13:50:19.000000000 +0200
++++ lsb_vsx.phoenix/tset/POSIX.os/procprim/kill/kill.c	2025-10-20 18:38:13.984483792 +0200
 @@ -1137,8 +1137,8 @@
  		if (tm_out)
  		{

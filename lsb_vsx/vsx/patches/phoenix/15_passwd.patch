@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/tset/POSIX.os/sysdb/getpwnam/getpwnam.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/sysdb/getpwnam/getpwnam.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/POSIX.os/sysdb/getpwnam/getpwnam.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/POSIX.os/sysdb/getpwnam/getpwnam.c	2024-10-16 15:22:06.485884602 +0200
 @@ -122,8 +122,9 @@
  
  	DBUG_ENTER("test1");
@@ -33,8 +33,8 @@
  	{
  		err = errno;
  		xx_rpt(DELETION);
---- lsb_vsx/test_sets/tset/POSIX.os/sysdb/getpwuid/getpwuid.c	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/tset/POSIX.os/sysdb/getpwuid/getpwuid.c	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/tset/POSIX.os/sysdb/getpwuid/getpwuid.c	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/tset/POSIX.os/sysdb/getpwuid/getpwuid.c	2024-10-16 15:22:06.485884602 +0200
 @@ -119,7 +119,8 @@
  	DBUG_ENTER("test1");
  

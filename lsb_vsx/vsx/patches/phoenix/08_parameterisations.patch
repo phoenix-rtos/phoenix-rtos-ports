@@ -1,5 +1,5 @@
---- lsb_vsx/test_sets/scripts/vsx-pcts/parameterisations.sh	2024-10-16 15:22:06.485884602 +0200
-+++ lsb_vsx.phoenix/test_sets/scripts/vsx-pcts/parameterisations.sh	2024-10-16 15:22:06.485884602 +0200
+--- lsb_vsx/scripts/vsx-pcts/parameterisations.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/scripts/vsx-pcts/parameterisations.sh	2024-10-16 15:22:06.485884602 +0200
 @@ -63,24 +63,3 @@
  echo "VSX_LINE_BUF_SUPP=T" >> $1
  echo "VSX_NXIO_BLKDEV=$HOME/nonexistb" >>$1

@@ -81,4 +81,21 @@ b_port_apply_patches() {
   done
 }
 
-export -f b_port_download b_port_apply_patches
+
+b_install_host() {
+	local filelist=("${@:1}")
+	local absdir="${PREFIX_BUILD}/host-prog/"
+	mkdir -p "$absdir"
+
+	for file in "${filelist[@]}"; do
+		if ! [ -f "$file" ]; then
+			echo -e "\033[0;31mFile $file does not exist \033[0m"
+			exit 1
+		fi
+
+    echo -e "\033[0;35mInstalling $(basename "$file") into host-prog\033[0m"
+		install -m 755 "$file" "$absdir"
+	done
+}
+
+export -f b_port_download b_port_apply_patches b_install_host
