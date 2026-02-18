@@ -36,6 +36,7 @@ p_build() {
     PORTS_COREMARK_THREADS="1"
   fi
 
+  # shellcheck disable=2153 # CFLAGS is externally provided
   export XCFLAGS="${CFLAGS} -DUSE_PTHREAD -DMULTITHREAD=${PORTS_COREMARK_THREADS} ${LDFLAGS}"
 
   # uses PORT_DIR, XCFLAGS

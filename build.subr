@@ -41,7 +41,8 @@ b_port_download() {
         b_die "No checksum found in ${checksum_file}"
       fi
 
-      local actual_checksum="$(shasum -b -a 256 "${PREFIX_PORT}/${filename}.part")"
+      local actual_checksum
+      actual_checksum="$(shasum -b -a 256 "${PREFIX_PORT}/${filename}.part")"
       actual_checksum="${actual_checksum%% *}"
 
       if [ "${expected_checksum}" = "${actual_checksum}" ]; then
@@ -69,6 +70,7 @@ b_port_apply_patches() {
   fi
 
   # Restores the initial value of nullglob option upon function return
+  # shellcheck disable=2064
   trap "$(shopt -p nullglob)" RETURN
   shopt -s nullglob
 

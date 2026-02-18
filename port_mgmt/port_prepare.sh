@@ -10,16 +10,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-# assumes 'size', 'sha256' loaded from port.def.sh
 function check_size_sha256() {
   local actual_size="${1?}"
   local actual_sha256="${2?}"
 
+  # shellcheck disable=2154 # size loaded from port.def.sh
   if [ "${actual_size}" != "${size}" ]; then
     rm -rf "${PREFIX_PORT_WORKDIR?}"
     b_die "size mismatch: expected '${size}', got '${actual_size}'"
   fi
 
+  # shellcheck disable=2154 # sha256 loaded from port.def.sh
   if [ "${actual_sha256}" != "${sha256}" ]; then
     rm -rf "${PREFIX_PORT_WORKDIR?}"
     b_die "sha256 mismatch: expected '${sha256}', got '${actual_sha256}'"
@@ -48,12 +49,16 @@ load_port_def "${def_path}"
 
 unset_internal_env
 
-export PREFIX_PORT="$(dirname ${def_path})"
+PREFIX_PORT="$(dirname "${def_path}")"
+export PREFIX_PORT
+
+# shellcheck disable=2154 # name, version loaded from port.def.sh
 export PREFIX_PORT_BUILD="${PREFIX_PORTS_BUILD_ROOT?}/${name}-${version}"
 
 # shellcheck disable=1091
 source "${PREFIX_PROJECT?}/phoenix-rtos-ports/build.subr"
 
+# shellcheck disable=2154 # def_path loaded from port.def.sh
 export PREFIX_PORT_WORKDIR="${PREFIX_PORT_BUILD?}/${src_path}"
 
 if [ ! -d "${PREFIX_PORT_WORKDIR}" ]; then
@@ -65,6 +70,7 @@ if [ ! -d "${PREFIX_PORT_WORKDIR}" ]; then
 
     check_size_sha256 "${actual_size}" "${actual_sha256}"
   else
+    # shellcheck disable=2154 # archive_filename loaded from port.def.sh
     b_port_download "${source}/" "${archive_filename}"
 
     archive_path="${PREFIX_PORT}/${archive_filename}"
@@ -78,6 +84,7 @@ if [ ! -d "${PREFIX_PORT_WORKDIR}" ]; then
   fi
 fi
 
+# shellcheck disable=2154 # license_file loaded from port.def.sh
 license_file_path="${PREFIX_PORT_WORKDIR}/${license_file}"
 if [ ! -f "${license_file_path}" ]; then
   b_die "license not found under ${license_file_path}"

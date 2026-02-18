@@ -651,7 +651,7 @@ class DependencyManager:
             if not dep_candidate.installed:
                 if cand.is_optional(dep_candidate):
                     logger.warning(
-                        f"{dep_candidate} is an optional dependency for {cand} that must be explicitely enabled"
+                        f"{dep_candidate} is an optional dependency for {cand} that must be explicitly enabled"
                     )
                 else:
                     self.install_cand(dep_candidate, cand)

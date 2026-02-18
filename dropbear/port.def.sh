@@ -38,6 +38,7 @@ p_prepare() {
     export OLDCFLAGS="-v" # HACKISH: fix ./configure script not detecting externally-provided CFLAGS
 
     # FIXME: -Wno-error=incompatible-pointer-types needed as dropbear uses uint* instead of enum* in cli-kex.c:117.
+    # shellcheck disable=2153 # CFLAGS, LDFLAGS are externally provided
     (cd "${PREFIX_PORT_WORKDIR}" && ./configure CFLAGS="${CFLAGS} ${DROPBEAR_CFLAGS} -Wno-error=incompatible-pointer-types" \
       LDFLAGS="${CFLAGS} ${LDFLAGS} ${DROPBEAR_LDFLAGS}" ARFLAGS="-r" \
       --host="${HOST}" --prefix="${PREFIX_PORT_INSTALL}" --enable-zlib="$ENABLE_ZLIB" --enable-static \

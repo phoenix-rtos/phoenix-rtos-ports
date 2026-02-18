@@ -37,6 +37,7 @@ fi
 [[ $(type -t p_prepare) == function ]] || b_die "p_prepare undefined"
 [[ $(type -t p_build) == function ]] || b_die "p_build undefined"
 
+# shellcheck disable=2154 # variables loaded from port.def.sh
 jq -n \
   --arg namever "${name}-${version}" \
   --arg requires "${depends}" \
