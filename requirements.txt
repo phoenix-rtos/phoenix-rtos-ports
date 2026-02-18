@@ -1,0 +1,5 @@
+packaging==26.0
+pyparsing==3.3.2
+PyYAML==6.0.1
+pytest==7.4.1
+resolvelib==1.2.1
