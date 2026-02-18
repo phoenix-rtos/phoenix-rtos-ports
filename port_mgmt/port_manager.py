@@ -529,7 +529,9 @@ class DependencyManager:
             self.get_ports_to_build = get_ports_to_build
         else:
 
-            def get_ports_to_build_from_ports_yaml() -> Dict[str, str | Dict[str, str]]:
+            def get_ports_to_build_from_ports_yaml() -> Dict[str, str | Dict[str, str]] | None:
+                if not os.path.exists(self.args.ports_yaml):
+                    return None
                 with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f)
 
@@ -764,15 +766,15 @@ class DependencyManager:
         ports_dict = self.get_ports_to_build()
 
         if not ports_dict:
-            logger.error("empty ports.yaml")
-            sys.exit(1)
+            logger.warning("ports.yaml not found. Nothing to do")
+            sys.exit(0)
 
         cands = []
 
         build_all_tests = ports_dict.get("tests", False)
 
         if "ports" not in ports_dict or not ports_dict["ports"]:
-            logger.error("no ports to install? (empty or no `ports:` in ports.yaml)")
+            logger.error("no ports to install? (`ports:` not present in ports.yaml)")
             sys.exit(1)
 
         # set per-port options

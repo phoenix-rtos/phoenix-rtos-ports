@@ -18,8 +18,10 @@ function port_manager() {
   "${PORT_MANAGER}" "${PORT_MANAGER_FLAGS[@]}" "$@"
 }
 
-if [ "$V" != 1 ]; then
+if [ "$RAW_LOG" != 1 ]; then
   PORT_MANAGER_FLAGS+=("-r")
 fi
+
+b_log "Installing ports"
 
 port_manager build "${PORTS_CONFIG}"
