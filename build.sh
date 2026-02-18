@@ -24,4 +24,6 @@ fi
 
 b_log "Installing ports"
 
+# TODO: add requires prtos>=3.4 dep
+
 port_manager build "${PORTS_CONFIG}"
