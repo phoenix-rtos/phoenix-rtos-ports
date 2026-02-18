@@ -22,8 +22,6 @@ import yaml
 import time
 
 import resolvelib
-from resolvelib.structs import RequirementInformation, State, KT, RT, CT
-from resolvelib.resolvers.criterion import Criterion
 
 from pathlib import Path
 
@@ -57,6 +55,40 @@ from typing import (
     Generator,
     Dict,
 )
+
+if Version(resolvelib.__version__) >= Version("1.1.1"):
+    from resolvelib.structs import RequirementInformation, State, KT, RT, CT
+    from resolvelib.resolvers.criterion import Criterion
+else:
+    # TODO: Drop the else once python3-resolvelib gets updated to >=1.1.1 on LTS
+    # (24.04 LTS has 1.0.1)
+
+    from typing import TYPE_CHECKING, Generic, NamedTuple, Union
+    from collections import namedtuple
+
+    KT = TypeVar("KT")  # Identifier.
+    RT = TypeVar("RT")  # Requirement.
+    CT = TypeVar("CT")  # Candidate.
+
+    Matches = Union[Iterable[CT], Callable[[], Iterable[CT]]]
+
+    if TYPE_CHECKING:
+        class RequirementInformation(NamedTuple, Generic[RT, CT]):
+            requirement: RT
+            parent: CT | None
+
+        class State(NamedTuple, Generic[RT, CT, KT]):
+            """Resolution state in a round."""
+
+            mapping: dict[KT, CT]
+            criteria: dict[KT, Criterion[RT, CT]]
+            backtrack_causes: list[RequirementInformation[RT, CT]]
+
+    else:
+        RequirementInformation = namedtuple(
+            "RequirementInformation", ["requirement", "parent"]
+        )
+        State = namedtuple("State", ["mapping", "criteria", "backtrack_causes"])
 
 
 class Requirement:
@@ -101,7 +133,6 @@ class Candidate:
         if diff:
             logger.error(f"unrecognized flags for {self}:", diff)
             sys.exit(1)
-
 
     def iter_dependencies(self) -> Iterable[Requirement]:
         return self._requirements
@@ -529,7 +560,9 @@ class DependencyManager:
             self.get_ports_to_build = get_ports_to_build
         else:
 
-            def get_ports_to_build_from_ports_yaml() -> Dict[str, str | Dict[str, str]] | None:
+            def get_ports_to_build_from_ports_yaml() -> (
+                Dict[str, str | Dict[str, str]] | None
+            ):
                 if not os.path.exists(self.args.ports_yaml):
                     return None
                 with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
@@ -569,7 +602,9 @@ class DependencyManager:
 
         available_flags = iuse.split()
 
-        self.add_candidate(Candidate(name, version, req, conflicts, def_dir, available_flags))
+        self.add_candidate(
+            Candidate(name, version, req, conflicts, def_dir, available_flags)
+        )
 
     def resolve(self, cands) -> None:
         user_requirements = dict()
@@ -681,7 +716,12 @@ class DependencyManager:
             return
 
         proc = subprocess.Popen(
-            ["bash", PORT_MGMT_DIR / "port_prepare.sh", cand.definition_path, str(w_fd)],
+            [
+                "bash",
+                PORT_MGMT_DIR / "port_prepare.sh",
+                cand.definition_path,
+                str(w_fd),
+            ],
             pass_fds=(w_fd,),
             close_fds=True,
             env=port_env,
