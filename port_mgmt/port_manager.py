@@ -35,6 +35,8 @@ from argparse import Namespace, ArgumentParser
 from packaging.version import Version
 from functools import cache, cmp_to_key
 
+from jinja2 import Template
+
 # Our package manager uses Python's resolvelib library:
 # https://pip.pypa.io/en/stable/topics/more-dependency-resolution/
 
@@ -567,6 +569,14 @@ def find_ports_from_port_defs() -> Generator[Tuple[Dict[str, str], Path]]:
         yield (dct, port_def)
 
 
+# borrowed from phoenix-rtos-build/scripts/image_builder.py
+def str_to_bool(v: str | bool) -> bool:
+    """False is denoted by empty string or any literal sensible false values"""
+    if isinstance(v, bool):
+        return v
+    return v.lower() not in ("", "no", "false", "n", "0")
+
+
 class DependencyManager:
     def __init__(
         self,
@@ -599,7 +609,11 @@ class DependencyManager:
                     )
                     return None
                 with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
-                    return yaml.safe_load(f)
+                    # treat yaml as jinja2 template to resolve e.g.
+                    # if: '{{ env.LONG_TEST }}'
+                    # this is a simplified image-builder-style behaviour
+                    template = Template(f.read())
+                    return yaml.safe_load(template.render(env=os.environ))
 
             self.get_ports_to_build = get_ports_to_build_from_ports_yaml
 
@@ -895,6 +909,9 @@ class DependencyManager:
             if port_name not in self.candidates:
                 logger.error("unrecognized port:", port_name)
                 sys.exit(1)
+
+            if not str_to_bool(port.get("if", True)):
+                continue
 
             port_cands = self.candidates[port_name]
             if "version" in port:
