@@ -22,6 +22,12 @@ if [ "$RAW_LOG" != 1 ]; then
   PORT_MANAGER_FLAGS+=("-r")
 fi
 
+if [ "$PORTS_VALIDATE_ONLY" == 1 ]; then
+  b_log "Validating ports"
+  port_manager validate
+  exit 0
+fi
+
 b_log "Installing ports"
 
 port_manager build "${PORTS_CONFIG}"

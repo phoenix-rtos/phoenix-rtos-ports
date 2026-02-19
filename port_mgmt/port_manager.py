@@ -167,6 +167,15 @@ class Candidate:
             prefix = ensure_getenv("PREFIX_BUILD")
             return f"{prefix}"
 
+    def to_dict(self) -> dict[str, str | list[str]]:
+        return {
+            "version": str(self.version),
+            "requirements": [str(r) for r in self.iter_dependencies()],
+            "conflicts": [str(r) for r in self.iter_conflicts()],
+            "port_def_path": str(self.definition_path),
+            "iuse": self.exposed_use_flags,
+        }
+
 
 class OsCandidate(Candidate):
     def __init__(self, name: str, version: PhxVersion):
@@ -422,7 +431,7 @@ class ConflictRequirement(BaseRequirement):
         self._cname = cname
 
     def __repr__(self):
-        return "!:" + self.cname
+        return "[!]" + self.cname
 
     @property
     def cname(self):
@@ -434,7 +443,7 @@ class ConflictRequirement(BaseRequirement):
 
 class OptionalRequirement(BaseRequirement):
     def __repr__(self):
-        return "O:" + super().__repr__()
+        return "[o]" + super().__repr__()
 
 
 def ensure_getenv(var: str):
@@ -570,8 +579,8 @@ class DependencyManager:
         self.mapping: dict[str, dict[str, Candidate]] = dict()
         self.roll_logs = False
         self.find_ports = find_ports
+        self.dry = dry  # self.dry may be overwritten by _parse_arguments
         self.args = self._parse_arguments(argv)
-        self.dry = dry
 
         # Add OS dummy candidates
         self.add_candidate(
@@ -661,7 +670,7 @@ class DependencyManager:
                     causes_strs.append(
                         f"-> {cause.requirement} required by {cause.parent}"
                     )
-                logger.error(f"Requirements unsatisfiable:\n{'\n'.join(causes_strs)}")
+                logger.error("Requirements unsatisfiable:\n" + "\n".join(causes_strs))
                 if reporter.redo_with_masked_optional():
                     logger.debug("Redoing resolution with masked optional")
                 else:
@@ -912,9 +921,22 @@ class DependencyManager:
             f"[Total {stop - start:.2f} s] Installed ports:", " ".join(namevers)
         )
 
+    def cmd_validate(self):
+        start = time.time()
+        self.discover_ports()
+        stop = time.time()
+        cand_str = json.dumps(self.candidates, indent=2, default=lambda o: o.to_dict())
+        logger.info(
+            f"[Total {stop - start:.2f} s] Validated {len(self.candidates)} ports:\n",
+            cand_str,
+        )
+
     def _build_argument_parser(self) -> ArgumentParser:
         parser = ArgumentParser()
 
+        parser.add_argument(
+            "--dry", action="store_true", help="don't build ports (resolve only)"
+        )
         parser.add_argument("--res", help="specify destination metadata file")
         parser.add_argument("-v", action="store_true")
         parser.add_argument(
@@ -933,6 +955,11 @@ class DependencyManager:
         build.add_argument("ports_yaml")
         build.set_defaults(func=self.cmd_build)
 
+        build = subparsers.add_parser(
+            "validate", help=f"validate all port definitions in {PORTS_DIR}"
+        )
+        build.set_defaults(func=self.cmd_validate)
+
         return parser
 
     def _parse_arguments(self, argv: Sequence[str]) -> Namespace:
@@ -949,6 +976,9 @@ class DependencyManager:
             logger.set_level(LogLevel.NONE)
         if args.r:
             self.roll_logs = True
+        if args.dry:
+            logger.warning("Dry run")
+            self.dry = True
 
         return args
 
