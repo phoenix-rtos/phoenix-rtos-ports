@@ -47,6 +47,8 @@ function reset_env() {
 function load_port_def() {
   local def_path="${1?def_path missing}"
 
+  unset ports_api
+
   unset name
   unset version
   unset source
@@ -54,8 +56,6 @@ function load_port_def() {
   unset sha256
   unset size
 
-  # must follow https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/
-  # https://spdx.org/licenses/
   unset license
   unset license_file
 
@@ -66,9 +66,7 @@ function load_port_def() {
   unset depends
   unset optional
 
-  # TODO: add host dependencies fields
-  # uses=
-  # test_uses=
+  unset supports
 
   unset iuse
 

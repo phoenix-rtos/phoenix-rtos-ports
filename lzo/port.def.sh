@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="lzo"
   version="2.10"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends=""
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

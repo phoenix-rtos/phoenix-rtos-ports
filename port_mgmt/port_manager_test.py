@@ -22,10 +22,12 @@ from port_manager import DependencyManager, LogLevel, logger, PhxVersion
 PREFIX_BUILD = "normal_port_install_dir"
 PREFIX_BUILD_VERSIONED = "versioned_port_install_dir"
 PREFIX_PORTS = "ports"
+PHOENIX_VER = "v3.3.1"
 
 
 @pytest.fixture(scope="session")
 def fix():
+    os.environ["PHOENIX_VER"] = PHOENIX_VER
     os.environ["PREFIX_BUILD"] = PREFIX_BUILD
     os.environ["PREFIX_BUILD_VERSIONED"] = PREFIX_BUILD_VERSIONED
     logger.set_level(LogLevel.VERBOSE if os.getenv("V", "0") == "1" else LogLevel.NONE)
@@ -37,6 +39,12 @@ def build_find_ports(dct):
         for name, port_def in dct.items():
             port_def["namever"] = name
             opt_fields = ["requires", "optional", "conflicts"]
+
+            if "supports" not in port_def:
+                port_def["supports"] = "phoenix>=3.3"
+
+            if "iuse" not in port_def:
+                port_def["iuse"] = ""
 
             for field in opt_fields:
                 if field not in port_def:
@@ -96,11 +104,14 @@ def get_cand_from_namever(pm, namever):
     return pm.mapping[namever][name]
 
 
-def assert_version_mapping(pm, namever, exp_mappings):
+def assert_version_mapping(pm, namever, exp_mappings, phoenix_ver=PHOENIX_VER):
     name, ver = namever.split("-")
     resolved_mapping = pm.mapping[namever]
 
-    assert len(resolved_mapping) == len(exp_mappings) + 1
+    # +2: one cand is phoenix, one is the target port itself
+    assert len(resolved_mapping) == len(exp_mappings) + 2
+
+    assert resolved_mapping["phoenix"].version == PhxVersion(phoenix_ver)
     assert resolved_mapping[name].version == PhxVersion(ver)
 
     for dep_name, ver in exp_mappings.items():
@@ -227,4 +238,3 @@ def test_install_bad_env(fix):
     assert ex.value.args[0] == "PREFIX_BUILD_VERSIONED undefined"
 
     os.environ["PREFIX_BUILD_VERSIONED"] = PREFIX_BUILD_VERSIONED
-

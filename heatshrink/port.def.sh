@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="heatshrink"
   version="0.4.1"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends=""
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

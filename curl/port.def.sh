@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="curl"
   version="7.64.1"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends=""
   optional="mbedtls>=2.28.0"
+
+  supports="phoenix>=3.3"
 }
 
 p_common() {

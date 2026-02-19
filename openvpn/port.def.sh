@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="openvpn"
   version="2.4.7"
 
@@ -19,6 +21,8 @@
   conflicts=""
   depends="openssl>=1.1.1a lzo>=2.10"
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

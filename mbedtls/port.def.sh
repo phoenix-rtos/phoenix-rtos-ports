@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="mbedtls"
   version="2.28.0"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends=""
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_common() {

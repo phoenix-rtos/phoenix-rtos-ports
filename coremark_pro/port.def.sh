@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="coremark_pro"
   version="1.0"
 
@@ -20,6 +22,8 @@
   conflicts=""
   depends=""
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="tetware_host"
   version="2.0"
 
@@ -20,6 +22,8 @@
   conflicts=""
   depends=""
   optional=""
+
+  supports="host"
 }
 
 p_common() {

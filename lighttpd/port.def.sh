@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="lighttpd"
   version="1.4.79"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends="pcre>=8.42 openssl>=1.1.1a"
   optional="zlib>=1.2.11"
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

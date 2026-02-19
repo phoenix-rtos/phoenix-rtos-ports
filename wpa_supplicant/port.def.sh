@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="wpa_supplicant"
   version="2.9"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends="openssl>=1.1.1a"
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

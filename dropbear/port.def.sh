@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="dropbear"
   version="2018.76"
 
@@ -18,6 +20,8 @@
   conflicts=""
   depends=""
   optional="zlib>=1.2.11"
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

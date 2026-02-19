@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="openssl"
   version="1.1.1a"
 
@@ -18,6 +20,8 @@
   conflicts="openssl3>=0.0"
   depends=""
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

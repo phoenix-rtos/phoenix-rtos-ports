@@ -10,29 +10,54 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-def_path="${1?def_path missing}"
+def_path="${1?}"
 source_dir="$(dirname "${BASH_SOURCE[0]}")"
 
 source "${source_dir}/port_internal.subr"
 load_port_def "${def_path}"
 
-: "${name?name missing}"
-: "${version?version missing}"
+# ports_api=1
+: "${ports_api?}"
+
+ports_apis=(1)
+
+for api in "${ports_apis[@]}"; do
+    if [[ "$ports_api" == "$api" ]]; then
+        found=true
+        break
+    fi
+done
+
+if [ ! "${found}" ]; then
+  b_die "bad ports_api: ${ports_api} (supported: ${ports_apis[*]})"
+fi
+
+: "${name?}"
+: "${version?}"
 
 if [ -z "${source}" ]; then
   [[ $(type -t p_source) == function ]] || b_die "source and p_source undefined"
 else
-  : "${archive_filename?archive_filename missing}"
+  : "${archive_filename?}"
 fi
 
-: "${sha256?sha256 missing}"
-: "${size?size missing}"
-: "${license?license missing}"
-: "${license_file?license_file missing}"
+: "${sha256?}"
+: "${size?}"
 
-: "${src_path?src_path missing}"
-: "${conflicts?conflicts missing}"
-: "${depends?depends missing}"
+# must follow SPDX:
+#  https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/
+#  https://spdx.org/licenses/
+: "${license?}"
+: "${license_file?}"
+
+# e.g. supports="phoenix>=3.4"
+: "${supports?}"
+
+: "${src_path?}"
+: "${conflicts?}"
+: "${depends?}"
+
+# TODO: add host dependencies fields?
 
 [[ $(type -t p_prepare) == function ]] || b_die "p_prepare undefined"
 [[ $(type -t p_build) == function ]] || b_die "p_build undefined"
@@ -44,4 +69,12 @@ jq -n \
   --arg optional "${optional}" \
   --arg conflicts "${conflicts}" \
   --arg iuse "${iuse}" \
-  '{namever: $namever, requires: $requires, optional: $optional, conflicts: $conflicts, iuse: $iuse}'
+  --arg supports "${supports}" \
+  '{
+    namever: $namever,
+    requires: $requires,
+    optional: $optional,
+    conflicts: $conflicts,
+    iuse: $iuse,
+    supports: $supports,
+  }'

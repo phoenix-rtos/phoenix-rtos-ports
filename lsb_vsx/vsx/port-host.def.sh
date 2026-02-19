@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="vsx_host"
   version="2.0"
 
@@ -20,6 +22,8 @@
   conflicts=""
   depends="tetware_host>=2.0"
   optional=""
+
+  supports="host"
 }
 
 p_common() {

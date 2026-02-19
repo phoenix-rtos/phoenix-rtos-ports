@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="azure_sdk"
   version="1.8.0"
   azure_version="lts_01_2022"
@@ -9,7 +11,7 @@
   src_path="${name}-${azure_version}"
 
   size="37747294"
-  sha256="f0de443418048e2e4b4401b6d934a00bdcea7c8c53ccde3c60292b20fa832d26"
+  sha256="1654c9babeb51871efd33575132101c82f62e58856780cd7bb2369c2b154be89"
 
   license="MIT"
   license_file="LICENSE"
@@ -17,6 +19,8 @@
   conflicts=""
   depends="openssl>=1.1.1a curl>=7.64.1"
   optional=""
+
+  supports="phoenix>=3.3"
 }
 
 install_binary() {
@@ -102,5 +106,4 @@ p_build_test() {
 
     install_binary "$dir/$test_executable"
   done
-  return
 }

@@ -2,6 +2,8 @@
 :
 #shellcheck disable=2034
 {
+  ports_api=1
+
   name="lua"
   version="5.3.6"
 
@@ -20,6 +22,8 @@
   optional=""
 
   iuse="safe"
+
+  supports="phoenix>=3.3"
 }
 
 p_prepare() {

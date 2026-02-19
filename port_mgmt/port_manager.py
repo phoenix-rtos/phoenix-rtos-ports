@@ -38,7 +38,6 @@ from functools import cache, cmp_to_key
 # Our package manager uses Python's resolvelib library:
 # https://pip.pypa.io/en/stable/topics/more-dependency-resolution/
 
-from collections.abc import Iterable
 from collections import deque
 from typing import (
     Any,
@@ -73,6 +72,7 @@ else:
     Matches = Union[Iterable[CT], Callable[[], Iterable[CT]]]
 
     if TYPE_CHECKING:
+
         class RequirementInformation(NamedTuple, Generic[RT, CT]):
             requirement: RT
             parent: CT | None
@@ -114,7 +114,7 @@ class Candidate:
         conflicts: Iterable[ConflictRequirement],
         definition_path: str,
         exposed_use_flags: List[str],
-    ) -> None:
+    ):
         self.name = name
         self.version = version
         self.installed = False
@@ -168,6 +168,14 @@ class Candidate:
             return f"{prefix}"
 
 
+class OsCandidate(Candidate):
+    def __init__(self, name: str, version: PhxVersion):
+        super().__init__(name, version, [], [], "", [])
+
+    def __repr__(self):
+        return f"OS:{self.name}-{self.version}"
+
+
 PreferenceInformation = RequirementInformation[Requirement, Candidate]
 
 
@@ -216,15 +224,23 @@ class VersionGrammar:
         .set_name("version")
         .set_parse_action(pp.token_map(PhxVersion))
     )
+    no_version_op = pp.Empty().set_parse_action(lambda: ">=")
+    no_version = (
+        pp.Empty().set_name("version").set_parse_action(lambda: PhxVersion("0.0"))
+    )
     version_op = pp.one_of(">= <= == > <")
-    e1 = pp.Group(package + version_op + version)
+    e1 = pp.Group(package + version_op + version) ^ pp.Group(
+        package + no_version_op + no_version
+    )
     e0 = e1 + pp.ZeroOrMore(e1)
 
     # TODO: foo>3 parses to nothing - fix
 
     @staticmethod
     def parse_string(s: str):
-        return VersionGrammar.e0.parse_string(s)
+        ret = VersionGrammar.e0.parse_string(s)
+        logger.debug(ret)
+        return ret
 
 
 T = TypeVar("T")
@@ -262,7 +278,7 @@ class PhxProvider(resolvelib.AbstractProvider):
     def identify(self, requirement_or_candidate: Requirement | Candidate) -> str:
         return requirement_or_candidate.name
 
-    def mask_optional(self, req: OptionalRequirement) -> None:
+    def mask_optional(self, req: OptionalRequirement):
         logger.debug("masking the optional", req)
         self.masked_requirements.add(req)
 
@@ -463,20 +479,20 @@ class Logger:
                 **kwargs,
             )
 
-    def set_level(self, n: LogLevel) -> None:
+    def set_level(self, n: LogLevel):
         self.print_level = n
 
-    def debug(self, *fmt: object, sep: str = " ", **kwargs) -> None:
+    def debug(self, *fmt: object, sep: str = " ", **kwargs):
         self._print(
             sep.join(map(str, fmt)), level=LogLevel.VERBOSE, color=Color.GREEN, **kwargs
         )
 
-    def info(self, *fmt: object, sep: str = " ", **kwargs) -> None:
+    def info(self, *fmt: object, sep: str = " ", **kwargs):
         self._print(
             sep.join(map(str, fmt)), level=LogLevel.INFO, color=Color.CYAN, **kwargs
         )
 
-    def warning(self, *fmt: object, sep: str = " ", **kwargs) -> None:
+    def warning(self, *fmt: object, sep: str = " ", **kwargs):
         self._print(
             sep.join(map(str, fmt)),
             level=LogLevel.WARNING,
@@ -484,7 +500,7 @@ class Logger:
             **kwargs,
         )
 
-    def error(self, *fmt: object, sep: str = " ", **kwargs) -> None:
+    def error(self, *fmt: object, sep: str = " ", **kwargs):
         self._print(
             sep.join(map(str, fmt)), level=LogLevel.ERROR, color=Color.RED, **kwargs
         )
@@ -496,27 +512,27 @@ logger = Logger()
 class MyReporter(resolvelib.BaseReporter):
     _redo = False
 
-    def __init__(self, provider) -> None:
+    def __init__(self, provider):
         self.provider = provider
 
-    @property
-    def redo(self) -> bool:
+    def redo_with_masked_optional(self) -> bool:
         res = self._redo
         self._redo = False
         return res
 
-    def ending(self, state: State[RT, CT, KT]) -> None:
+    def ending(self, state: State[RT, CT, KT]):
         logger.debug("ending", state)
 
-    def adding_requirement(self, requirement: RT, parent: CT | None) -> None:
+    def adding_requirement(self, requirement: RT, parent: CT | None):
         logger.debug("adding a requirement:", requirement, "parent:", parent)
 
-    def rejecting_candidate(self, criterion: Criterion[RT, CT], candidate: CT) -> None:
+    def rejecting_candidate(self, criterion: Criterion[RT, CT], candidate: CT):
         for req_info in criterion.information:
             req, parent = req_info.requirement, req_info.parent
             if isinstance(req, OptionalRequirement):
-                logger.debug(f"{parent} optional requirement for {
-                        req} unsatisfiable, dropping")
+                logger.debug(
+                    f"{parent} optional requirement for {req} unsatisfiable, dropping"
+                )
                 self._redo = True
                 self.provider.mask_optional(req)
             else:
@@ -532,7 +548,8 @@ def find_ports_from_port_defs() -> Generator[Tuple[Dict[str, str], Path]]:
         )
 
         if result.returncode != 0:
-            sys.exit("bad port_def")
+            logger.error(f"during loading of {port_def}:\n", result.stderr)
+            sys.exit(1)
 
         dct = json.loads(result.stdout)
         logger.debug(dct)
@@ -548,13 +565,19 @@ class DependencyManager:
         find_ports=find_ports_from_port_defs,
         get_ports_to_build=None,
         dry=False,
-    ) -> None:
+    ):
         self.candidates: dict[str, dict[str, Candidate]] = dict()
         self.mapping: dict[str, dict[str, Candidate]] = dict()
         self.roll_logs = False
         self.find_ports = find_ports
         self.args = self._parse_arguments(argv)
         self.dry = dry
+
+        # Add OS dummy candidates
+        self.add_candidate(
+            OsCandidate("phoenix", PhxVersion(ensure_getenv("PHOENIX_VER")))
+        )
+        self.add_candidate(OsCandidate("host", PhxVersion("0")))
 
         if get_ports_to_build:
             self.get_ports_to_build = get_ports_to_build
@@ -571,7 +594,7 @@ class DependencyManager:
 
             self.get_ports_to_build = get_ports_to_build_from_ports_yaml
 
-    def add_candidate(self, candidate: Candidate) -> None:
+    def add_candidate(self, candidate: Candidate):
         name = candidate.name
         version = str(candidate.version)
         if name not in self.candidates:
@@ -579,35 +602,34 @@ class DependencyManager:
 
         self.candidates[name][version] = candidate
 
-        logger.debug(f"added {candidate} reqs={
-                list(candidate.iter_dependencies())}")
-
-        logger.debug(f"self.candidates={self.candidates}")
+        logger.debug(f"added {candidate} reqs={list(candidate.iter_dependencies())}")
 
     def lookup_candidate(self, name: str, version: PhxVersion) -> Candidate:
         return self.candidates[name][str(version)]
 
-    def discover_port(self, namever, def_dir, requires, optional, conflicts, iuse):
-        name, version = parse_namever(namever)
+    def discover_ports(self):
+        for port, def_path in self.find_ports():
+            name, version = parse_namever(port["namever"])
 
-        req = parse_requirements(requires, BaseRequirement)
-        req += parse_requirements(optional, OptionalRequirement)
+            req = parse_requirements(port["requires"], BaseRequirement)
+            req += parse_requirements(port["optional"], OptionalRequirement)
+            req += parse_requirements(port["supports"], BaseRequirement)
 
-        conflicts = parse_requirements(
-            conflicts,
-            lambda rname, constraints: ConflictRequirement(name, rname, constraints),
-        )
+            conflicts = parse_requirements(
+                port["conflicts"],
+                lambda r, c: ConflictRequirement(name, r, c),
+            )
 
-        if not def_dir:
-            raise ValueError(f"Empty definition directory")
+            if not def_path:
+                raise ValueError("Empty definition path")
 
-        available_flags = iuse.split()
+            available_flags = port["iuse"].split()
 
-        self.add_candidate(
-            Candidate(name, version, req, conflicts, def_dir, available_flags)
-        )
+            self.add_candidate(
+                Candidate(name, version, req, conflicts, def_path, available_flags)
+            )
 
-    def resolve(self, cands) -> None:
+    def resolve(self, cands):
         user_requirements = dict()
 
         for cand in cands:
@@ -618,8 +640,6 @@ class DependencyManager:
         provider = PhxProvider(self.candidates)
         reporter = MyReporter(provider)
 
-        prev_candidates = self.candidates
-
         while True:
             try:
                 resolver = resolvelib.Resolver(provider, reporter)
@@ -627,17 +647,24 @@ class DependencyManager:
                     result = resolver.resolve([ureq])
                     self.mapping[namever] = result.mapping
                 logger.debug(self.mapping)
-                self.candidates = prev_candidates
                 break
             except resolvelib.resolvers.ResolutionTooDeep as e:
                 logger.error(
                     f"Requirements unsatisfiable despite {e.round_count} attempts"
                 )
+                # NOTE: rethrow resolution exceptions instead of sys.exit(1)
+                # to catch exact resolution failures in resolver tests
                 raise
-            except resolvelib.resolvers.ResolverException as e:
-                logger.error(type(e).__name__)
-                if not reporter.redo:
-                    self.candidates = prev_candidates
+            except resolvelib.resolvers.ResolutionImpossible as e:
+                causes_strs = []
+                for cause in e.causes:
+                    causes_strs.append(
+                        f"-> {cause.requirement} required by {cause.parent}"
+                    )
+                logger.error(f"Requirements unsatisfiable:\n{'\n'.join(causes_strs)}")
+                if reporter.redo_with_masked_optional():
+                    logger.debug("Redoing resolution with masked optional")
+                else:
                     raise
 
     def iter_cand_deps(self, cand: Candidate) -> Generator[Candidate]:
@@ -655,28 +682,120 @@ class DependencyManager:
         logger.debug(self.mapping)
         return self.iter_cand_deps(candidate)
 
-    def install_cand(self, cand: Candidate, dep_of: Candidate | None = None):
+    def run_process(
+        self, cmd, env, pass_fds=(), output_len=5, color=Color.BLUE
+    ) -> subprocess.Popen:
+        if not self.roll_logs:
+            return subprocess.Popen(
+                cmd,
+                env=env,
+                pass_fds=pass_fds,
+                text=True,
+            )
+
+        proc = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=pass_fds,
+            text=True,
+        )
+
+        last_lines: deque[str] = deque(maxlen=output_len)
+
+        if proc.stdout:
+            for line in proc.stdout:
+                sys.stdout.write("\033[F" * len(last_lines))
+                last_lines.append(line.rstrip()[: os.get_terminal_size()[0] * 8 // 10])
+
+                for line in last_lines:
+                    sys.stdout.write(color + "=> \033[K" + line + "\n" + Color.END)
+
+                sys.stdout.flush()
+
+        return proc
+
+    def prepare_cand(self, cand: Candidate, env: dict[str, str]) -> dict[str, str]:
         r_fd, w_fd = os.pipe()
 
+        logger.info(f"Prepare {cand}")
+
+        proc = self.run_process(
+            [
+                "bash",
+                PORT_MGMT_DIR / "port_prepare.sh",
+                cand.definition_path,
+                str(w_fd),
+            ],
+            pass_fds=(w_fd,),
+            env=env,
+            output_len=10,
+            color=Color.CYAN,
+        )
+
+        if proc.wait() != 0:
+            logger.error(f"Preparing {cand} failed")
+            sys.exit(1)
+
+        os.close(w_fd)
+        with os.fdopen(r_fd) as r:
+            env_output = r.read()
+
+        for line in env_output.split("\0"):
+            if "=" in line:
+                key, value = line.split("=", 1)
+                env[key] = value
+
+        return env
+
+    def build_cand(self, cand: Candidate, env: dict[str, str]):
+        log_file_path = os.path.join(env["PREFIX_PORT_BUILD"], "build.log")
+
+        cmd = [
+            "bash",
+            str(PORT_MGMT_DIR / "port_build.sh"),
+            cand.definition_path,
+            log_file_path,
+        ]
+
+        logger.info(f"Build {cand}")
+
+        proc = self.run_process(cmd, env=env)
+
+        retcode = proc.wait()
+
+        if retcode != 0:
+            logger.error(
+                f"Building {cand} failed. Full logs written to {log_file_path}"
+            )
+            sys.exit(1)
+
+    def install_cand(self, cand: Candidate, dep_of: Candidate | None = None):
+        if isinstance(cand, OsCandidate):
+            return
+
         info = f"Installing {cand}"
-        extra = []
+        extras_info = []
 
         port_env = os.environ.copy()
 
         if dep_of:
-            extra.append(f"dependency of {dep_of}")
+            extras_info.append(f"dependency of {dep_of}")
 
         if len(cand.use_flags) > 0:
-            extra.append(f"+USE flags: " + " ".join(cand.use_flags))
             for use_flag in cand.use_flags:
                 port_env[f"PORT_USE_{use_flag}"] = "y"
 
+            extras_info.append("+USE flags: " + " ".join(cand.use_flags))
+
         if cand.build_tests:
             port_env["PORT_BUILD_TESTS"] = "y"
-            extra.append("+tests")
 
-        if len(extra) > 0:
-            info += f" ({", ".join(extra)})"
+            extras_info.append("+tests")
+
+        if len(extras_info) > 0:
+            info += f" ({', '.join(extras_info)})"
 
         logger.info(info)
 
@@ -694,6 +813,7 @@ class DependencyManager:
                 else:
                     self.install_cand(dep_candidate, cand)
 
+        lib_path_set = set()
         pkg_config_path_set = set()
         for dep_candidate in self.iter_cand_deps(cand):
             env_name = f"PORT_DEP_{dep_candidate.name}"
@@ -702,6 +822,7 @@ class DependencyManager:
                 pkg_config_path_set.add(
                     os.path.join(dep_candidate.install_path, "lib", "pkgconfig")
                 )
+                lib_path_set.add("-L" + os.path.join(dep_candidate.install_path, "lib"))
             else:
                 port_env[env_name] = ""
 
@@ -710,99 +831,24 @@ class DependencyManager:
                 dep_candidate.install_path if dep_candidate.installed else "<empty>",
             )
 
-        logger.info(f"Prepare {cand}")
-
         if self.dry:
             cand.installed = True
             return
 
-        proc = subprocess.Popen(
-            [
-                "bash",
-                PORT_MGMT_DIR / "port_prepare.sh",
-                cand.definition_path,
-                str(w_fd),
-            ],
-            pass_fds=(w_fd,),
-            close_fds=True,
-            env=port_env,
-        )
-
-        os.close(w_fd)
-        with os.fdopen(r_fd) as r:
-            env_output = r.read()
-
-        if proc.wait() != 0:
-            logger.error(f"Preparing {cand} failed")
-            sys.exit(1)
-
-        for line in env_output.split("\0"):
-            if "=" in line:
-                key, value = line.split("=", 1)
-                port_env[key] = value
-
         port_env["PKG_CONFIG_PATH"] = ":".join(list(pkg_config_path_set))
 
-        log_file_path = os.path.join(port_env["PREFIX_PORT_BUILD"], "build.log")
+        port_env = self.prepare_cand(cand, port_env)
 
-        cmd = [
-            "bash",
-            str(PORT_MGMT_DIR / "port_build.sh"),
-            cand.definition_path,
-            log_file_path,
-        ]
-
-        logger.info(f"Build {cand}")
-
-        if self.roll_logs:
-            proc = subprocess.Popen(
-                cmd,
-                env=port_env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            last_lines: deque[str] = deque(maxlen=5)
-
-            if proc.stdout:
-                for line in proc.stdout:
-                    sys.stdout.write("\033[F" * len(last_lines))
-                    last_lines.append(
-                        line.rstrip()[: os.get_terminal_size()[0] * 8 // 10]
-                    )
-
-                    for l in last_lines:
-                        sys.stdout.write(Color.BLUE + "> \033[K" + l + "\n" + Color.END)
-
-                    sys.stdout.flush()
-
-            retcode = proc.wait()
-        else:
-            retcode = subprocess.run(cmd, env=port_env).returncode
-
-        if retcode != 0:
-            logger.error(
-                f"Building {cand} failed. Full logs written to {log_file_path}"
-            )
-            sys.exit(1)
+        self.build_cand(cand, port_env)
 
         logger.info(f"Installed {cand}")
 
         cand.installed = True
 
-    def cmd_build(self) -> None:
+    def cmd_build(self):
         start = time.time()
 
-        for dct, def_path in self.find_ports():
-            self.discover_port(
-                dct["namever"],
-                def_path,
-                dct["requires"],
-                dct["optional"],
-                dct["conflicts"],
-                dct["iuse"],
-            )
+        self.discover_ports()
 
         ports_dict = self.get_ports_to_build()
 
@@ -843,12 +889,17 @@ class DependencyManager:
                 cand = next(iter(port_cands.values()))
 
             cand.use_flags = port.get("use", [])
-            cand.build_tests = port.get("tests", False) or build_all_tests
+            cand.build_tests = port.get("tests", False) and build_all_tests
 
             cands.append(cand)
 
-        for cand in cands:
+        for i, cand in enumerate(cands):
+            cand_start = time.time()
             self.install_cand(cand)
+            cand_stop = time.time()
+            logger.info(
+                f"[{i + 1}/{len(cands)}, {cand_stop - cand_start:.2f} s] Installed {cand}"
+            )
 
         namevers = []
         for name, versions in self.candidates.items():
@@ -858,7 +909,7 @@ class DependencyManager:
 
         stop = time.time()
         logger.info(
-            f"Done in {stop - start:.2f} s. Installed ports:", " ".join(namevers)
+            f"[Total {stop - start:.2f} s] Installed ports:", " ".join(namevers)
         )
 
     def _build_argument_parser(self) -> ArgumentParser:
@@ -901,7 +952,7 @@ class DependencyManager:
 
         return args
 
-    def run_cmd(self) -> None:
+    def run_cmd(self):
         if "func" in self.args:
             self.args.func()
 
