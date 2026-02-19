@@ -591,8 +591,12 @@ class DependencyManager:
             def get_ports_to_build_from_ports_yaml() -> (
                 Dict[str, str | Dict[str, str]] | None
             ):
-                if not os.path.exists(self.args.ports_yaml) or not os.path.isfile(self.args.ports_yaml):
-                    logger.warning(f"The ports.yaml does not exist or is not a file ({self.args.ports_yaml})")
+                if not os.path.exists(self.args.ports_yaml) or not os.path.isfile(
+                    self.args.ports_yaml
+                ):
+                    logger.warning(
+                        f"The ports.yaml does not exist or is not a file ({self.args.ports_yaml})"
+                    )
                     return None
                 with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f)
@@ -615,9 +619,10 @@ class DependencyManager:
         to satisfy `supports` requirements.
         """
         if not self.os_candidates_added:
-            self.add_candidate(
-                OsCandidate("phoenix", PhxVersion(ensure_getenv("PHOENIX_VER")))
-            )
+            # ignore any abbrevs that may possibly be emitted if version is taken with `git describe`
+            phoenix_ver = ensure_getenv("PHOENIX_VER").split("-", 1)[0]
+
+            self.add_candidate(OsCandidate("phoenix", PhxVersion(phoenix_ver)))
             self.add_candidate(OsCandidate("host", PhxVersion("0")))
             self.os_candidates_added = True
 
