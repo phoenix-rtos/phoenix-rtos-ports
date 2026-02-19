@@ -172,7 +172,7 @@ class Candidate:
             "version": str(self.version),
             "requirements": [str(r) for r in self.iter_dependencies()],
             "conflicts": [str(r) for r in self.iter_conflicts()],
-            "port_def_path": str(self.definition_path),
+            "port_def_path": str(Path(self.definition_path).relative_to(PORTS_DIR)),
             "iuse": self.exposed_use_flags,
         }
 
@@ -937,9 +937,9 @@ class DependencyManager:
         stop = time.time()
         cand_str = json.dumps(self.candidates, indent=2, default=lambda o: o.to_dict())
         logger.info(
-            f"[Total {stop - start:.2f} s] Validated {len(self.candidates)} ports:\n",
-            cand_str,
+            f"[Total {stop - start:.2f} s] Validated {len(self.candidates)} ports",
         )
+        print(cand_str)
 
     def _build_argument_parser(self) -> ArgumentParser:
         parser = ArgumentParser()
