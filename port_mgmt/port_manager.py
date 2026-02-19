@@ -576,17 +576,13 @@ class DependencyManager:
         dry=False,
     ):
         self.candidates: dict[str, dict[str, Candidate]] = dict()
+        self.os_candidates_added = False
+
         self.mapping: dict[str, dict[str, Candidate]] = dict()
         self.roll_logs = False
         self.find_ports = find_ports
         self.dry = dry  # self.dry may be overwritten by _parse_arguments
         self.args = self._parse_arguments(argv)
-
-        # Add OS dummy candidates
-        self.add_candidate(
-            OsCandidate("phoenix", PhxVersion(ensure_getenv("PHOENIX_VER")))
-        )
-        self.add_candidate(OsCandidate("host", PhxVersion("0")))
 
         if get_ports_to_build:
             self.get_ports_to_build = get_ports_to_build
@@ -612,6 +608,18 @@ class DependencyManager:
         self.candidates[name][version] = candidate
 
         logger.debug(f"added {candidate} reqs={list(candidate.iter_dependencies())}")
+
+    def add_os_candidates(self):
+        """
+        Adds dummy OS candidates that provide the resolver with OS versions
+        to satisfy `supports` requirements.
+        """
+        if not self.os_candidates_added:
+            self.add_candidate(
+                OsCandidate("phoenix", PhxVersion(ensure_getenv("PHOENIX_VER")))
+            )
+            self.add_candidate(OsCandidate("host", PhxVersion("0")))
+            self.os_candidates_added = True
 
     def lookup_candidate(self, name: str, version: PhxVersion) -> Candidate:
         return self.candidates[name][str(version)]
@@ -645,6 +653,8 @@ class DependencyManager:
             user_requirements[str(cand)] = BaseRequirement(
                 cand.name, [("==", cand.version)]
             )
+
+        self.add_os_candidates()
 
         provider = PhxProvider(self.candidates)
         reporter = MyReporter(provider)
@@ -935,9 +945,10 @@ class DependencyManager:
         parser = ArgumentParser()
 
         parser.add_argument(
-            "--dry", action="store_true", help="don't build ports (resolve only)"
+            "--dry",
+            action="store_true",
+            help="don't build ports, just mark them as installed",
         )
-        parser.add_argument("--res", help="specify destination metadata file")
         parser.add_argument("-v", action="store_true")
         parser.add_argument(
             "-r",
