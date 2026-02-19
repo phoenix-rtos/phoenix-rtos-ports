@@ -591,8 +591,8 @@ class DependencyManager:
             def get_ports_to_build_from_ports_yaml() -> (
                 Dict[str, str | Dict[str, str]] | None
             ):
-                if not os.path.exists(self.args.ports_yaml):
-                    logger.warning(f"'{self.args.ports_yaml}' does not exist")
+                if not os.path.exists(self.args.ports_yaml) or not os.path.isfile(self.args.ports_yaml):
+                    logger.warning(f"The ports.yaml does not exist or is not a file ({self.args.ports_yaml})")
                     return None
                 with open(self.args.ports_yaml, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f)
@@ -872,7 +872,7 @@ class DependencyManager:
         ports_dict = self.get_ports_to_build()
 
         if not ports_dict:
-            logger.warning("ports.yaml not found or empty. Nothing to do")
+            logger.warning("No port requirements for target. Nothing to do")
             sys.exit(0)
 
         cands = []
