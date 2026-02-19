@@ -1,0 +1,53 @@
+--- lsb_vsx.host/tset/POSIX.os/files/fstat/fstat.c	2026-02-10 17:29:53.518575114 +0100
++++ lsb_vsx.phoenix/tset/POSIX.os/files/fstat/fstat.c	2026-02-10 17:30:06.976494145 +0100
+@@ -336,6 +336,25 @@
+ 
+ 	(void) sleep(2);
+ 
++/* Move t1 capture before write() to avoid testcase failure */
++#if        TEST_XNFS
++
++        if (xnfs_rtime_c(&t1, SP_T1_RTIME2_START) != 0)
++        {
++                xx_rpt(DELETION);
++                in_rpt("could not obtain current time on server");
++                DBUG_VOID_RETURN;
++        }
++        else
++                PATH_TRACE;
++
++#else   /* TEST_XNFS */
++
++        (void) time(&t1);
++        PATH_TRACE;
++
++#endif  /* TEST_XNFS */
++
+ 	if (write(fd, wbuf, (unsigned)sizeof(wbuf)) != sizeof(wbuf))
+ 	{
+ 		err = errno;
+@@ -351,24 +370,6 @@
+ 
+ 	(void) close(fd);
+ 
+-#if	   TEST_XNFS
+-
+-	if (xnfs_rtime_c(&t1, SP_T1_RTIME2_START) != 0)
+-	{
+-		xx_rpt(DELETION);
+-		in_rpt("could not obtain current time on server");
+-		DBUG_VOID_RETURN;
+-	}
+-	else
+-		PATH_TRACE;
+-
+-#else	/* TEST_XNFS */
+-
+-	(void) time(&t1);
+-	PATH_TRACE;
+-
+-#endif	/* TEST_XNFS */
+-
+ 	(void) sleep(1);
+ 
+ 	if (stat(".", &stbuf) == SYSERROR)

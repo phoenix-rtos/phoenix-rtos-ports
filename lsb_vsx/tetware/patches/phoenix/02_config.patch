@@ -1,0 +1,1329 @@
+--- lsb_vsx/test_sets/SRC/install/scripts/config.sh	2024-10-16 15:22:06.485884602 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/install/scripts/config.sh	2024-10-16 15:22:06.485884602 +0200
+@@ -11,1288 +11,16 @@
+ #		Outputs - Parameter File for Subsequent Phases		#
+ #########################################################################
+ 
+-tfile=/tmp/tfile$$		# miscellaneous temporary files
+-cfile=/tmp/cfile$$.c
+-tdir=/tmp/tdir$$
+-
+-echo "
+-**********************************************************
+-**		    VSXgen release 1.4			**
+-**		X/OPEN Verification Suite		**
+-**		 Configuration Procedure		**
+-**********************************************************
+-"
+-
+-VSXDIR="$HOME/SRC"
+-if test ! -d "$VSXDIR/install"
+-then
+-	echo "*** VSX must be installed in your HOME directory ($HOME)"
+-	exit 1
+-fi
+-cd "$VSXDIR/install"
+-
+-#  Remove temporary files and exit for common signals
+-rm_tmp1="rm -f $VSXDIR/install/a.out"
+-rm_tmp2="rm -f $tfile $cfile cfile[0-9]*.o"
+-trap "$rm_tmp1; $rm_tmp2; exit 1" 1 2 3 15
+-
+-# shell function to find a file
+-
+-mywhere() {
+-	if test $# -lt 1
+-	then
+-		return 1
+-	fi
+-	for i in `echo $1`
+-	do
+-		arg=$i
+-		break
+-	done
+-	if test -f $arg
+-	then
+-		echo "$1"
+-		return 0
+-	fi
+-	for i in `echo $PATH | sed 's/:/ /g'`
+-	do
+-		if test -f $i/$arg
+-		then
+-			echo "$i/$1"
+-			return 0
+-		fi
+-	done
+-	return 1
+-}
+-
+-# shell function to get an answer
+-#	- watch out for BSD 'echo' which needs '-n' instead of '\c'
+-
+-case `echo 'xx\c'` in
+-*c*)	ECHON=-n; ECHOC= ;;
+-*)	ECHON= ;  ECHOC="\c" ;;
+-esac
+-
+-getans() {
+-	ans=""
+-	echo $ECHON "$*$ECHOC"
+-
+-	while read i
+-	do
+-		case "$i" in
+-		"!")
+-			sh -i
+-			echo "  "
+-			;;
+-		!*)
+-			i=`echo "$i" | sed 's/^.//'`
+-			sh -c "$i"
+-			;;
+-		*)
+-			ans="$i"
+-			return 0
+-			;;
+-		esac
+-
+-		echo $ECHON "$*$ECHOC"
+-	done
+-	return 1
+-}
+-
+-# shell function to check C compiler can find libraries
+-checklib() {
+-	echo "main() { }" > "$cfile"
+-	if $CC $COPTS $DEFINES "$cfile" "$@" $LDFLAGS > $tfile 2>&1
+-	then
+-		return 0
+-	else
+-		cat $tfile
+-		return 1
+-	fi
+-}
+-
+-# Ask some Questions
+-echo "
+-In each of the following questions, the default answer in square
+-brackets will be used if a carriage return alone is typed.
+-If
+-	!shell command
+-
+-is typed, the command will be sent to sh(1) to be executed.
+-\`!' on its own stands for \`!sh'.
+-"
+-
+-echo "*** The VSX source directory is rooted at $VSXDIR
+-"
+-
++VSXDIR="${HOME}/SRC"
+ TGTDIR="$VSXDIR"
++cp -f "${PREFIX_PORT_WORKDIR}/ps_config/ps_vsxparams" "${VSXDIR}/vsxparams"
++. "${VSXDIR}/vsxparams"
+ 
+-while :
+-do
+-	echo "** List of Available Parameter Files **
+-"
+-	ls -C params.data
+-	getans "
+-Which of the above parameter files do you wish to use
+-in this installation procedure [none]? "
+-	if test -z "$ans"
+-	then
+-		if test -f "$TGTDIR/vsxparams"
+-		then
+-			PARAMS="$TGTDIR/vsxparams"
+-		else
+-			PARAMS=params.data/.defaults
+-		fi
+-		break
+-	else
+-		if test ! -f "params.data/$ans"
+-		then
+-			echo "*** Could not find $ans"
+-		else
+-			PARAMS=params.data/$ans
+-			break
+-		fi
+-	fi
+-done
+-SAVEVSXD="$VSXDIR"
+-SAVEPATH="$PATH"
+-echo "Setting defaults from: $PARAMS"
+-# first source all the config_params files, in case $PARAMS does not
+-# contain defaults for all parameters in all subsets
+-for subdir in $VSXDIR/subsets/*
+-do
+-	if test -f "$subdir"/config_params
+-	then
+-		. "$subdir"/config_params
+-	fi
+-done
+-. $PARAMS
+-VSXDIR="$SAVEVSXD"
+-case "$PATH" in
+-"")
+-	PATH="$SAVEPATH"
+-	;;
+-esac
+-
+-if test -f $VSXDIR/install/posix_only
+-then
+-	echo "
+-X/Open specific tests have been removed: only POSIX and FIPS modes available"
+-	posixonly=y
+-else
+-	posixonly=n
+-fi
+-
+-# Determine what modes are supported by the available subsets
+-
+-allmodes=""
+-allnfsmodes=""
+-for subdir in $VSXDIR/subsets/*
+-do
+-	if test -f "$subdir"/config_info
+-	then
+-		CONFIG_MODES=""
+-		. "$subdir"/config_info
+-		allmodes="$allmodes $CONFIG_MODES"
+-	fi
+-	if test -f "$subdir"/config_xnfs
+-	then
+-		CONFIG_XNFS_MODES=""
+-		. "$subdir"/config_xnfs
+-		allnfsmodes="$allnfsmodes $CONFIG_XNFS_MODES"
+-	fi
+-done
+-case $posixonly in
+-y)
+-	oldmodes="$allmodes"
+-	allmodes=""
+-	for mode in $oldmodes
+-	do
+-		case $mode in
+-		POSIX*|FIPS*) allmodes="$allmodes $mode" ;;
+-		esac
+-	done
+-	oldmodes="$allnfsmodes"
+-	allnfsmodes=""
+-	for mode in $oldmodes
+-	do
+-		case $mode in
+-		POSIX*|FIPS*) allnfsmodes="$allnfsmodes $mode" ;;
+-		esac
+-	done
+-	unset oldmodes
+-	;;
+-esac
+-
+-# Ask whether to test XNFS (if any subset supports it)
+-
+-case "$allnfsmodes" in
+-"")
+-	TEST_XNFS=n
+-	;;
+-*)
+-	if test -z "$TEST_XNFS"
+-	then
+-		default=n
+-	else
+-		default=$TEST_XNFS
+-	fi
+-	while :
+-	do
+-		getans "
+-Do you wish to test the XNFS specification (y/n) [$default]? "
+-		if test -z "$ans"
+-		then
+-			ans=$default
+-		fi
+-		case "$ans" in
+-		y|n)
+-			TEST_XNFS=$ans
+-			break
+-			;;
+-		*)
+-			;;
+-		esac
+-	done
+-	;;
+-esac
+-
+-case $TEST_XNFS in
+-y) allmodes="$allnfsmodes" ;;
+-esac
+-
+-# Construct list of modes to offer to the user
+-# (note $allmodes may contain duplicates)
+-
+-modelist=""
+-for mode in FIPS POSIX90 POSIX96 XPG3 XPG4 UNIX95 UNIX98
+-do
+-	case " $allmodes " in
+-	*" $mode "*) modelist="$modelist $mode" ;;
+-	esac
+-done
+-
+-# Ask for the test mode
+-
+-if test -z "$TEST_MODE"
+-then
+-	default=unknown
+-else
+-	default=$TEST_MODE
+-fi
+-case " $modelist " in
+-*" $default "*)
+-	# OK - default is in the list
+-	;;
+-*)
+-	# set default to last mode in the list
+-	for default in $modelist
+-	do :
+-	done
+-	;;
+-esac
+-while :
+-do
+-	getans "
+-Which test mode do you require
+-(from:$modelist) [$default]? "
+-	if test -z "$ans"
+-	then
+-		ans=$default
+-	fi
+-	case " $modelist " in
+-	*" $ans "*)
+-		TEST_MODE="$ans"
+-		break
+-		;;
+-	esac
+-done
+-
+-# Set DEFINES based on test mode
+-
+-case "$TEST_MODE" in
+-POSIX90|FIPS*)
+-	DEFINES="-D_POSIX_SOURCE"
+-	;;
+-POSIX96)
+-	DEFINES="-D_POSIX_C_SOURCE=199506"
+-	;;
+-XPG*)
+-	DEFINES="-D_XOPEN_SOURCE"
+-	;;
+-UNIX95)
+-	DEFINES="-D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED"
+-	;;
+-UNIX98)
+-	DEFINES="-D_XOPEN_SOURCE=500"
+-	;;
+-*)
+-	# Should never happen
+-	echo "*** Unknown test mode: $TEST_MODE"
+-	exit 1
+-	;;
+-esac
+-
+-# Determine which subsets support the test mode
+-
+-subsetlist=""
+-packagelist=""
+-for subset in `cd $VSXDIR/subsets && ls`
+-do
+-	if test ! -f "$VSXDIR/subsets/$subset/config_info"
+-	then
+-		echo "*** Ignored subset \"$subset\" (no config_info file)"
+-		continue
+-	fi
+-
+-	CONFIG_PACKAGE=""
+-	CONFIG_MODES=""
+-	. "$VSXDIR/subsets/$subset/config_info"
+-	case $TEST_XNFS in
+-	y)
+-		if test -f "$VSXDIR/subsets/$subset/config_xnfs"
+-		then
+-			CONFIG_XNFS_MODES=""
+-			. "$VSXDIR/subsets/$subset/config_xnfs"
+-			modes="$CONFIG_XNFS_MODES"
+-		else
+-			modes=""
+-		fi
+-		;;
+-	*)
+-		modes="$CONFIG_MODES"
+-		;;
+-	esac
+-
+-	case " $modes " in
+-	*" $TEST_MODE "*)
+-		subsetlist="$subsetlist"${subsetlist:+" "}"$subset"
+-		packagelist="$packagelist
+-		$CONFIG_PACKAGE"
+-		;;
+-	esac
+-done
+-
+-# Ask for subsets (if more than one supports the test mode)
+-
+-case "$subsetlist" in
+-"")
+-	# Should not happen - mode would not have been offered if no
+-	# subsets support it
+-	echo "*** internal error: no subsets to choose from"
+-	exit 1
+-	;;
+-*" "*)
+-	echo "
+-** VSX subsets supporting $TEST_MODE mode are available from the
+-** following test packages:"
+-	echo "$packagelist" | sort -u
+-
+-	if test -z "$SUBSETS"
+-	then
+-		default="$subsetlist"
+-	else
+-		default=$SUBSETS
+-	fi
+-	while :
+-	do
+-		getans "
+-Which subsets do you wish to install?  Enter a space-separated
+-list including one or more of: $subsetlist
+-[$default] "
+-		if test -z "$ans"
+-		then
+-			ans=$default
+-		fi
+-		bad=
+-		for i in $ans
+-		do
+-			case " $subsetlist " in
+-			*" $i "*) ;;
+-			*)
+-				echo "*** subset \"$i\" is not available or does not support $TEST_MODE mode"
+-				bad=1
+-				;;
+-			esac
+-		done
+-		if test -z "$bad"
+-		then
+-			SUBSETS="$ans"
+-			break
+-		fi
+-	done
+-	;;
+-*)
+-	# note $packagelist contains unwanted whitespace
+-	echo "
+-** Only one subset supports $TEST_MODE mode: $subsetlist
+-** (from test package `echo $packagelist`)"
+-	SUBSETS=$subsetlist
+-	;;
+-esac
+-
+-# Ask for common parameter values
+-
+-if test -z "$VSX_OPER"
+-then
+-	default="Unknown"
+-else
+-	default=$VSX_OPER
+-fi
+-getans "
+-What is your name [$default]? "
+-if test -z "$ans"
+-then
+-	VSX_OPER="$default"
+-else
+-	VSX_OPER="$ans"
+-fi
+-
+-if test -z "$VSX_ORG"
+-then
+-	default="Unknown"
+-else
+-	default=$VSX_ORG
+-fi
+-getans "
+-What is the agency for whom you are running VSX [$default]? "
+-if test -z "$ans"
+-then
+-	VSX_ORG="$default"
+-else
+-	VSX_ORG="$ans"
+-fi
+-
+-if test -z "$VSX_SYS"
+-then
+-	default="Unknown"
+-else
+-	default=$VSX_SYS
+-fi
+-getans "
+-What is the system on which you are running VSX [$default]? "
+-if test -z "$ans"
+-then
+-	VSX_SYS="$default"
+-else
+-	VSX_SYS="$ans"
+-fi
+-
+-if test -z "$TET_EXECUTE"
+-then
+-	default="$HOME/TESTROOT"
+-else
+-	default=$TET_EXECUTE
+-fi
+-getans "
+-Where is the root directory of the tree from which the
+-testsets will be executed [$default]? "
+-if test -z "$ans"
+-then
+-	ans=$default
+-fi
+-if test ! -d "$ans"
+-then
+-	echo "*** warning: directory $ans does not exist"
+-	echo "*** it will be created by the VSX install procedure"
+-fi
+-TET_EXECUTE="$ans"
+-
+-if test -z "$SPEED"
+-then
+-	default="5"
+-else
+-	default=$SPEED
+-fi
+-while :
+-do
+-	getans "
+-How fast is your machine (1=very fast, 10=slow) [$default]? "
+-	if test -z "$ans"
+-	then
+-		ans="$default"
+-	fi
+-	case "$ans" in
+-	1|2|3|4|5|6|7|8|9|10)
+-		SPEED="$ans"
+-		break;
+-		;;
+-	*)
+-		echo "*** $ans is not a valid speed"
+-		;;
+-	esac
+-done
+-
+-if test -z "$INCDIRS"
+-then
+-	INCDIRS="/usr/include"
+-fi
+-while :
+-do
+-	getans "
+-The system include directories (in order of searching) are:
+-	$INCDIRS
+-Is this correct (y/n) [y]? "
+-	case "$ans" in
+-	"y"|"")
+-		confirm="1"
+-		break
+-		;;
+-	"n")
+-		confirm=""
+-		break
+-		;;
+-	*)
+-		;;
+-	esac
+-done
+-
+-if test -z "$confirm"
+-then
+-	INCDIRS=""
+-	echo "
+-Name the system include directories, in order of searching:"
+-	while :
+-	do
+-		getans "	Name of next directory (type return to end): "
+-		if test -z "$ans"
+-		then
+-			if test -z "$INCDIRS"
+-			then
+-				echo "*** Must name at least one directory"
+-			else
+-				break
+-			fi
+-		fi
+-		if test ! -d "$ans"
+-		then
+-			echo "*** Could not find the directory $ans"
+-		else
+-			INCDIRS="$INCDIRS $ans"
+-		fi
+-	done
+-fi
+-
+-
+-if test -z "$CC"
+-then
+-	default=`mywhere c89`
+-	if test -z "$default"
+-	then
+-		default=`mywhere cc`
+-	fi
+-	if test -z "$default"
+-	then
+-		default="c89"
+-		# if selected, will be reported not found
+-	fi
+-else
+-	default=$CC
+-fi
+-warntxt=""
+-case $TEST_MODE in
+-UNIX98)
+-	warntxt=" (must be c89 for
+-UNIX98 registration runs)"
+-	;;
+-esac
+-while :
+-do
+-	getans "
+-What is your C compiler called$warntxt [$default]? "
+-	if test -z "$ans"
+-	then
+-		ans="$default"
+-	fi
+-	if test -z "`mywhere $ans`"
+-	then
+-		echo "*** Could not find $ans"
+-	else
+-		CC="`mywhere "$ans"`"
+-		break
+-	fi
+-done
+-
+-if test -z "$COPTS"
+-then
+-	default="none"
+-else
+-	default=$COPTS
+-fi
+-getans "
+-What command line options does your C compiler need [$default]? "
+-if test ! -z "$ans" 
+-then
+-	COPTS="$ans"
+-fi
+-
+-if test -z "$LDFLAGS"
+-then
+-	default="none"
+-else
+-	default=$LDFLAGS
+-fi
+-getans "
+-What link editor options does your C compiler need [$default]? "
+-if test ! -z "$ans" 
+-then
+-	LDFLAGS="$ans"
+-fi
+-
+-echo "
+-Searching for archive maintenance tools ..."
+-
+-if test -z "$LORDER"
+-then
+-	LORDER="lorder"
+-fi
+-if test -z "`mywhere $LORDER`"
+-then
+-	LORDER="echo"
+-fi
+-
+-if test -z "$TSORT"
+-then
+-	TSORT="tsort"
+-fi
+-if test -z "`mywhere $TSORT`"
+-then
+-	TSORT="cat"
+-fi
+-
+-if test -z "$RANLIB"
+-then
+-	RANLIB="ranlib"
+-fi
+-if test -z "`mywhere $RANLIB`"
+-then
+-	RANLIB="echo"
+-else
+-	if test "$RANLIB" != "echo"
+-	then
+-		LORDER="echo"
+-		TSORT="cat"
+-	fi
+-fi
+-
+-if test -z "$AR"
+-then
+-	AR="ar cr"
+-fi
+-if test -z "`mywhere $AR`"
+-then
+-	echo "
+-*** Could not find the archive program $AR in your PATH"
+-	while :
+-	do
+-		getans "
+-Which command creates and maintains libraries [$AR]? "
+-		if test -z "$ans"
+-		then
+-			ans="$AR"
+-		fi
+-		if test -z "`mywhere $ans`"
+-		then
+-			echo "*** Could not find $ans"
+-		else
+-			AR="`mywhere "$ans"`"
+-			break
+-		fi
+-	done
+-fi
+-
+-if test -z "$CHOWN"
+-then
+-	CHOWN="chown"
+-fi
+-if test -z "`mywhere $CHOWN`"
+-then
+-	echo "
+-*** Could not find the program $CHOWN in your PATH"
+-	while :
+-	do
+-		getans "
+-Which command changes file ownership [$CHOWN]? "
+-		if test -z "$ans"
+-		then
+-			ans="$CHOWN"
+-		fi
+-		if test ! -f "$ans"
+-		then
+-			if test -z "`mywhere $ans`"
+-			then
+-				echo "*** Could not find $ans"
+-			else
+-				CHOWN="`mywhere "$ans"`"
+-				break
+-			fi
+-		else
+-			CHOWN="$ans"
+-			break
+-		fi
+-	done
+-fi
+-
+-if test -z "$CHGRP"
+-then
+-	CHGRP="chgrp"
+-fi
+-if test -z "`mywhere $CHGRP`"
+-then
+-	echo "
+-*** Could not find the program $CHGRP in your PATH"
+-	while :
+-	do
+-		getans "
+-Which command changes file group ownership [$CHGRP]? "
+-		if test -z "$ans"
+-		then
+-			ans="$CHGRP"
+-		fi
+-		if test ! -f "$ans"
+-		then
+-			if test -z "`mywhere $ans`"
+-			then
+-				echo "*** Could not find $ans"
+-			else
+-				CHGRP="`mywhere "$ans"`"
+-				break
+-			fi
+-		else
+-			CHGRP="$ans"
+-			break
+-		fi
+-	done
+-fi
+-
+-if test -z "$CHMOD"
+-then
+-	CHMOD="chmod"
+-fi
+-if test -z "`mywhere $CHMOD`"
+-then
+-	while :
+-	do
+-		echo "*** Could not find the program $CHMOD in your PATH"
+-		getans "
+-Which command changes file modes [$CHMOD]? "
+-		if test -z "$ans"
+-		then
+-			ans="$CHMOD"
+-		fi
+-		if test ! -f "$ans"
+-		then
+-			if test -z "`mywhere $ans`"
+-			then
+-				echo "*** Could not find $ans"
+-			else
+-				CHMOD="`mywhere "$ans"`"
+-				break
+-			fi
+-		else
+-			CHMOD="$ans"
+-			break
+-		fi
+-	done
+-fi
+-
+-################################################################################
+-#									       #
+-# find other libraries as necessary    	   			       	       #
+-#									       #
+-################################################################################
+-
+-# If there are default SYSLIBS, check compiler finds them
+-case $SYSLIBS in
+-"")
+-	;;
+-*)
+-	if checklib $SYSLIBS >/dev/null 2>&1
+-	then :
+-	else
+-		echo "
+-*** warning: compiler cannot find one or more default additional libraries"
+-	fi
+-	;;
+-esac
+-
+-if test -z "$SYSLIBS"
+-then
+-	question="
+-There are no additional libraries needed to compile VSX
+-Is this correct (y/n) [y]? "
+-else
+-	question="
+-The following additional libraries are needed to compile VSX
+-	$SYSLIBS
+-Is this correct (y/n) [y]? "
+-fi
+-while :
+-do
+-	getans "$question"
+-	case "$ans" in
+-	"y"|"")
+-		confirm="1"
+-		break
+-		;;
+-	"n")
+-		confirm=""
+-		break
+-		;;
+-	*)
+-		;;
+-	esac
+-done
+-
+-if test -z "$confirm"
+-then
+-	LIBSTD=""
+-	echo "
+-Name the additional libraries needed, in order of searching
+-(should be of form: -l<name> or full pathname): "
+-	while :
+-	do
+-		getans "	Name of next library (type return to end): "
+-		case $ans in
+-		"")
+-			break
+-			;;
+-		-l*)
+-			# no quotes on $ans to allow for multiple libs
+-			# that need each other to link OK
+-			if checklib $ans
+-			then
+-				LIBSTD="$LIBSTD $ans"
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		/*)
+-			if test -f "$ans"
+-			then
+-				LIBSTD="$LIBSTD $ans"
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		*)
+-			echo "*** $ans not of form: -l<name> or full pathname"
+-			;;
+-		esac
+-	done
+-	SYSLIBS="$LIBSTD"
+-else
+-	LIBSTD="$SYSLIBS"
+-fi
+-
+-# Only ask for XNFS_CLIENT, XNFS_SERVER and SERVER_TET_ROOT if testing XNFS
+-
+-case "$TEST_XNFS" in
+-[yY])
+-	case "$XNFS_CLIENT" in
+-	"")
+-		XNFS_CLIENT=`(hostname || uname -n) 2>/dev/null`
+-		;;
+-	esac
+-	default="$XNFS_CLIENT"
+-
+-	while :
+-	do
+-		getans "
+-What is the name of your XNFS client system [$default]? "
+-		case $ans in
+-		"")
+-			ans="$default"
+-			;;
+-		esac
+-		case $ans in
+-		"")
+-			;;
+-		*)
+-			XNFS_CLIENT="$ans"
+-			break
+-			;;
+-		esac
+-	done
+-
+-	default="$XNFS_SERVER"
+-	while :
+-	do
+-		getans "
+-What is the name of your XNFS server system [$default]? "
+-		case $ans in
+-		"")
+-			ans="$default"
+-			;;
+-		esac
+-		case $ans in
+-		"")
+-			;;
+-		*)
+-			XNFS_SERVER="$ans"
+-			break
+-			;;
+-		esac
+-	done
+-
+-	default="$SERVER_TET_ROOT"
+-	while :
+-	do
+-		getans "
+-Where is the TET_ROOT directory on your XNFS server system [$default]? "
+-		case $ans in
+-		"")
+-			ans="$default"
+-			;;
+-		esac
+-		case $ans in
+-		"")
+-			;;
+-		*)
+-			SERVER_TET_ROOT="$ans"
+-			break
+-			;;
+-		esac
+-	done
+-	;;
+-esac
+-
+-# Only ask for VPRINTF_SUPP if installing in a POSIX mode
+-
+-case "$TEST_MODE" in
+-POSIX*|FIPS*)
+-	if test -z "$VPRINTF_SUPP"
+-	then
+-		default=y
+-	else
+-		default=$VPRINTF_SUPP
+-	fi
+-	while :
+-	do
+-		getans "
+-Is the ANSI function vprintf() supported (y/n) [$default]? "
+-		if test -z "$ans"
+-		then
+-			ans=$default
+-		fi
+-		case "$ans" in
+-		y|n)
+-			VPRINTF_SUPP=$ans
+-			break
+-			;;
+-		*)
+-			;;
+-		esac
+-	done
+-	;;
+-*)
+-	VPRINTF_SUPP=y
+-	;;
+-esac
+-
+-################################################################################
+-#									       #
+-# check if compiler understands "long double"  	                               #
+-#									       #
+-################################################################################
+-
+-case $TEST_XNFS in
+-[yY])
+-	;;
+-*)
+-	echo "
+-Using C compiler to establish understanding of type \"long double\""
+-	cat > $cfile << 'E_O_F'
+-	long double x;
+-
+-	long double
+-	f()
+-	{
+-		return x;
+-	}
+-E_O_F
+-
+-	$CC $COPTS $DEFINES -c "$cfile" $LIBSTD > $tfile 2>&1
+-
+-	if test "$?" != "0" || grep "long.*double" "$tfile" > /dev/null 2>&1
+-	then
+-		cat "$tfile"
+-		echo "*** Compiler does not support type \"long double\""
+-		LONG_DOUBLE_SUPP=n
+-	else
+-		echo "*** Compiler supports type \"long double\""
+-		LONG_DOUBLE_SUPP=y
+-	fi
+-esac
+-
+-# Source the config_sub.sh scripts
+-
+-REALLY_ASK_THR_COPTS=N
+-REALLY_ASK_CFPURE=N
+-REALLY_ASK_MLIB=N
+-REALLY_ASK_NOSPC_DEV=N
+-REALLY_ASK_RPCLIB=N
+ for subset in $SUBSETS
+ do
+-	ASK_THR_COPTS=""
+-	ASK_CFPURE=""
+-	ASK_MLIB=""
+-	ASK_NOSPC_DEV=""
+-	ASK_RPCLIB=""
+-
+-	. $VSXDIR/subsets/$subset/config_sub.sh
+-
+-	case $ASK_THR_COPTS in
+-	[yY]*) REALLY_ASK_THR_COPTS=Y ;;
+-	esac
+-	case $ASK_CFPURE in
+-	[yY]*) REALLY_ASK_CFPURE=Y ;;
+-	esac
+-	case $ASK_MLIB in
+-	[yY]*) REALLY_ASK_MLIB=Y ;;
+-	esac
+-	case $ASK_NOSPC_DEV in
+-	[yY]*) REALLY_ASK_NOSPC_DEV=Y ;;
+-	esac
+-	case $ASK_RPCLIB in
+-	[yY]*) REALLY_ASK_RPCLIB=Y ;;
+-	esac
++	. "${VSXDIR}/subsets/$subset/config_sub.sh"
+ done
+ 
+-# Ask for optional parameters if needed by one or more subsets
+-
+-case "$REALLY_ASK_THR_COPTS" in
+-Y)
+-	if test -z "$THR_COPTS"
+-	then
+-		default="none"
+-	else
+-		default=$THR_COPTS
+-	fi
+-	getans "
+-What command line options does your C compiler need, instead of the normal
+-options, when compiling thread-safe programs [$default]? "
+-	if test ! -z "$ans" 
+-	then
+-		THR_COPTS="$ans"
+-	fi
+-	;;
+-esac
+-
+-case "$REALLY_ASK_CFPURE" in
+-Y)
+-	if test -z "$CFPURE"
+-	then
+-		default="none"
+-		textplus=""
+-	else
+-		default=$CFPURE
+-		textplus="(type \"none\" if no such option exists) "
+-	fi
+-	getans "
+-Which command line option does your C compiler use to create a pure
+-executable (shared text) image $textplus[$default]? "
+-	case "$ans" in
+-	"")
+-		;;
+-	*none*)
+-		CFPURE=""
+-		;;
+-	*)
+-		CFPURE="$ans"
+-		;;
+-	esac
+-	;;
+-esac
+-
+-case "$REALLY_ASK_MLIB" in
+-Y)
+-	if test -z "$MLIB"
+-	then
+-		if checklib "-lm" >/dev/null 2>&1
+-		then
+-			MLIB="-lm"
+-			default="-lm"
+-		else
+-			default="none"
+-		fi
+-	else
+-		default="$MLIB"
+-	fi
+-	while :
+-	do
+-		getans "
+-Which library is your maths library [$default]?
+-(should be of form: -l<name> or full pathname): "
+-		case $ans in
+-		"")
+-			break
+-			;;
+-		-l*)
+-			if checklib "$ans"
+-			then
+-				MLIB="$ans"
+-				break
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		/*)
+-			if test -f "$ans"
+-			then
+-				MLIB="$ans"
+-				break
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		*)
+-			echo "*** $ans not of form: -l<name> or full pathname"
+-			;;
+-		esac
+-	done
+-	;;
+-esac
+-
+-case "$REALLY_ASK_NOSPC_DEV" in
+-Y)
+-	default="$NOSPC_DEV"
+-	while :
+-	do
+-		getans "
+-What is the mountable device to be used for ENOSPC testing [$default]? "
+-		case $ans in
+-		"")
+-			ans="$default"
+-			;;
+-		esac
+-		case $ans in
+-		"")
+-			;;
+-		*)
+-			NOSPC_DEV="$ans"
+-			break
+-			;;
+-		esac
+-	done
+-	;;
+-esac
+-
+-case "$REALLY_ASK_RPCLIB" in
+-Y)
+-	case "$RPCLIB" in
+-	"")
+-		default="none"
+-		;;
+-	*SRC/LIB/xnfs_socket.a)
+-		default="sample"
+-		;;
+-	*)
+-		default=$RPCLIB
+-	esac
+-
+-	while :
+-	do
+-		getans "
+-Which library is your RPC library [$default]?
+-Enter \"sample\" to use the VSX socket-based sample library, or
+-\"none\" if the RPC routines are not in a separate library, or
+-enter your own library of the form: -l<name> or full pathname: "
+-		case $ans in
+-		"")
+-			ans="$default"
+-			;;
+-		esac
+-		case $ans in
+-		sample)
+-			RPCLIB=$VSXDIR/LIB/xnfs_socket.a
+-			break
+-			;;
+-		none)
+-			RPCLIB=
+-			break
+-			;;
+-		-l*)
+-			if checklib "$ans"
+-			then
+-				RPCLIB="$ans"
+-				break
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		/*)
+-			if test -f "$ans"
+-			then
+-				RPCLIB="$ans"
+-				break
+-			else
+-				echo "*** Could not find library $ans"
+-			fi
+-			;;
+-		*)
+-			echo "*** $ans not of form: \"sample\", -l<name> or full pathname"
+-			;;
+-		esac
+-	done
+-
+-	# Ask for RPC_TYPE if not using sample RPC library
+-
+-	case "$RPCLIB" in
+-	*SRC/LIB/xnfs_socket.a)
+-		RPC_TYPE=socket
+-		;;
+-	*)
+-		case "$RPC_TYPE" in
+-		"")
+-			default="socket"
+-			;;
+-		*)
+-			default=$RPC_TYPE
+-			;;
+-		esac
+-
+-		while :
+-		do
+-			getans "
+-Is your RPC library TLI-based or socket-based [$default]?
+-(enter \"socket\" or \"TLI\"): "
+-			case $ans in
+-			"")
+-				RPC_TYPE="$default"
+-				break
+-				;;
+-			socket|tli|TLI)
+-				RPC_TYPE="$ans"
+-				break
+-				;;
+-			*)
+-				echo "*** $ans is not a valid reply"
+-				;;
+-			esac
+-		done
+-		;;
+-	esac
+-	;;
+-esac
+-
+-echo "
+-Producing a new parameter file in $TGTDIR/vsxparams"
+-
+-templates="params.data/.defaults"
+-for subset in $SUBSETS
+-do
+-	templates="$templates $VSXDIR/subsets/$subset/config_params"
+-done
+-cat $templates > $TGTDIR/vsxparams &&
+-( for x in `sed -n '/^[^#]/s/=.*//p' $TGTDIR/vsxparams`
+-  do
+-	echo "/^$x=/s/\$/ /"
+-	echo "c"
+-	eval echo $x=\\\"'$'$x\\\"
+-	echo "."
+-  done
+-  echo "w"
+-  echo "q" ) | ed - "$TGTDIR/vsxparams" 
+ 
+ ################################################################################
+ #									       #
+@@ -1304,8 +32,7 @@
+ Determining missing #defines and #includes ..."
+ 
+ cd "$TGTDIR"
+-export VSXDIR TEST_MODE TEST_XNFS SUBSETS INCDIRS CC COPTS
+-export DEFINES TGTDIR PATH
++export VSXDIR INCDIRS TEST_MODE TEST_XNFS SUBSETS CC COPTS DEFINES
+ $VSXDIR/install/scripts/incrpt.sh -c
+ 
+ ################################################################################
+@@ -1340,12 +67,10 @@
+ 	done
+ 
+ 	(
+-		sed "s/^all:.*/all:	privchk mktroot $dirgid_target install chmogpriv $filldisc_target $user_targets $fixed_targets/" \
+-			"$VSXDIR"/install/Makefile.top &&
+-		cd $VSXDIR/install/targets &&
+-		cat $dirgid_target $filldisc_target $user_targets \
+-			"$VSXDIR"/install/Makefile.mid $fixed_targets
+-	) > "$HOME"/Makefile
++		sed "s/^all:.*/all: mktroot dirgid install/" "${VSXDIR}/install/Makefile.top" && \
++		cd "${VSXDIR}/install/targets" &&
++		cat dirgid "${VSXDIR}/install/Makefile.mid"
++	) > "${HOME}/Makefile"
+ 		
+ 	;;
+ esac
+@@ -1426,6 +151,3 @@
+ [nN]) ;;
+ *) echo "The XNFS RPC headers config file is $TGTDIR/rpcincs.h" ;;
+ esac
+-
+-# clean up: remove temporary files
+-$rm_tmp1; $rm_tmp2

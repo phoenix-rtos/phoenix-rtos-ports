@@ -1,0 +1,68 @@
+diff -Naur micropython-1.26.0/py/modbuiltins.c micropython-phoenix/py/modbuiltins.c
+--- micropython-1.26.0/py/modbuiltins.c	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/py/modbuiltins.c	2025-08-29 16:22:13.592512523 +0200
+@@ -38,6 +38,7 @@
+ #if MICROPY_PY_BUILTINS_FLOAT
+ #include <math.h>
+ #endif
++#define nearbyint(x) round(x) //PHOENIX CHANGE: missing in libphoenix
+
+ #if MICROPY_PY_IO
+ extern struct _mp_dummy_t mp_sys_stdout_obj; // type is irrelevant, just need pointer
+diff -Naur micropython-1.26.0/py/modmath.c micropython-phoenix/py/modmath.c
+--- micropython-1.26.0/py/modmath.c	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/py/modmath.c	2025-08-29 16:22:13.592705996 +0200
+@@ -26,6 +26,12 @@
+
+ #include "py/builtin.h"
+ #include "py/runtime.h"
++#include "lib/libm/libm.h"
++#include "lib/libm_dbl/libm.h"
++
++#ifndef copysign
++#define copysign(x, y) (((y) <= 0) ? -fabs(x) : fabs(x))
++#endif
+
+ #if MICROPY_PY_BUILTINS_FLOAT && MICROPY_PY_MATH
+
+diff -Naur micropython-1.26.0/py/mpconfig.h micropython-phoenix/py/mpconfig.h
+--- micropython-1.26.0/py/mpconfig.h	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/py/mpconfig.h	2025-08-29 16:22:13.592914268 +0200
+@@ -1064,7 +1064,7 @@
+
+ // Whether to use internally defined *printf() functions (otherwise external ones)
+ #ifndef MICROPY_USE_INTERNAL_PRINTF
+-#define MICROPY_USE_INTERNAL_PRINTF (1)
++#define MICROPY_USE_INTERNAL_PRINTF (0) //PHOENIX CHANGE: phoenix do support printf
+ #endif
+
+ // The mp_print_t printer used for printf output when MICROPY_USE_INTERNAL_PRINTF is enabled
+diff -Naur micropython-1.26.0/py/mpstate.h micropython-phoenix/py/mpstate.h
+--- micropython-1.26.0/py/mpstate.h	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/py/mpstate.h	2025-08-29 16:22:13.593161183 +0200
+@@ -35,6 +35,11 @@
+ #include "py/obj.h"
+ #include "py/objlist.h"
+ #include "py/objexcept.h"
++#include "math.h"
++
++#ifndef nan
++#define nan(x) NAN
++#endif
+
+ // This file contains structures defining the state of the MicroPython
+ // memory system, runtime and virtual machine.  The state is a global
+diff -Naur micropython-1.26.0/py/objfloat.c micropython-phoenix/py/objfloat.c
+--- micropython-1.26.0/py/objfloat.c	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/py/objfloat.c	2025-08-29 16:22:13.593288529 +0200
+@@ -32,6 +32,10 @@
+ #include "py/parsenum.h"
+ #include "py/runtime.h"
+
++#ifndef copysign //PHOENIX CHANGE: missing in libphoenix
++#define copysign(x, y) (((y) <= 0) ? -fabs(x) : fabs(x))
++#endif
++
+ #if MICROPY_PY_BUILTINS_FLOAT
+
+ // Workaround a bug in Windows SDK version 10.0.26100.0, where NAN is no longer constant.

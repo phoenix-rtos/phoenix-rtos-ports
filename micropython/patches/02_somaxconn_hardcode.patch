@@ -1,0 +1,12 @@
+diff -Naur micropython-1.26.0/ports/unix/mpconfigport.h micropython-phoenix/ports/unix/mpconfigport.h
+--- micropython-1.26.0/ports/unix/mpconfigport.h	2025-08-09 17:01:58.000000000 +0200
++++ micropython-phoenix/ports/unix/mpconfigport.h	2025-08-29 16:21:55.227888374 +0200
+@@ -166,7 +166,7 @@
+ // Enable sys.executable.
+ #define MICROPY_PY_SYS_EXECUTABLE (1)
+ 
+-#define MICROPY_PY_SOCKET_LISTEN_BACKLOG_DEFAULT (SOMAXCONN < 128 ? SOMAXCONN : 128)
++#define MICROPY_PY_SOCKET_LISTEN_BACKLOG_DEFAULT (128)
+ 
+ // Bare-metal ports don't have stderr. Printing debug to stderr may give tests
+ // which check stdout a chance to pass, etc.
