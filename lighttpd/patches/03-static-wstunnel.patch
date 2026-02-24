@@ -1,0 +1,13 @@
+# add mod_wstunnel to the list of static (compiled-in) modules
+--- lighttpd-1.4.79/src/Makefile.am	2025-04-04 07:28:20.000000000 +0200
++++ lighttpd-1.4.79.phx/src/Makefile.am	2026-02-24 18:00:29.286004503 +0100
+@@ -413,7 +413,8 @@
+   mod_userdir.c \
+   mod_vhostdb.c \
+   mod_vhostdb_api.c \
+-  mod_webdav.c
++  mod_webdav.c \
++  mod_wstunnel.c
+ lighttpd_CPPFLAGS = \
+   -DLIGHTTPD_STATIC \
+   $(XML_CFLAGS) $(SQLITE_CFLAGS) \
