@@ -13,7 +13,67 @@ on:
       - 'feature/*'
 
 jobs:
+  validate-port-defs:
+    name: validate port defs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout submodule
+      uses: actions/checkout@v6
+
+    - name: Checkout phoenix-rtos-project
+      # we need to use relative paths here so they would work in docker env
+      run: |
+        mkdir .buildroot && cd .buildroot
+        git clone https://github.com/phoenix-rtos/phoenix-rtos-project --recurse-submodules
+        cd phoenix-rtos-project
+        echo "BUILD_DIRECTORY=$(pwd)" >> $GITHUB_ENV
+        echo "CI_CUSTOM_BUILDROOT=.buildroot/phoenix-rtos-project" >> $GITHUB_ENV
+        git log -1 --pretty=oneline
+        git submodule
+
+    # step 2a: resolve cross-repo dependencies (same-branch matching + Depends-On directives from PR body)
+    - name: Resolve cross-repo dependencies
+      uses: ./.buildroot/phoenix-rtos-project/.github/actions/resolve-submodule-deps
+      with:
+        project-dir: ${{ env.BUILD_DIRECTORY }}
+        update-submodule: 'false'
+
+    # step 2b: replace current submodule dir with symlink to PR checkout
+    - name: Replace submodule with symlink to PR checkout
+      run: |
+        cd "${{ env.BUILD_DIRECTORY }}"
+        rm -rf "${{ github.event.repository.name }}"
+        ln -s ../.. "${{ github.event.repository.name }}"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r "${BUILD_DIRECTORY}/phoenix-rtos-build/requirements.txt"
+
+    - name: Validate
+      run: |
+        (cd "${BUILD_DIRECTORY}/phoenix-rtos-build" && python3 -m port_manager.main validate ../phoenix-rtos-ports) >> result.json
+        "${BUILD_DIRECTORY}/phoenix-rtos-build/port_manager/gen_validate_markdown_table.sh" result.json >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload port definitions
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: port-defs-${{ matrix.python-version }}
+        path: |
+          result.json
+
   call-ci:
+    needs: [validate-port-defs]
     uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
     secrets: inherit
     with:
