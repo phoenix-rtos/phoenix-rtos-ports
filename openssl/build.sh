@@ -36,8 +36,11 @@ done
 # Configure
 #
 if [ ! -f "${PREFIX_PORT_BUILD}/Makefile" ]; then
-	cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_OPENSSL_SRC/Configurations/"
-	(cd "${PREFIX_PORT_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
+	# Fill the Phoenix compilation settings.
+	# NOTE: This causes setting of all other Phoenix targets to be wrong.
+	openssl_target="phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}"
+	OPENSSL_TARGET="$openssl_target" python3 "$PREFIX_PORT/render-config.py" "$PREFIX_PORT/30-phoenix.conf.jinja" > "$PREFIX_OPENSSL_SRC/Configurations/30-phoenix.conf"
+	(cd "${PREFIX_PORT_BUILD}" && "${PREFIX_OPENSSL_SRC}/Configure" "$openssl_target" --prefix="$PREFIX_OPENSSL_INSTALL" --openssldir="/etc/ssl")
 fi
 
 
