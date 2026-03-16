@@ -1,0 +1,9 @@
+--- busybox-1.27.2/testsuite/cp/cp-copies-large-file	2026-03-16 13:06:26.795280956 +0100
++++ busybox-1.27.2.phoenix/testsuite/cp/cp-copies-large-file	2026-03-16 13:22:39.349031520 +0100
+@@ -1,3 +1,5 @@
+-dd if=/dev/zero of=foo seek=10k count=1 2>/dev/null
++# File size reduced because on armv7a9-zynq7000-qemu the 16MB flash
++# is too small to store two 5MB files
++dd if=/dev/zero of=foo seek=5k count=1 2>/dev/null
+ busybox cp foo bar
+ cmp foo bar
