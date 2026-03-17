@@ -61,15 +61,19 @@ p_build() {
 	#
 
 	# TODO: use strip manually
-	if [ "${TARGET_FAMILY}" = "armv7m7" ]; then
+	case "${TARGET_FAMILY}" in
+	armv7m7|armv7r5f)
 		STRIPEXP="--strip-unneeded"
-	elif [ "${TARGET_FAMILY}" = "ia32" ]; then
+		;;
+	ia32)
 		STRIPEXP="--strip-all"
-	else
+		;;
+	*)
 		b_log "Warning! Phoenix-RTOS for ${TARGET_FAMILY} does not support MicroPython compilation (yet!)"
 		b_log "The compilation attempt will start in 5 seconds..."
 		sleep 5
-	fi
+		;;
+	esac
 	export STRIPFLAGS_EXTRA="${STRIPEXP}"
 	export PHOENIX_MATH_ABSENT="expm1 log1p asinh acosh atanh erf tgamma lgamma copysign __sin __cos __tan __signbit"
 	export LDFLAGS_EXTRA="${CFLAGS} ${LDFLAGS}"
