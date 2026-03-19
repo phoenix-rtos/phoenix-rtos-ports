@@ -1,0 +1,19 @@
+--- lsb_vsx.host/test_sets/SRC/common/vprog/vmake.sh	2025-10-21 13:36:02.255392931 +0200
++++ lsb_vsx.phoenix/test_sets/SRC/common/vprog/vmake.sh	2026-03-20 16:10:01.633532714 +0100
+@@ -102,13 +102,15 @@
+ THRTCMCHILD=$VSXDIR/../../lib/$tetdir/thrtcmchild.o
+ 
+ # Make command with parameters set on command line (use: eval $make_cmd target)
++# host binaries for cross-compilation are now stored in host-prog
++# for this reason, we need to override VSXBIN for all Makefiles
+ make_cmd='$VSX_MAKE VSXDIR="$VSXDIR" TET_EXECUTE="$TET_EXECUTE"
+ 	TETINC="$TETINC" APILIB="$APILIB" TCM="$TCM" TCMCHILD="$TCMCHILD"
+ 	THRAPILIB="$THRAPILIB" THRTCM="$THRTCM" THRTCMCHILD="$THRTCMCHILD"
+ 	INCDIRS="$INCDIRS" CC="$CC" COPTS="$COPTS" THR_COPTS="$THR_COPTS"
+ 	DEFINES="$DEFINES" LDFLAGS="$LDFLAGS" AR="$AR"
+ 	LORDER="$LORDER" TSORT="$TSORT" RANLIB="$RANLIB" MLIB="$MLIB"
+-	RPCLIB="$RPCLIB" XNFSLIB="$XNFSLIB" SYSLIBS="$SYSLIBS"'
++	RPCLIB="$RPCLIB" XNFSLIB="$XNFSLIB" SYSLIBS="$SYSLIBS" VSXBIN="$VSXBIN"'
+ 
+ for subset in $SUBSETS
+ do
