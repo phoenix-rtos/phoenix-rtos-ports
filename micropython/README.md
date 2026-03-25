@@ -2,10 +2,11 @@
 
 ## Overview 
 
-This is a Micropython port for Phoenix-RTOS operating system. Currently it is working on following targets:
+This is a Micropython port for Phoenix-RTOS operating system. Currently it has been tested on the following targets:
 
  * `ia32-generic`
  * `armv7m7-imxrt106x`
+ * `armv7r5f-zynqmp`
 
 Currently we are working to bring this port onto other targets so this list is going to be expanded.
 
