@@ -1,0 +1,22 @@
+# libphoenix requires explicit shebang to treat the file as sh script
+diff -ruN a/misc/compile.sh b/misc/compile.sh
+--- a/misc/compile.sh	2026-03-15 17:10:28.000000000 +0100
++++ b/misc/compile.sh	2026-04-02 11:18:10.684924459 +0200
+@@ -28,7 +28,7 @@
+    else
+     outcome=compile_error
+   fi
+-  echo "echo $outcome" > "$FILE"
++  echo -e "#!/bin/sh\necho $outcome" > "$FILE"
+   chmod +x "$FILE"
+   echo "$outcome" > "$OUT_PATH/$FILE.out"
+   exit 0
+@@ -36,7 +36,7 @@
+ if ! $COMPILE "$OUT_PATH/$FILE.o" -o "$FILE" $LDFLAGS $EXTRA_LDFLAGS 2>> "$OUT_PATH/$FILE.err" 1>&2; then
+   rm -f "$OUT_PATH/$FILE.o" "$FILE"
+   outcome=undefined
+-  echo "echo $outcome" > "$FILE"
++  echo -e "#!/bin/sh\necho $outcome" > "$FILE"
+   chmod +x "$FILE"
+   echo "$outcome" > "$OUT_PATH/$FILE.out"
+   exit 0

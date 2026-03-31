@@ -1,0 +1,17 @@
+diff -ruN a/misc/GNUmakefile.shared b/misc/GNUmakefile.shared
+--- a/misc/GNUmakefile.shared	2026-03-15 17:10:28.000000000 +0100
++++ b/misc/GNUmakefile.shared	2026-03-31 16:24:14.041421699 +0200
+@@ -13,11 +13,13 @@
+ STD_C17 = -std=c17
+ NO_SHARED_DEFAULT ?= 0
+ 
++ifneq ($(OS),Phoenix-RTOS)
+ LDFLAGS += -lm
+ ifneq ($(OS),Minix)
+   CFLAGS += -pthread
+   LDFLAGS += -lpthread
+ endif
++endif
+ ifneq ($(OS),Haiku)
+ ifneq ($(OS),Minix)
+ ifneq ($(OS),Darwin)
