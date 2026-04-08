@@ -36,6 +36,7 @@ p_prepare() {
 }
 
 p_build() {
+	mkdir -p "${PREFIX_PORT_INSTALL}/bin/"
 	make -C "${PREFIX_PORT_WORKDIR}" install PREFIX="$PREFIX_PORT_INSTALL" OPTIMIZE="-Os"
 
 	cp -a "${PREFIX_PORT_INSTALL}/bin/"* "$PREFIX_PROG"
