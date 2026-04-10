@@ -43,6 +43,13 @@ p_prepare() {
 }
 
 p_build() {
+	# Ensure DEBUG environmental doesn't leak into micropython's build environment,
+	# as it can cause the garbage collector and memory optimization to be turned off
+	# issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1588
+	if [ -n "${DEBUG+set}" ]; then
+        b_die "DEBUG is defined"
+    fi
+
 	#
 	# Micropython internal use stack/heap size (not actual application stack/heap)
 	# Values are to be overwritten in _targets/build.project.*
