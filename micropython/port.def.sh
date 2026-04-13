@@ -92,14 +92,7 @@ p_build() {
 	#
 	# Build and install micropython binary
 	#
-	extra_args=()
-
-	# issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1588
-	if [ "${TARGET_FAMILY}" = "armv7r5f" ]; then
-		extra_args+=(DEBUG=)
-	fi
-
-	make -C "${PREFIX_PORT_WORKDIR}/ports/unix" all CROSS_COMPILE="${CROSS}" "${extra_args[@]}"
+	make -C "${PREFIX_PORT_WORKDIR}/ports/unix" all CROSS_COMPILE="${CROSS}"
 
 	cp -a "${PREFIX_PORT_WORKDIR}/ports/unix/build-standard/micropython" "$PREFIX_PROG_STRIPPED"
 	b_install "$PREFIX_PROG_TO_INSTALL/micropython" /bin/
