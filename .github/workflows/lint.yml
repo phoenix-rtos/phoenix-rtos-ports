@@ -16,3 +16,15 @@ on:
 jobs:
   call-lint:
     uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/lint.yml@master
+
+  shfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v4
+      - run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
+
+      - run: shfmt -i 0 -w .
+      - uses: reviewdog/action-suggester@v1
+        with:
+          tool_name: shfmt
