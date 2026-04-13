@@ -47,8 +47,8 @@ p_build() {
 	# as it can cause the garbage collector and memory optimization to be turned off
 	# issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1588
 	if [ -n "${DEBUG+set}" ]; then
-        b_die "DEBUG is defined"
-    fi
+		b_die "DEBUG is defined"
+	fi
 
 	#
 	# Micropython internal use stack/heap size (not actual application stack/heap)
@@ -69,7 +69,7 @@ p_build() {
 
 	# TODO: use strip manually
 	case "${TARGET_FAMILY}" in
-	armv7m7|armv7r5f)
+	armv7m7 | armv7r5f)
 		STRIPEXP="--strip-unneeded"
 		;;
 	ia32)
