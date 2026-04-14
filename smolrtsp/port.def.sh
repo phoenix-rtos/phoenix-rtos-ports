@@ -9,7 +9,7 @@
 	desc="A lightweight real-time streaming library for IP cameras"
 
 	source="https://github.com/OpenIPC/smolrtsp/archive/refs/tags/"
-	archive_filename="v${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="1471348"

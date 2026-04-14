@@ -11,7 +11,7 @@
 	commit="d5fad6bd094899101a4e5fd53af7298160ced6ab"
 
 	source="https://github.com/eembc/coremark/archive/"
-	archive_filename="${commit}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "${commit}.tar.gz")
 	src_path="${name}-${commit}/"
 
 	size="402348"
