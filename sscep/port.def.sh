@@ -9,7 +9,7 @@
 	desc="A command line client for the SCEP protocol"
 
 	source="https://github.com/certnanny/sscep/archive/refs/tags/"
-	archive_filename="v${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="97647"

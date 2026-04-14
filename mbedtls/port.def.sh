@@ -9,7 +9,7 @@
 	desc="SSL/TLS and cryptography library suitable for embedded systems"
 
 	source="https://github.com/Mbed-TLS/mbedtls/archive/"
-	archive_filename="v${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="3711231"

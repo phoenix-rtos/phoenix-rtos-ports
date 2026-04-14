@@ -11,7 +11,7 @@
 	commit="4832cc67b0926c7a80a4b7ce0ce00f4640ea6bec"
 
 	source="https://codeload.github.com/eembc/coremark-pro/tar.gz/"
-	archive_filename="coremark-pro-${commit}.tar.gz"
+	archive_filename=("coremark-pro-${version}.tar.gz" "${commit}")
 	src_path="coremark-pro-${commit}/"
 
 	size="13792200"

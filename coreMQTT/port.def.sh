@@ -9,7 +9,7 @@
 	desc="Client implementation of the MQTT 3.1.1 specification for embedded devices"
 
 	source="https://github.com/FreeRTOS/coreMQTT/archive/refs/tags/"
-	archive_filename="${name}-${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="831617"

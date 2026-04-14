@@ -9,7 +9,7 @@
 	desc="Dumb Terminal Emulator"
 
 	source="https://github.com/npat-efault/picocom/archive/refs/tags/"
-	archive_filename="${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="121686"

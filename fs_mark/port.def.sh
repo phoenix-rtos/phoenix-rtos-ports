@@ -11,7 +11,7 @@
 	commit="2628be58146de63a13260ff64550f84275556c0e"
 
 	source="https://github.com/josefbacik/fs_mark/archive/"
-	archive_filename="${commit}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "${commit}.tar.gz")
 	src_path="${name}-${commit}/"
 
 	size="22433"

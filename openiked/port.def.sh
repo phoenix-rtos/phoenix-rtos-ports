@@ -9,7 +9,7 @@
 	desc="IKEv2 daemon"
 
 	source="https://github.com/openiked/openiked-portable/archive/refs/tags/"
-	archive_filename="v${version}.tar.gz"
+	archive_filename=("openiked-portable-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="openiked-portable-${version}/"
 
 	size="296532"

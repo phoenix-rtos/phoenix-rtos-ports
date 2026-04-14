@@ -9,7 +9,7 @@
 	desc="Data compression library for embedded/real-time systems based on LZSS"
 
 	source="https://github.com/atomicobject/heatshrink/archive/refs/tags/"
-	archive_filename="${name}-${version}.tar.gz"
+	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")
 	src_path="${name}-${version}/"
 
 	size="36945"
