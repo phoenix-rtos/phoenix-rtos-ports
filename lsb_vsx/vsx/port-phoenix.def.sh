@@ -85,7 +85,7 @@ p_build_test() {
 	(
 		cd "${test_sets_path}" &&
 			HOME="${test_sets_path}" VSXBIN="${PREFIX_BUILD}/host-prog" \
-			"${PREFIX_BUILD}/host-prog/tcc" -p -b -s "${PREFIX_PORT}/config/scen.bld"
+				"${PREFIX_BUILD}/host-prog/tcc" -p -b -s "${PREFIX_PORT}/config/scen.bld"
 	)
 
 	find "${test_sets_path}" -type f -executable -name "T.*" -print0 | while IFS= read -r -d '' test_path; do
