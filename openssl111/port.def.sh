@@ -30,7 +30,7 @@ p_prepare() {
 
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/Makefile" ]; then
 		cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_PORT_WORKDIR/Configurations/"
-		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl")
+		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" LDFLAGS="${LDFLAGS}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl")
 	fi
 }
 
