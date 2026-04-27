@@ -46,10 +46,11 @@ p_prepare() {
 		LDFLAGS="${LDFLAGS} -z stack-size=65536"
 
 		# FIXME: lighttpd ./configure ignores custom openssl location provided by pkg-config
+		HOST_LIGHTTPD="${HOST/#aarch64a53/aarch64}"
 		(cd "$PREFIX_PORT_WORKDIR" && "./autogen.sh")
 		(cd "$PREFIX_PORT_WORKDIR" && "./configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 			-C --disable-ipv6 --disable-mmap --with-bzip2=no \
-			--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared --host="$HOST" \
+			--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared --host="$HOST_LIGHTTPD" \
 			--with-openssl="$(b_dependency_dir 'openssl')" \
 			--with-pcre="$(b_dependency_dir "pcre")" \
 			--enable-silent-rules \

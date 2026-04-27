@@ -32,7 +32,8 @@ p_common() {
 p_prepare() {
 	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
 
-	CONFIGURE_PARAMS=(--host="${HOST}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver
+	HOST_CURL="${HOST/#aarch64a53/aarch64}"
+	CONFIGURE_PARAMS=(--host="${HOST_CURL}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver
 		--disable-ipv6 --prefix="$PREFIX_CURL_INSTALL" --disable-ntlm-wb --without-zlib)
 
 	# TODO: assert that if $PORTS_CURL_USE_MBEDTLS" = "y", that the optional

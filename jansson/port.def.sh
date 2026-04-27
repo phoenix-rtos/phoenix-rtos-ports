@@ -29,9 +29,10 @@ p_prepare() {
 	# hacks for incremental build:
 	# - use "install -p" to preserve timestamps in headers
 	# - use "echo" instead of "ranlib" to not overwrite static lib with every recompile (note: using ar -s while linking instead)
+	HOST_JANSSON="${HOST/#aarch64a53/aarch64}"
 	if [ ! -f "$PREFIX_PORT_WORKDIR/config.status" ]; then
 		(cd "${PREFIX_PORT_WORKDIR}" && "./configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="\"-r -s\"" RANLIB="echo" INSTALL="$(which install) -p" \
-			--enable-static --disable-shared --host="$HOST" \
+			--enable-static --disable-shared --host="$HOST_JANSSON" \
 			--prefix="${PREFIX_PORT_INSTALL}" --libdir="${PREFIX_A}" --includedir="${PREFIX_H}")
 	fi
 }
