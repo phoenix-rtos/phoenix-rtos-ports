@@ -1,11 +1,74 @@
 #!/usr/bin/env bash
 
+#shellcheck disable=2154 # version visible in scope
+generate_config() {
+	opts=''
+	inherits='"phoenix"'
+
+	case "${TARGET_FAMILY}-${TARGET_SUBFAMILY}" in
+	armv7m7-imxrt117x)
+		# OpenSSL assumes armv7-a in asm files, when it detects that the arm version
+		# is >= 7. Additionally it then uses vector instructions. This overwrite
+		# prevents this behaviour.
+		opts+='cppflags => "-D__ARM_ARCH__=6",'
+		;& # fall through
+	armv7a7-imx6ull)
+		opts+='asm_arch => "armv4",
+    perlasm_scheme  => "void",'
+		if [[ "${version}" == 1* ]]; then
+			inherits+=',asm("armv4_asm")'
+		fi
+		;;
+	ia32-generic)
+		opts+='asm_arch => "x86",
+    perlasm_scheme  => "elf",'
+		if [[ "${version}" == 1* ]]; then
+			inherits+=',asm("x86_elf_asm")'
+		fi
+		;;
+	riscv64-generic)
+		# TODO: ASM arch should be defined as otherwise less optimized C code will be used.
+		;;
+	esac
+
+	opts+="
+  inherit_from => [ ${inherits} ],"
+
+	config=$(
+		cat <<EOF
+#phoenix
+
+my %targets = (
+	"phoenix" => {
+		template         => 1,
+		inherit_from     => [ "BASE_unix" ],
+		sys_id           => "PHOENIX_RTOS",
+		defines          => add("OPENSSL_SYS_PHOENIX"),
+		disable          => [ "dynamic-engine", "pic", "shared", "threads", "tests", "tls1_3" ],
+		enable           => [ "epoll", "pktinfo" ],
+	},
+	"phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" => {
+    ${opts}
+		cc               => "${CC}",
+		ld               => "${LD}",
+		ranlib           => "${CROSS}gcc-ranlib",
+		arflags          => "-r",
+		cflags           => "${CFLAGS}",
+		lflags           => "${LDFLAGS}"
+	},
+);
+EOF
+	)
+
+	echo "$config" >"${PREFIX_PORT_WORKDIR}/Configurations/30-phoenix.conf"
+}
+
 openssl_prepare() {
 	#shellcheck disable=2154 # version visible in scope
 	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}"
 
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/Makefile" ]; then
-		cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_PORT_WORKDIR/Configurations/"
+		generate_config
 		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl" "${@}")
 	fi
 }
