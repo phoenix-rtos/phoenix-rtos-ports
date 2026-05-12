@@ -33,6 +33,9 @@ p_prepare() {
 }
 
 p_build() {
+	# Disable parallel building as it may cause failures: https://github.com/eembc/coremark-pro/issues/9
+	local -x MAKEFLAGS="${MAKEFLAGS}${MAKEFLAGS:+ }-j1"
+
 	make -C "${PREFIX_PORT_WORKDIR}" TARGET="${HOST}" build
 
 	# Remove empty data directory (not needed)
