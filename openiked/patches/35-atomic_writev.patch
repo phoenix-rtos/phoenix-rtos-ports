@@ -1,7 +1,7 @@
 diff -ruN c/iked/pfkey.c d/iked/pfkey.c
 --- c/iked/pfkey.c	2022-02-03 17:58:34.506167285 +0100
 +++ d/iked/pfkey.c	2022-02-04 15:16:11.104443951 +0100
-@@ -1663,6 +1663,65 @@
+@@ -1663,6 +1663,68 @@
  }
  #endif
  
@@ -53,15 +53,18 @@ diff -ruN c/iked/pfkey.c d/iked/pfkey.c
 +		else {
 +			char *buf = malloc(len);
 +			if (!buf)
-+				return SET_ERRNO(-ENOMEM);
++				return -1;
 +
 +			copy_from_iov(buf, iov, iovcnt);
 +			len = write(fd, buf, len);
 +			free(buf);
 +		}
 +	}
++	else {
++		return SET_ERRNO(len);
++ 	}
 +
-+	return SET_ERRNO(len);
++	return len;
 +}
 +
  int
