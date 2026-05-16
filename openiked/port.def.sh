@@ -39,6 +39,11 @@ p_build() {
 	LDFLAGS+=" -L${openssl_dir}/lib"
 
 	CFLAGS="-D__linux__ ${CFLAGS}"
+	CFLAGS+=" -ggdb3" # make addr2line work for unstripped binaries
+
+	# parsing auth/enc options (from file and server) is recursive, 65k stack is too small for minimal iked.conf
+	LDFLAGS="${LDFLAGS} -z stack-size=262144"
+
 	cmake -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -S "${PREFIX_PORT_WORKDIR}" -B "${build_dir}"
 	make -C "${build_dir}" install DESTDIR="${build_dir}"
 
