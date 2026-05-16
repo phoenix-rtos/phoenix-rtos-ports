@@ -1,0 +1,484 @@
+diff -Naur '--exclude=build' openiked-portable-6.9.0.orig/CMakeLists.txt openiked-portable-6.9.0/CMakeLists.txt
+--- openiked-portable-6.9.0.orig/CMakeLists.txt	2026-05-14 16:17:51.241727455 +0200
++++ openiked-portable-6.9.0/CMakeLists.txt	2026-05-14 16:45:07.783380814 +0200
+@@ -124,6 +124,7 @@
+ check_include_files("phoenix/ipsec.h" HAVE_PHOENIX_IPSEC_H)
+ if(HAVE_PHOENIX_IPSEC_H)
+ 	add_definitions(-DHAVE_PHOENIX_IPSEC_H)
++	set(HAVE_VROUTE ON)
+ endif()
+ 
+ check_include_files("sys/types.h;sys/queue.h;imsg.h" HAVE_IMSG_H)
+diff -Naur '--exclude=build' openiked-portable-6.9.0.orig/iked/ikev2.c openiked-portable-6.9.0/iked/ikev2.c
+--- openiked-portable-6.9.0.orig/iked/ikev2.c	2026-05-14 16:17:51.358272224 +0200
++++ openiked-portable-6.9.0/iked/ikev2.c	2026-05-18 12:55:55.035956808 +0200
+@@ -7107,8 +7107,28 @@
+ 	struct sockaddr_in6	*in6;
+ 	struct iked_addr	*naddr;
+ 
+-	if (addr->addr_net)
+-		return (-2);
++	if (addr->addr_net) {
++		/*
++		 * Allow 0.0.0.0/0 or ::/0 through as CP wildcard placeholder.
++		 * These represent "any" and should be replaced with the
++		 * CP-assigned address.  All other networks are skipped.
++		 */
++		switch (addr->addr_af) {
++		case AF_INET:
++			in4 = (struct sockaddr_in *)&addr->addr;
++			if (in4->sin_addr.s_addr != 0 || addr->addr_mask != 0)
++				return (-2);
++			break;
++		case AF_INET6:
++			in6 = (struct sockaddr_in6 *)&addr->addr;
++			if (!IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr) ||
++			    addr->addr_mask != 0)
++				return (-2);
++			break;
++		default:
++			return (-2);
++		}
++	}
+ 	if (sa->sa_cp == 0)
+ 		return (-1);
+ 	switch (addr->addr_af) {
+diff -Naur '--exclude=build' openiked-portable-6.9.0.orig/iked/vroute.c openiked-portable-6.9.0/iked/vroute.c
+--- openiked-portable-6.9.0.orig/iked/vroute.c	2021-04-15 19:18:01.000000000 +0200
++++ openiked-portable-6.9.0/iked/vroute.c	2026-06-15 09:08:42.335541875 +0200
+@@ -18,11 +18,14 @@
+ 
+ #include <sys/ioctl.h>
+ 
++#include <sys/socket.h>
+ #include <net/if.h>
+ #include <net/route.h>
+ #include <netinet/in.h>
++#if !defined(__phoenix__)
+ #include <netinet6/in6_var.h>
+ #include <netinet6/nd6.h>
++#endif
+ 
+ #include <event.h>
+ #include <err.h>
+@@ -56,10 +59,17 @@
+ 	int	ivr_rtsock;
+ 	int	ivr_rtseq;
+ 	pid_t	ivr_pid;
++
++#if defined(__phoenix__)
++	/* HACKISH: cache interface name to pass to routing table */
++	char ifname[IF_NAMESIZE];
++#endif
+ };
+ 
+ struct vroute_msg {
++#if !defined(__phoenix__)
+ 	struct rt_msghdr	 vm_rtm;
++#endif
+ 	uint8_t			 vm_space[512];
+ };
+ 
+@@ -81,8 +91,10 @@
+ 	if ((ivr->ivr_iosock6 = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+ 		fatal("%s: failed to create ioctl socket", __func__);
+ 
++#ifndef __phoenix__
+ 	if ((ivr->ivr_rtsock = socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) == -1)
+ 		fatal("%s: failed to create routing socket", __func__);
++#endif
+ 
+ 	ivr->ivr_pid = getpid();
+ 
+@@ -108,10 +120,10 @@
+ 	addr = (struct sockaddr *) ptr;
+ 	af = addr->sa_family;
+ 
+-	if (left < addr->sa_len)
++	if (left < SA_LEN(addr))
+ 		fatalx("bad length imsg received");
+-	ptr += addr->sa_len;
+-	left -= addr->sa_len;
++	ptr += SA_LEN(addr);
++	left -= SA_LEN(addr);
+ 
+ 	if (left < sizeof(*mask))
+ 		fatalx("bad length imsg received");
+@@ -119,10 +131,10 @@
+ 	if (mask->sa_family != af)
+ 		return (-1);
+ 
+-	if (left < mask->sa_len)
++	if (left < SA_LEN(mask))
+ 		fatalx("bad length imsg received");
+-	ptr += mask->sa_len;
+-	left -= mask->sa_len;
++	ptr += SA_LEN(mask);
++	left -= SA_LEN(mask);
+ 
+ 	if (left != sizeof(ifidx))
+ 		fatalx("bad length imsg received");
+@@ -180,7 +192,7 @@
+ 	iovcnt++;
+ 
+ 	iov[iovcnt].iov_base = dst;
+-	iov[iovcnt].iov_len = dst->sa_len;
++	iov[iovcnt].iov_len = SA_LEN(dst);
+ 	iovcnt++;
+ 
+ 	if (type != IMSG_VROUTE_CLONE && addr) {
+@@ -190,7 +202,9 @@
+ 			in = (struct sockaddr_in *)&sa;
+ 			in->sin_addr.s_addr = prefixlen2mask(mask);
+ 			in->sin_family = af;
++#ifndef __phoenix__
+			in->sin_len = sizeof(*in);
++#endif
+ 			iov[iovcnt].iov_base = in;
+ 			iov[iovcnt].iov_len = sizeof(*in);
+ 			iovcnt++;
+@@ -200,7 +214,9 @@
+ 			prefixlen2mask6(mask,
+ 			    (uint32_t *)in6->sin6_addr.s6_addr);
+ 			in6->sin6_family = af;
++#ifndef __phoenix__
+			in6->sin6_len = sizeof(*in6);
++#endif
+ 			iov[iovcnt].iov_base = in6;
+ 			iov[iovcnt].iov_len = sizeof(*in6);
+ 			iovcnt++;
+@@ -208,13 +224,29 @@
+ 		}
+ 
+ 		iov[iovcnt].iov_base = addr;
+-		iov[iovcnt].iov_len = addr->sa_len;
++		iov[iovcnt].iov_len = SA_LEN(addr);
+ 		iovcnt++;
+ 	}
+ 
+ 	return (proc_composev(&env->sc_ps, PROC_PARENT, type, iov, iovcnt));
+ }
+ 
++#if defined(__phoenix__)
++
++#define RTF_STATIC 0x00000000 /* not defined on phoenix */
++
++/* internal - address-passing */
++#define RTA_DST     (1 << 0)
++#define RTA_GATEWAY (1 << 1)
++#define RTA_NETMASK (1 << 2)
++
++/* operations to implement */
++#define RTM_ADD    0x1
++#define RTM_DELETE 0x2
++#define RTM_GET    0x4
++
++#endif
++
+ int
+ vroute_getroute(struct iked *env, struct imsg *imsg)
+ {
+@@ -237,11 +269,11 @@
+ 	if (left < sizeof(struct sockaddr))
+ 		return (-1);
+ 	dest = (struct sockaddr *)ptr;
+-	if (left < dest->sa_len)
++	if (left < SA_LEN(dest))
+ 		return (-1);
+ 	socket_setport(dest, 0);
+-	ptr += dest->sa_len;
+-	left -= dest->sa_len;
++	ptr += SA_LEN(dest);
++	left -= SA_LEN(dest);
+ 	addrs |= RTA_DST;
+ 
+ 	flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+@@ -249,26 +281,27 @@
+ 		if (left < sizeof(struct sockaddr))
+ 			return (-1);
+ 		mask = (struct sockaddr *)ptr;
+-		if (left < mask->sa_len)
++		if (left < SA_LEN(mask))
+ 			return (-1);
+ 		socket_setport(mask, 0);
+-		ptr += mask->sa_len;
+-		left -= mask->sa_len;
++		ptr += SA_LEN(mask);
++		left -= SA_LEN(mask);
+ 		addrs |= RTA_NETMASK;
+ 
+ 		if (left < sizeof(struct sockaddr))
+ 			return (-1);
+ 		gateway = (struct sockaddr *)ptr;
+-		if (left < gateway->sa_len)
++		if (left < SA_LEN(gateway))
+ 			return (-1);
+ 		socket_setport(gateway, 0);
+-		ptr += gateway->sa_len;
+-		left -= gateway->sa_len;
++		ptr += SA_LEN(gateway);
++		left -= SA_LEN(gateway);
+ 		addrs |= RTA_GATEWAY;
+ 	} else {
+ 		flags |= RTF_HOST;
+ 	}
+ 
++	type = RTM_GET;
+ 	switch(imsg->hdr.type) {
+ 	case IMSG_VROUTE_ADD:
+ 		type = RTM_ADD;
+@@ -290,6 +323,14 @@
+ int
+ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
+ {
++#if defined(__phoenix__)
++	/*
++	 * Clone route not needed on Phoenix-RTOS.  LwIP IPSEC operates at the
++	 * IP layer using SPD/SAD, not routing.  The peer is directly reachable
++	 * on L2 and ESP encapsulation doesn't depend on a host route to the peer.
++	 */
++	return (0);
++#else
+ 	struct sockaddr		*dst;
+ 	struct sockaddr_storage	 dest;
+ 	struct sockaddr_storage	 mask;
+@@ -317,11 +358,11 @@
+ 	if (left < sizeof(struct sockaddr))
+ 		return (-1);
+ 	dst = (struct sockaddr *)ptr;
+-	if (left < dst->sa_len)
++	if (left < SA_LEN(dst))
+ 		return (-1);
+-	memcpy(&dest, ptr, dst->sa_len);
+-	ptr += dst->sa_len;
+-	left -= dst->sa_len;
++	memcpy(&dest, ptr, SA_LEN(dst));
++	ptr += SA_LEN(dst);
++	left -= SA_LEN(dst);
+
+ 	/* Get route to peer */
+ 	flags = RTF_UP | RTF_HOST | RTF_STATIC;
+@@ -337,12 +378,73 @@
+ 	addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+ 	return (vroute_doroute(env, flags, addrs, rdomain, RTM_ADD,
+ 	    dst, (struct sockaddr *)&mask, (struct sockaddr *)&addr, NULL));
++#endif
+ }
+ 
+ int
+ vroute_doroute(struct iked *env, int flags, int addrs, int rdomain, uint8_t type,
+     struct sockaddr *dest, struct sockaddr *mask, struct sockaddr *addr, int *need_gw)
+ {
++#if defined(__phoenix__)
++	struct iked_vroute_sc	*ivr = env->sc_vroute;
++	struct rtentry rt = { 0 };
++
++	/* FIXME: RTM_GET not implemented */
++
++	/*
++	 * Phoenix-RTOS requires RTA_NETMASK for all route operations.
++	 * Routes with only RTA_DST (e.g. clone route to peer) are not
++	 * supported and not needed — skip silently.
++	 */
++	if (!(addrs & RTA_NETMASK)) {
++		log_debug("%s: skipping route without netmask (not needed on phoenix)",
++		    __func__);
++		return (0);
++	}
++
++
++	{ // debug
++		char addr_buf[NI_MAXHOST] = "NULL";
++		char dest_buf[NI_MAXHOST] = "NULL";
++		char mask_buf[NI_MAXHOST] = "NULL";
++
++		inet_ntop(dest->sa_family, &((struct sockaddr_in *)dest)->sin_addr,
++		    dest_buf, sizeof(dest_buf));
++
++		if (addrs & RTA_GATEWAY)
++			inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr,
++			    addr_buf, sizeof(addr_buf));
++
++		if (addrs & RTA_NETMASK)
++			inet_ntop(mask->sa_family, &((struct sockaddr_in *)mask)->sin_addr,
++			    mask_buf, sizeof(mask_buf));
++
++		log_debug("%s: %s ROUTE DST: %s netmask %s GW: %s DEV: %s", __func__,
++				type == RTM_ADD ? "add" : "del", dest_buf, mask_buf, addr_buf, ivr->ifname);
++	}
++
++	/* NOTE: for phoenix rt_dev is required (we have netif-based routing */
++	rt.rt_dev = ivr->ifname;
++
++	rt.rt_flags = flags;
++	rt.rt_dst = *dest;
++
++	if (addrs & RTA_NETMASK)
++		rt.rt_genmask = *mask;
++
++	if (addrs & RTA_GATEWAY)
++		rt.rt_gateway = *addr;
++
++	rt.rt_metric = 100;
++
++	long ioreq = type == RTM_ADD ? SIOCADDRT : SIOCDELRT;
++	if (ioctl(ivr->ivr_iosock, ioreq, &rt) == -1) {
++		log_warn("%s: req: %lu", __func__, ioreq);
++		return (-1);
++	}
++
++
++#else
+ 	struct vroute_msg	 m_rtmsg;
+ 	struct iovec		 iov[7];
+ 	struct iked_vroute_sc	*ivr = env->sc_vroute;
+@@ -371,9 +473,9 @@
+ 
+ 	if (rtm.rtm_addrs & RTA_DST) {
+ 		iov[iovcnt].iov_base = dest;
+-		iov[iovcnt].iov_len = dest->sa_len;
++		iov[iovcnt].iov_len = SA_LEN(dest);
+ 		iovcnt++;
+-		padlen = ROUNDUP(dest->sa_len) - dest->sa_len;
++		padlen = ROUNDUP(SA_LEN(dest)) - SA_LEN(dest);
+ 		if (padlen > 0) {
+ 			iov[iovcnt].iov_base = &pad;
+ 			iov[iovcnt].iov_len = padlen;
+@@ -383,9 +485,9 @@
+ 
+ 	if (rtm.rtm_addrs & RTA_GATEWAY) {
+ 		iov[iovcnt].iov_base = addr;
+-		iov[iovcnt].iov_len = addr->sa_len;
++		iov[iovcnt].iov_len = SA_LEN(addr);
+ 		iovcnt++;
+-		padlen = ROUNDUP(addr->sa_len) - addr->sa_len;
++		padlen = ROUNDUP(SA_LEN(addr)) - SA_LEN(addr);
+ 		if (padlen > 0) {
+ 			iov[iovcnt].iov_base = &pad;
+ 			iov[iovcnt].iov_len = padlen;
+@@ -395,9 +497,9 @@
+ 
+ 	if (rtm.rtm_addrs & RTA_NETMASK) {
+ 		iov[iovcnt].iov_base = mask;
+-		iov[iovcnt].iov_len = mask->sa_len;
++		iov[iovcnt].iov_len = SA_LEN(mask);
+ 		iovcnt++;
+-		padlen = ROUNDUP(mask->sa_len) - mask->sa_len;
++		padlen = ROUNDUP(SA_LEN(mask)) - SA_LEN(mask);
+ 		if (padlen > 0) {
+ 			iov[iovcnt].iov_base = &pad;
+ 			iov[iovcnt].iov_len = padlen;
+@@ -429,6 +531,7 @@
+ 	}
+ #undef rtm
+ 
++#endif
+ 	return (0);
+ }
+ 
+@@ -506,6 +609,7 @@
+ vroute_process(struct iked *env, int msglen, struct vroute_msg *m_rtmsg,
+     struct sockaddr *dest, struct sockaddr *mask, struct sockaddr *addr, int *need_gw)
+ {
++#if !defined(__phoenix__)
+ 	struct sockaddr *sa;
+ 	char *cp;
+ 	int i;
+@@ -534,27 +638,86 @@
+ 				sa = (struct sockaddr *)cp;
+ 				switch(i) {
+ 				case RTA_DST:
+-					memcpy(dest, cp, sa->sa_len);
++					memcpy(dest, cp, SA_LEN(sa));
+ 					break;
+ 				case RTA_NETMASK:
+-					memcpy(mask, cp, sa->sa_len);
++					memcpy(mask, cp, SA_LEN(sa));
+ 					break;
+ 				case RTA_GATEWAY:
+-					memcpy(addr, cp, sa->sa_len);
++					memcpy(addr, cp, SA_LEN(sa));
+ 					break;
+ 				}
+-				cp += ROUNDUP(sa->sa_len);
++				cp += ROUNDUP(SA_LEN(sa));
+ 			}
+ 		}
+ 	}
+ #undef rtm
++#endif // !defined(__phoenix__)
+ 	return (0);
+ }
+ 
++
+ int
+ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
+     struct sockaddr *mask, int add)
+ {
++#if defined(__phoenix__)
++	struct iked_vroute_sc	*ivr = env->sc_vroute;
++	struct ifreq		 req;
++	unsigned long		 ioreq;
++	int			 af;
++	char			 addr_buf[NI_MAXHOST];
++	char			 mask_buf[NI_MAXHOST];
++
++	/* cache iface name for later use in routing table operations */
++	strncpy(ivr->ifname, ifname, sizeof(ivr->ifname));
++
++	/* NOTE: we don't support alias addresses for interfaces - this implementation sets the main one */
++	af = addr->sa_family;
++	switch (af) {
++	case AF_INET:
++		bzero(&req, sizeof(req));
++		strncpy(req.ifr_name, ifname, sizeof(req.ifr_name));
++
++		inet_ntop(af, &((struct sockaddr_in *)addr)->sin_addr,
++		    addr_buf, sizeof(addr_buf));
++		inet_ntop(af, &((struct sockaddr_in *)mask)->sin_addr,
++		    mask_buf, sizeof(mask_buf));
++		log_debug("%s: %s inet %s netmask %s", __func__,
++		    add ? "add" : "del",addr_buf, mask_buf);
++
++		/* we need to send 2 separate ioctls for address and netmask */
++		if (add) {
++			ioreq = SIOCSIFADDR;
++			memcpy(&req.ifr_addr, addr, sizeof(req.ifr_addr));
++			if (ioctl(ivr->ivr_iosock, ioreq, &req) == -1) {
++				log_warn("%s: req: %lu", __func__, ioreq);
++				return (-1);
++			}
++
++			ioreq = SIOCSIFNETMASK;
++			memcpy(&req.ifr_netmask, mask, sizeof(req.ifr_netmask));
++			if (ioctl(ivr->ivr_iosock, ioreq, &req) == -1) {
++				log_warn("%s: req: %lu", __func__, ioreq);
++				return (-1);
++			}
++		} else {
++			/* set IP address to 0.0.0.0 */
++			ioreq = SIOCSIFADDR;
++			memset(&req.ifr_addr, 0, sizeof(req.ifr_addr));
++			if (ioctl(ivr->ivr_iosock, ioreq, &req) == -1) {
++				log_warn("%s: req: %lu", __func__, ioreq);
++				return (-1);
++			}
++		}
++		break;
++	case AF_INET6:
++		log_warn("%s: IPv6 support is not implemented", __func__);
++		return (-1);
++	default:
++		return (-1);
++	}
++#else
+ 	struct iked_vroute_sc	*ivr = env->sc_vroute;
+ 	struct ifaliasreq	 req;
+ 	struct in6_aliasreq	 req6;
+@@ -613,5 +776,6 @@
+ 		return (-1);
+ 	}
+ 
++#endif /* __phoenix__ */
+ 	return (0);
+ }
