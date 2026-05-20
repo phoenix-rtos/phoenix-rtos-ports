@@ -61,7 +61,7 @@ jobs:
 
     - name: Validate
       run: |
-        (cd "${BUILD_DIRECTORY}/phoenix-rtos-build" && python3 -m port_manager.main validate ../phoenix-rtos-ports) >> result.json
+        (cd "${BUILD_DIRECTORY}/phoenix-rtos-build" && python3 ./port_manager.py validate ../phoenix-rtos-ports) >> result.json
         "${BUILD_DIRECTORY}/phoenix-rtos-build/port_manager/gen_validate_markdown_table.sh" result.json >> $GITHUB_STEP_SUMMARY
 
     - name: Upload port definitions

@@ -4,6 +4,9 @@ on:
   schedule:
     # triggered every monday at 1:00 UTC
     - cron: '0 1 * * 1'
+  pull_request:
+    branches:
+      - master
 
 # based on phoenix-rtos-project/.github/workflows/ci-project.yml
 jobs:
@@ -21,32 +24,57 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Checkout phoenix-rtos-project
+        # we need to use relative paths here so they would work in docker env
+        run: |
+          mkdir .buildroot && cd .buildroot
+          git clone https://github.com/phoenix-rtos/phoenix-rtos-project --recurse-submodules
+          cd phoenix-rtos-project
+          echo "BUILD_DIRECTORY=$(pwd)" >> $GITHUB_ENV
+          echo "CI_CUSTOM_BUILDROOT=.buildroot/phoenix-rtos-project" >> $GITHUB_ENV
+          git log -1 --pretty=oneline
+          git submodule
+
+      # step 2a: resolve cross-repo dependencies (same-branch matching + Depends-On directives from PR body)
+      - name: Resolve cross-repo dependencies
+        uses: ./.buildroot/phoenix-rtos-project/.github/actions/resolve-submodule-deps
+        with:
+          project-dir: ${{ env.BUILD_DIRECTORY }}
+          update-submodule: 'false'
+
+      # step 2b: replace current submodule dir with symlink to PR checkout
+      - name: Replace submodule with symlink to PR checkout
+        run: |
+          cd "${{ env.BUILD_DIRECTORY }}"
+          rm -rf "${{ github.event.repository.name }}"
+          ln -s ../.. "${{ github.event.repository.name }}"
+
       # attach GCC problem matcher - will pin problems to files only in current submodule
       - name: Add GCC problem matcher
-        run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+        run: echo "::add-matcher::./.buildroot/phoenix-rtos-project/.github/problem-matchers/gcc.json"
 
-      # step 2: use our custom action to build the project
+      # step 3: use our custom action to build the project
       - name: Build
         id: build
-        uses: ./.github/actions/phoenix-build
+        uses: ./.buildroot/phoenix-rtos-project/.github/actions/phoenix-build
         with:
-          image-tag: ${{ inputs.image-tag }}
+          image-tag: "latest"
           target: ${{ matrix.target }}
-          params: ${{ inputs.build_params }} ${{ matrix.additional_params }}
-          nightly: ${{ inputs.nightly }}
+          params: "all"
+          buildroot: ${{env.CI_CUSTOM_BUILDROOT}}
           build_all_ports: true
 
-      # step 3: tar rootfs
+      # step 4: tar rootfs
       - name: Tar rootfs
         working-directory: _fs
         run: tar -cvf ../rootfs-${{ matrix.target }}.tar ${{ matrix.target }}/root
 
-      # step 4: tar project boot directory
+      # step 5: tar project boot directory
       - name: Tar boot directory
         working-directory: _boot
         run: tar -cvf ../boot-${{ matrix.target }}.tar ${{ matrix.target }}
 
-      # step 5: upload project boot and rootfs tarballs as build artifacts
+      # step 6: upload project boot and rootfs tarballs as build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
