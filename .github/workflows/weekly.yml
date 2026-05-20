@@ -1,0 +1,56 @@
+name: weekly
+
+on:
+  schedule:
+    # triggered every monday at 1:00 UTC
+    - cron: '0 1 * * 1'
+
+# based on phoenix-rtos-project/.github/workflows/ci-project.yml
+jobs:
+  build-all-ports:
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - 'ia32-generic-qemu'
+    steps:
+      # step 1: checkout repository code inside the workspace directory of the runner
+      - name: Checkout the repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      # attach GCC problem matcher - will pin problems to files only in current submodule
+      - name: Add GCC problem matcher
+        run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+
+      # step 2: use our custom action to build the project
+      - name: Build
+        id: build
+        uses: ./.github/actions/phoenix-build
+        with:
+          image-tag: ${{ inputs.image-tag }}
+          target: ${{ matrix.target }}
+          params: ${{ inputs.build_params }} ${{ matrix.additional_params }}
+          nightly: ${{ inputs.nightly }}
+          build_all_ports: true
+
+      # step 3: tar rootfs
+      - name: Tar rootfs
+        working-directory: _fs
+        run: tar -cvf ../rootfs-${{ matrix.target }}.tar ${{ matrix.target }}/root
+
+      # step 4: tar project boot directory
+      - name: Tar boot directory
+        working-directory: _boot
+        run: tar -cvf ../boot-${{ matrix.target }}.tar ${{ matrix.target }}
+
+      # step 5: upload project boot and rootfs tarballs as build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: phoenix-rtos-${{ matrix.target }}
+          path: |
+            boot-${{ matrix.target }}.tar
+            rootfs-${{ matrix.target }}.tar
