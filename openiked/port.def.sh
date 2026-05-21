@@ -20,7 +20,6 @@
 
 	conflicts=""
 	depends="openssl>=1.1.1a libevent>=2.1"
-	optional=""
 
 	supports="phoenix>=3.3"
 }

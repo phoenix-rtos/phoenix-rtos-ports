@@ -22,7 +22,6 @@
 
 	conflicts=""
 	depends=""
-	optional=""
 
 	supports="phoenix>=3.3"
 }

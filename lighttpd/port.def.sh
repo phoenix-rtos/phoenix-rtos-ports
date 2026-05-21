@@ -18,9 +18,9 @@
 	license="BSD-3-Clause"
 	license_file="COPYING"
 
+	iuse="zlib"
+	depends="pcre>=8.42 openssl>=1.1.1a zlib? (zlib>=1.2.11)"
 	conflicts=""
-	depends="pcre>=8.42 openssl>=1.1.1a"
-	optional="zlib>=1.2.11"
 
 	supports="phoenix>=3.3"
 }
@@ -35,12 +35,7 @@ p_prepare() {
 		LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 
 		WITH_ZLIB="no"
-		zlib_dir=$(b_optional_dir "zlib")
-		if [ -n "${zlib_dir}" ]; then
-			WITH_ZLIB="yes"
-			CFLAGS+=" -I${zlib_dir}/include"
-			LDFLAGS+=" -L${zlib_dir}/lib"
-		fi
+		b_use "zlib" && WITH_ZLIB="yes"
 
 		# Increase the stack size. A 32 kB array allocated on the stack was causing a stack overflow on the Phoenix-RTOS.
 		LDFLAGS="${LDFLAGS} -z stack-size=65536"

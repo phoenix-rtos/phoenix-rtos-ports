@@ -20,7 +20,6 @@
 
 	conflicts=""
 	depends=""
-	optional=""
 
 	iuse="safe"
 

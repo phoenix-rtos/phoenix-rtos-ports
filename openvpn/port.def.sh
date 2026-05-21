@@ -21,7 +21,6 @@
 
 	conflicts=""
 	depends="openssl>=1.1.1a lzo>=2.10"
-	optional=""
 
 	supports="phoenix>=3.3"
 }

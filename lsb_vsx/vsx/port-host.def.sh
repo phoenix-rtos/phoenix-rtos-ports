@@ -22,7 +22,6 @@
 
 	conflicts=""
 	depends="tetware_host>=2.0"
-	optional=""
 
 	supports="host"
 }

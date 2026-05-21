@@ -18,9 +18,9 @@
 	license="curl"
 	license_file="COPYING"
 
+	iuse="mbedtls"
+	depends="mbedtls? (mbedtls>=2.28.0)"
 	conflicts=""
-	depends=""
-	optional="mbedtls>=2.28.0"
 
 	supports="phoenix>=3.3"
 }
@@ -35,9 +35,7 @@ p_prepare() {
 	CONFIGURE_PARAMS=(--host="${HOST}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver
 		--disable-ipv6 --prefix="$PREFIX_CURL_INSTALL" --disable-ntlm-wb --without-zlib)
 
-	# TODO: assert that if $PORTS_CURL_USE_MBEDTLS" = "y", that the optional
-	# mbedtls dep is satisfiable
-	[[ "$PORTS_CURL_USE_MBEDTLS" = "y" ]] && CONFIGURE_PARAMS+=(--without-ssl --with-mbedtls)
+	b_use "mbedtls" && CONFIGURE_PARAMS+=(--without-ssl --with-mbedtls)
 
 	if [ ! -f "$PREFIX_PORT_WORKDIR/config.status" ]; then
 		(cd "$PREFIX_PORT_WORKDIR" && "$PREFIX_PORT_WORKDIR/configure" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
