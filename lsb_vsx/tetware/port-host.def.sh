@@ -22,7 +22,6 @@
 
 	conflicts=""
 	depends=""
-	optional=""
 
 	supports="host"
 }

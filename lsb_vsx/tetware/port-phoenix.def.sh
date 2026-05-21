@@ -22,7 +22,6 @@
 
 	conflicts=""
 	depends="vsx_host>=2.0"
-	optional=""
 
 	supports="phoenix>=3.3"
 }

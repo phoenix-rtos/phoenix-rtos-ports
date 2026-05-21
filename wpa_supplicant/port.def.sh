@@ -20,7 +20,6 @@
 
 	conflicts=""
 	depends="openssl>=1.1.1a"
-	optional=""
 
 	supports="phoenix>=3.3"
 }

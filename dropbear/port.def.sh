@@ -18,9 +18,9 @@
 	license="MIT"
 	license_file="LICENSE"
 
+	iuse="zlib"
+	depends="zlib? (zlib>=1.2.11)"
 	conflicts=""
-	depends=""
-	optional="zlib>=1.2.11"
 
 	supports="phoenix>=3.3"
 }
@@ -35,10 +35,7 @@ p_prepare() {
 		DROPBEAR_LDFLAGS=""
 
 		ENABLE_ZLIB="no"
-		zlib_dir=$(b_optional_dir "zlib")
-		if [ -n "${zlib_dir}" ]; then
-			ENABLE_ZLIB="yes"
-		fi
+		b_use "zlib" && ENABLE_ZLIB="yes"
 
 		export OLDCFLAGS="-v" # HACKISH: fix ./configure script not detecting externally-provided CFLAGS
 
