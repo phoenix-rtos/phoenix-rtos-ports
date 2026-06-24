@@ -28,7 +28,7 @@ p_prepare() {
 	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
 
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/config.status" ]; then
-		(cd "${PREFIX_PORT_WORKDIR}" && ./configure INSTALL="/usr/bin/install -p" CPPFLAGS="$CFLAGS" --host="$HOST" \
+		(cd "${PREFIX_PORT_WORKDIR}" && ./configure INSTALL="install -p" CPPFLAGS="$CFLAGS" --host="$HOST" \
 			--disable-thread-support --disable-openssl --disable-debug-mode --disable-libevent-regress \
 			--disable-samples --enable-function-sections --disable-clock-gettime --disable-shared \
 			--prefix="${PREFIX_PORT_INSTALL}" --includedir="${PREFIX_H}" --libdir="${PREFIX_A}")
