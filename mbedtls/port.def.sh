@@ -7,6 +7,7 @@
 	name="mbedtls"
 	version="2.28.0"
 	desc="SSL/TLS and cryptography library suitable for embedded systems"
+	cpe23="cpe:2.3:a:trustedfirmware:mbed_tls:${version}:*:*:*:*:*:*:*"
 
 	source="https://github.com/Mbed-TLS/mbedtls/archive/"
 	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")

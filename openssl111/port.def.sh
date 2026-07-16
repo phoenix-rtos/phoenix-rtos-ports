@@ -7,6 +7,7 @@
 	name="openssl"
 	version="1.1.1a"
 	desc="TLSv1.3 capable SSL and crypto library"
+	cpe23="cpe:2.3:a:openssl:openssl:${version}:-:*:*:*:*:*:*"
 
 	source="https://www.openssl.org/source/"
 	archive_filename="${name}-${version}.tar.gz"

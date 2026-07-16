@@ -7,6 +7,7 @@
 	name="lzo"
 	version="2.10"
 	desc="Portable speedy, lossless data compression library"
+	cpe23="cpe:2.3:a:lzo_project:lzo:${version}:*:*:*:*:*:*:*"
 
 	source="http://www.oberhumer.com/opensource/lzo/download/"
 	archive_filename="${name}-${version}.tar.gz"

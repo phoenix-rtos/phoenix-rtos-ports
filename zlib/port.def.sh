@@ -7,6 +7,7 @@
 	name="zlib"
 	version="1.2.11"
 	desc="General purpose compression library"
+	cpe23="cpe:2.3:a:zlib:zlib:${version}:*:*:*:*:*:*:*"
 
 	source="https://zlib.net/fossils/"
 	archive_filename="${name}-${version}.tar.gz"

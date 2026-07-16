@@ -7,6 +7,7 @@
 	name="lua"
 	version="5.3.6"
 	desc="Small, compilable scripting language providing easy access to C code"
+	cpe23="cpe:2.3:a:lua:lua:${version}:*:*:*:*:*:*:*"
 
 	source="https://www.lua.org/ftp/"
 	archive_filename="${name}-${version}.tar.gz"

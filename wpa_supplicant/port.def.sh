@@ -7,6 +7,7 @@
 	name="wpa_supplicant"
 	version="2.9"
 	desc="Supplicant (client) for WPA/802.1x protocols"
+	cpe23="cpe:2.3:a:w1.fi:wpa_supplicant:${version}:*:*:*:*:*:*:*"
 
 	source="https://w1.fi/releases/"
 	archive_filename="${name}-${version}.tar.gz"

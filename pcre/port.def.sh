@@ -7,6 +7,7 @@
 	name="pcre"
 	version="8.42"
 	desc="Perl Compatible Regular Expressions library"
+	cpe23="cpe:2.3:a:pcre:pcre:${version}:*:*:*:*:*:*:*"
 
 	source="http://ftp.exim.org/pub/pcre/"
 	archive_filename="${name}-${version}.tar.bz2"

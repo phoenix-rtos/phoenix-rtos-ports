@@ -7,6 +7,7 @@
 	name="micropython"
 	version="1.26.0"
 	desc="Implementation of the Python language for microcontrollers"
+	cpe23="cpe:2.3:a:micropython:micropython:${version}:*:*:*:*:*:*:*"
 
 	source="https://github.com/micropython/micropython/releases/download/v${version}/"
 	archive_filename="${name}-${version}.tar.xz"

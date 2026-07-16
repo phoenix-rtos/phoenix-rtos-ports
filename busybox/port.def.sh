@@ -7,6 +7,7 @@
 	name="busybox"
 	version="1.27.2"
 	desc="Set of common UNIX utilities built as single binary"
+	cpe23="cpe:2.3:a:busybox:busybox:${version}:*:*:*:*:*:*:*"
 
 	source="https://busybox.net/downloads/"
 	archive_filename="${name}-${version}.tar.bz2"

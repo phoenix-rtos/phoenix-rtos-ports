@@ -7,6 +7,7 @@
 	name="openvpn"
 	version="2.4.7"
 	desc="Secure IP/Ethernet tunnel daemon"
+	cpe23="cpe:2.3:a:openvpn:openvpn:${version}:*:*:*:community:*:*:*"
 
 	source="https://swupdate.openvpn.org/community/releases/"
 	archive_filename="${name}-${version}.tar.gz"

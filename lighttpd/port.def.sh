@@ -7,6 +7,7 @@
 	name="lighttpd"
 	version="1.4.79"
 	desc="A secure, fast, standards compliant, and very flexible web server that has been optimized for high-performance environments"
+	cpe23="cpe:2.3:a:lighttpd:lighttpd:${version}:*:*:*:*:*:*:*"
 
 	source="https://download.lighttpd.net/lighttpd/releases-1.4.x/"
 	archive_filename="${name}-${version}.tar.gz"

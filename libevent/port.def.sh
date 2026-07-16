@@ -7,6 +7,7 @@
 	name="libevent"
 	version="2.1.12"
 	desc="Event notification library"
+	cpe23="cpe:2.3:a:libevent_project:libevent:${version}:*:*:*:*:*:*:*"
 
 	source="https://github.com/libevent/libevent/releases/download/release-${version}-stable/"
 	archive_filename="${name}-${version}-stable.tar.gz"

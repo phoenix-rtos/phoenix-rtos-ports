@@ -7,6 +7,7 @@
 	name="azure_sdk"
 	version="1.8.0"
 	desc="A C99 SDK for connecting devices to Microsoft Azure IoT services"
+	cpe23="cpe:2.3:a:microsoft:azure-iot-sdk-c:${version}:*:*:*:*:*:*:*"
 
 	git_rev="lts_01_2022"
 	git_source="https://github.com/Azure/azure-iot-sdk-c.git"

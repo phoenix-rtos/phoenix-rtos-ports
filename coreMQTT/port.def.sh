@@ -7,6 +7,7 @@
 	name="coreMQTT"
 	version="2.3.0"
 	desc="Client implementation of the MQTT 3.1.1 specification for embedded devices"
+	cpe23="cpe:2.3:a:freertos:coremqtt:${version}:*:*:*:*:*:*:*"
 
 	source="https://github.com/FreeRTOS/coreMQTT/archive/refs/tags/"
 	archive_filename=("${name}-${version}.tar.gz" "v${version}.tar.gz")

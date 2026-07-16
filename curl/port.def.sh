@@ -7,6 +7,7 @@
 	name="curl"
 	version="7.64.1"
 	desc="A command line tool and library for transferring data with URL syntax"
+	cpe23="cpe:2.3:a:haxx:curl:${version}:*:*:*:*:*:*:*"
 
 	source="https://curl.haxx.se/download/"
 	archive_filename="${name}-${version}.tar.gz"

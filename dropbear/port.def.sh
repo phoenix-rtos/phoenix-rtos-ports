@@ -7,6 +7,7 @@
 	name="dropbear"
 	version="2018.76"
 	desc="A smallish SSH server and client"
+	cpe23="cpe:2.3:a:dropbear_ssh_project:dropbear_ssh:${version}:*:*:*:*:*:*:*"
 
 	source="https://matt.ucc.asn.au/dropbear/releases/"
 	archive_filename="${name}-${version}.tar.bz2"
