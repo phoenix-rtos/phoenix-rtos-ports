@@ -15,7 +15,7 @@
 	size="1570171"
 	sha256="2cd04b7c887808be030254e8d77de11d3fe9d4505c39d4b15d2664ffe8bf9301"
 
-	license="BSD"
+	license="BSD-3-Clause"
 	license_file="LICENCE"
 
 	conflicts=""
