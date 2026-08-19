@@ -102,4 +102,7 @@ p_build() {
 	else
 		b_install "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build/iwasm" /usr/bin/
 	fi
+
+	cp -a "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build/libiwasm.a" "${PREFIX_A}"
+	cp -a "${PREFIX_PORT_WORKDIR}/core/iwasm/include"/* "${PREFIX_H}"
 }
