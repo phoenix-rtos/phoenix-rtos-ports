@@ -82,7 +82,10 @@ p_build() {
 		;;
 	esac
 	export STRIPFLAGS_EXTRA="${STRIPEXP}"
-	export PHOENIX_MATH_ABSENT="expm1 log1p asinh acosh atanh erf tgamma lgamma copysign __sin __cos __tan __signbit"
+	export PHOENIX_MATH_ABSENT=""
+	if [ "$LIBM_USE_LIBMCS" != "y" ]; then
+		export PHOENIX_MATH_ABSENT="expm1 log1p asinh acosh atanh erf tgamma lgamma copysign __sin __cos __tan"
+	fi
 	export LDFLAGS_EXTRA="${CFLAGS} ${LDFLAGS}"
 	export CFLAGS_EXTRA="${CFLAGS} -DUPYTH_STACKSZ=${UPYTH_STACKSZ} -DUPYTH_HEAPSZ=${UPYTH_HEAPSZ} "
 	# clear original ld-format ldflags/cflags
