@@ -38,15 +38,22 @@ p_prepare() {
 	# Fix permissions
 	chmod -R u+w "${PREFIX_PORT_WORKDIR}"
 
+	local SYSROOT_INCLUDE="${PREFIX_BUILD}/sysroot/usr/include"
+
+	# Ensure that incrpt.sh ($CC $COPTS $defs -E $INCRPT/$i.c > "$Efile") checks
+	# symbol existence based on built sysroot headers before falling back to
+	# (usually outdated) toolchain-provided ones.
+	local COPTS="-std=gnu89 -I${SYSROOT_INCLUDE}"
+
 	# TODO(adamgreloch): is there really no better way to achieve correct build
 	# than sed patching?
 	mkdir -p "${PREFIX_PORT_WORKDIR}/ps_config"
 	sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
-		-e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
+		-e "s|^COPTS=.*$|COPTS=\"${COPTS}\"|" \
 		-e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
 		-e "s|^AR=.*$|AR=\"${AR} cr\"|" \
 		-e "s|^RANLIB=.*$|RANLIB=\"${CROSS}ranlib\"|" \
-		-e "s|^INCDIRS=.*$|INCDIRS=\"${PREFIX_BUILD}/sysroot/usr/include\"|" \
+		-e "s|^INCDIRS=.*$|INCDIRS=\"${SYSROOT_INCLUDE}\"|" \
 		-e "s|^VSXDIR=.*$|VSXDIR=\"${VSXDIR}\"|" \
 		-e "s|^TET_EXECUTE=.*$|TET_EXECUTE=\"${TET_EXECUTE}\"|" \
 		-e "s|^VSX_ORG=.*$|VSX_ORG=\"Phoenix Systems\"|" \
