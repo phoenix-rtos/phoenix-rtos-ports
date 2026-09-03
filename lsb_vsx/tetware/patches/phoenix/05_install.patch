@@ -6,7 +6,7 @@
  #########################################################################
  #									#
  #	SCCS:	@(#)install/scripts/install.sh	4.3 (03/03/98)  VSXgen release 1.4#
-@@ -141,6 +141,17 @@
+@@ -141,6 +141,19 @@
  #########################################################################
  echo "
  Creating the system include files used by VSX in $VSXDIR/SYSINC"
@@ -20,11 +20,13 @@
 +cp "${INCDIRS}/sys/types.h" "${VSXDIR}/SYSINC/sys/types.h"
 +# inccreat.sh don't check stdint.h, copy manually
 +cp "${INCDIRS}/stdint.h" "${VSXDIR}/SYSINC/stdint.h"
++cp "${INCDIRS}/numeric_size_config.h" "${VSXDIR}/SYSINC/numeric_size_config.h"
++cp "${INCDIRS}/internal_config.h" "${VSXDIR}/SYSINC/internal_config.h"
 +
  $VSXDIR/install/scripts/inccreat.sh
  
  # copy sample RPC headers into SYSINC/rpc if using sample RPC library
-@@ -157,152 +168,6 @@
+@@ -157,152 +170,6 @@
  
  #########################################################################
  #									#
@@ -177,7 +179,7 @@
  # Set up the testroot 							#
  #									#
  #########################################################################
-@@ -339,176 +204,6 @@
+@@ -339,176 +206,6 @@
  )
  
  #########################################################################
@@ -354,7 +356,7 @@
  #									#
  # Install userintf.c, rpcincs.h and testvars.h				#
  #									#
-@@ -681,14 +376,22 @@
+@@ -681,14 +378,22 @@
  	then	echo "$dir make succeeded"
  	else	echo "$dir make failed:"
  		cat make.$target
