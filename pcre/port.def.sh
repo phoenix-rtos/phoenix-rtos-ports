@@ -26,8 +26,9 @@
 }
 
 p_prepare() {
+	HOST_PCRE="${HOST/#aarch64a53/aarch64}"
 	if [ ! -f "${PREFIX_PORT_WORKDIR}/config.h" ]; then
-		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
+		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST_PCRE" \
 			--disable-cpp --prefix="${PREFIX_PORT_WORKDIR}" --libdir="${PREFIX_A}" \
 			--includedir="${PREFIX_H}")
 	fi
