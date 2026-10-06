@@ -1,5 +1,5 @@
 diff --git a/core/shared/platform/linux/platform_internal.h b/core/shared/platform/linux/platform_internal.h
-index 86518027..59dd95e0 100644
+index 86518027..16340534 100644
 --- a/core/shared/platform/linux/platform_internal.h
 +++ b/core/shared/platform/linux/platform_internal.h
 @@ -18,7 +18,7 @@
@@ -11,7 +11,7 @@ index 86518027..59dd95e0 100644
  #include <limits.h>
  #include <dirent.h>
  #include <fcntl.h>
-@@ -31,20 +31,74 @@
+@@ -31,20 +31,70 @@
  #include <sys/stat.h>
  #include <sys/mman.h>
  #include <sys/time.h>
@@ -72,24 +72,20 @@ index 86518027..59dd95e0 100644
 +float rintf(float x);
 +float fabsf(float x);
 +float truncf(float x);
-+int isnan(double x);
 +double pow(double x, double y);
 +double scalbn(double x, int n);
-+
-+#ifndef BH_HAS_SIGNBIT
-+int signbit(double x);
-+#endif
 +
 +unsigned long long int strtoull(const char *nptr, char **endptr, int base);
 +double strtod(const char *nptr, char **endptr);
 +float strtof(const char *nptr, char **endptr);
 +
 +#define BH_HAS_SQRT
++#define BH_HAS_SIGNBIT
 +
  /* Stack size of applet threads's native part.  */
  #define BH_APPLET_PRESERVED_STACK_SIZE (32 * 1024)
  
-@@ -55,12 +109,19 @@ typedef pthread_t korp_tid;
+@@ -55,12 +105,19 @@ typedef pthread_t korp_tid;
  typedef pthread_mutex_t korp_mutex;
  typedef pthread_cond_t korp_cond;
  typedef pthread_t korp_thread;
