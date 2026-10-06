@@ -1,8 +1,8 @@
 diff --git a/core/shared/platform/common/math/math.c b/core/shared/platform/common/math/math.c
-index 2ba9f4d2..79651020 100644
+index 2ba9f4d2..842a63af 100644
 --- a/core/shared/platform/common/math/math.c
 +++ b/core/shared/platform/common/math/math.c
-@@ -419,40 +419,8 @@ static const double
+@@ -419,46 +419,12 @@ static const double
  #else
  static double
  #endif
@@ -44,7 +44,13 @@ index 2ba9f4d2..79651020 100644
  static double
  freebsd_fabs(double x);
  static double
-@@ -620,311 +588,6 @@ freebsd_atan2(double y, double x)
+ freebsd_rint(double x);
+-static int
+-freebsd_isnan(double x);
+ static double
+ freebsd_atan(double x);
+ static double
+@@ -620,311 +586,6 @@ freebsd_atan2(double y, double x)
      }
  }
  
@@ -356,10 +362,25 @@ index 2ba9f4d2..79651020 100644
  static double
  freebsd_rint(double x)
  {
-@@ -1005,15 +668,6 @@ freebsd_isnan(double d)
-     }
+@@ -990,30 +651,6 @@ freebsd_rint(double x)
+     return w - TWO52[sx];
  }
  
+-static int
+-freebsd_isnan(double d)
+-{
+-    if (is_little_endian()) {
+-        IEEEd2bits_L u;
+-        u.d = d;
+-        return (u.bits.exp == 2047 && (u.bits.manl != 0 || u.bits.manh != 0));
+-    }
+-    else {
+-        IEEEd2bits_B u;
+-        u.d = d;
+-        return (u.bits.exp == 2047 && (u.bits.manl != 0 || u.bits.manh != 0));
+-    }
+-}
+-
 -static float
 -freebsd_fabsf(float x)
 -{
@@ -372,7 +393,7 @@ index 2ba9f4d2..79651020 100644
  static double
  freebsd_fabs(double x)
  {
-@@ -1023,43 +677,11 @@ freebsd_fabs(double x)
+@@ -1023,43 +660,11 @@ freebsd_fabs(double x)
      return x;
  }
  
@@ -416,7 +437,7 @@ index 2ba9f4d2..79651020 100644
  static float
  freebsd_rintf(float x)
  {
-@@ -1087,85 +709,6 @@ freebsd_rintf(float x)
+@@ -1087,85 +692,6 @@ freebsd_rintf(float x)
          return x; /* x is integral */
  }
  
@@ -502,7 +523,7 @@ index 2ba9f4d2..79651020 100644
  static float
  freebsd_fminf(float x, float y)
  {
-@@ -1290,260 +833,6 @@ freebsd_scalbn(double x, int n)
+@@ -1290,260 +816,6 @@ freebsd_scalbn(double x, int n)
      return x * twom54;
  }
  
@@ -763,7 +784,7 @@ index 2ba9f4d2..79651020 100644
  double
  atan(double x)
  {
-@@ -1556,26 +845,6 @@ atan2(double y, double x)
+@@ -1556,26 +828,6 @@ atan2(double y, double x)
      return freebsd_atan2(y, x);
  }
  
@@ -790,7 +811,7 @@ index 2ba9f4d2..79651020 100644
  double
  fmin(double x, double y)
  {
-@@ -1594,60 +863,24 @@ rint(double x)
+@@ -1594,60 +846,12 @@ rint(double x)
      return freebsd_rint(x);
  }
  
@@ -800,24 +821,24 @@ index 2ba9f4d2..79651020 100644
 -    return freebsd_fabs(x);
 -}
 -
- int
- isnan(double x)
- {
-     return freebsd_isnan(x);
- }
- 
+-int
+-isnan(double x)
+-{
+-    return freebsd_isnan(x);
+-}
+-
 -double
 -trunc(double x)
 -{
 -    return (x > 0) ? freebsd_floor(x) : freebsd_ceil(x);
 -}
 -
- int
- signbit(double x)
- {
-     return ((__HI(x) & 0x80000000) >> 31);
- }
- 
+-int
+-signbit(double x)
+-{
+-    return ((__HI(x) & 0x80000000) >> 31);
+-}
+-
 -float
 -fabsf(float x)
 -{
@@ -851,7 +872,7 @@ index 2ba9f4d2..79651020 100644
  float
  fminf(float x, float y)
  {
-@@ -1660,22 +893,17 @@ fmaxf(float x, float y)
+@@ -1660,22 +864,17 @@ fmaxf(float x, float y)
      return freebsd_fmaxf(x, y);
  }
  
