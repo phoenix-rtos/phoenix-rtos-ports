@@ -1,0 +1,19 @@
+--- lsb_vsx/tset/POSIX.os/procenv/times/times.c	2000-08-29 06:41:01.000000000 +0200
++++ lsb_vsx.phoenix/tset/POSIX.os/procenv/times/times.c	2026-10-24 13:21:51.590573810 +0200
+@@ -114,6 +114,7 @@
+ #define PATH_OK		4	/* path checking error in child */
+ #define	WAITTIME	(5 * SPEEDFACTOR)
+ #define	COUNT_UT	(1000 / SPEEDFACTOR)	/* count for user time wasting */
++#define	COUNT_UT_TICKS	(COUNT_UT * 100)	/* count for user time growing by several clock ticks */
+ #define	COUNT_ST	(10000 / SPEEDFACTOR)	/* count for system time wasting */
+ 
+ #define	VSX_CLOCK_ERR	"VSX_CLOCK_ERR"
+@@ -440,7 +441,7 @@
+ 
+ 	ptime = buf.tms_utime;
+ 
+-	for (count = 0; count < COUNT_UT; count++)
++	for (count = 0; count < COUNT_UT_TICKS; count++)
+ 	{
+ 		if (count==0)
+ 			PATH_TRACE;
