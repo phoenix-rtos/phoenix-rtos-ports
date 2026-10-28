@@ -1,13 +1,36 @@
 diff -ruN c/compat/imsg.c d/compat/imsg.c
---- c/compat/imsg.c	2022-02-03 11:08:54.689945627 +0100
-+++ d/compat/imsg.c	2022-02-03 11:29:35.205311722 +0100
-@@ -93,7 +93,12 @@
+--- c/compat/imsg.c	2021-04-15 19:18:01.000000000 +0200
++++ d/compat/imsg.c	2026-10-29 09:05:21.092876102 +0100
+@@ -76,6 +76,9 @@
+ 	ssize_t			 n = -1;
+ 	int			 fd;
+ 	struct imsg_fd		*ifd;
++#ifdef __phoenix__
++	static long			 open_max = -1;
++#endif
+ 
+ 	memset(&msg, 0, sizeof(msg));
+ 	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+@@ -90,10 +93,25 @@
+ 	if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL)
+ 		return (-1);
+ 
++#ifdef __phoenix__
++	if (open_max == -1) {
++		/* getdtablesize is not supported in libphoenix (non-POSIX) */
++		open_max = sysconf(_SC_OPEN_MAX);
++		if (open_max < 0) {
++			/* TODO: Adjust when issue #1610 is fixed (for now limit to MAX_FD_COUNT) */
++			open_max = 1024;
++		}
++	}
++#endif
++
  again:
  	if (getdtablecount() + imsg_fd_overhead +
  	    (int)((CMSG_SPACE(sizeof(int))-CMSG_SPACE(0))/sizeof(int))
 +#ifdef __phoenix__
-+	    /* getdtablesize is not supported in libphoenix (non-POSIX) */
-+	    >= sysconf(_SC_OPEN_MAX)) {
++	    >= open_max) {
 +#else
  	    >= getdtablesize()) {
 +#endif
