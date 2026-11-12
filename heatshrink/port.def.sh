@@ -27,16 +27,16 @@
 p_prepare() {
 	# Copy custom config.h
 	if [ -n "$PORTS_HEATSHRINK_CONFIG_DIR" ] && [ -f "${PORTS_HEATSHRINK_CONFIG_DIR}/config.h" ]; then
-		if ! cmp -s "${PORTS_HEATSHRINK_CONFIG_DIR}/config.h" "${PREFIX_PORT_WORKDIR}/heatshrink_config.h"; then
+		if ! cmp -s "${PORTS_HEATSHRINK_CONFIG_DIR}/config.h" "heatshrink_config.h"; then
 			echo "copying config.h"
-			cp -a "${PORTS_HEATSHRINK_CONFIG_DIR}/config.h" "${PREFIX_PORT_WORKDIR}/heatshrink_config.h"
+			cp -a "${PORTS_HEATSHRINK_CONFIG_DIR}/config.h" "heatshrink_config.h"
 		fi
 	fi
 }
 
 p_build() {
 	mkdir -p "${PREFIX_PORT_INSTALL}/bin/"
-	make -C "${PREFIX_PORT_WORKDIR}" install PREFIX="$PREFIX_PORT_INSTALL" OPTIMIZE="-Os"
+	make install PREFIX="$PREFIX_PORT_INSTALL" OPTIMIZE="-Os"
 
 	cp -a "${PREFIX_PORT_INSTALL}/bin/"* "$PREFIX_PROG"
 	$STRIP -o "$PREFIX_PROG_STRIPPED/heatshrink" "${PREFIX_PROG}/heatshrink"

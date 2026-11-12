@@ -26,17 +26,17 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
 	# changing LDFLAGS from "ld" params format to "gcc" params - prefixing with -Wl, and changing spaces to colons
 	LDFLAGS="${CFLAGS} $LDFLAGS"
 
-	if [ ! -f "${PREFIX_PORT_WORKDIR}/build/Makefile" ]; then
-		mkdir -p "${PREFIX_PORT_WORKDIR}/build"
-		(cd "${PREFIX_PORT_WORKDIR}/build" && cmake -DCMAKE_INSTALL_PREFIX="${PREFIX_PORT_INSTALL}" -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_EXAMPLES=ON -DSKIP_INSTALL_MAN=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .. && make install)
+	if [ ! -f "build/Makefile" ]; then
+		mkdir -p build
+		(cd build && cmake -DCMAKE_INSTALL_PREFIX="${PREFIX_PORT_INSTALL}" -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_EXAMPLES=ON -DSKIP_INSTALL_MAN=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .. && make install)
 	fi
 
-	(cd "${PREFIX_PORT_WORKDIR}/build" && make install)
+	(cd build && make install)
 }

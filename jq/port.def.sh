@@ -26,15 +26,15 @@
 }
 
 p_prepare() {
-	if [[ ! -f "${PREFIX_PORT_WORKDIR}/config.status" ]]; then
-		(cd "${PREFIX_PORT_WORKDIR}" && autoreconf -i -v -f)
-		(cd "${PREFIX_PORT_WORKDIR}" && ./configure CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" --host="${HOST}" --bindir="$PREFIX_PROG")
+	if [[ ! -f "config.status" ]]; then
+		autoreconf -i -v -f
+		./configure CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" --host="${HOST}" --bindir="$PREFIX_PROG"
 	fi
 }
 
 p_build() {
-	make -C "${PREFIX_PORT_WORKDIR}"
-	make -C "${PREFIX_PORT_WORKDIR}" install-binaries
+	make
+	make install-binaries
 
 	$STRIP -o "$PREFIX_PROG_STRIPPED/jq" "$PREFIX_PROG/jq"
 	b_install "$PREFIX_PROG_TO_INSTALL/jq" /usr/bin/

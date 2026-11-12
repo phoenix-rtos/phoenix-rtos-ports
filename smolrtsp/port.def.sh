@@ -25,12 +25,11 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
-	build_dir="${PREFIX_PORT_WORKDIR}/build"
-	cmake -DCMAKE_INSTALL_PREFIX="$PREFIX_PORT_INSTALL" -DCMAKE_BUILD_TYPE=Release -S "${PREFIX_PORT_WORKDIR}" -B "${build_dir}"
-	cmake --build "${build_dir}"
-	cmake --install "${build_dir}"
+	cmake -DCMAKE_INSTALL_PREFIX="$PREFIX_PORT_INSTALL" -DCMAKE_BUILD_TYPE=Release -S . -B build
+	cmake --build build
+	cmake --install build
 }

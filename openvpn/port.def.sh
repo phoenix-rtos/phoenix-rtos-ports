@@ -27,18 +27,18 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	if [ ! -f "$PREFIX_PORT_WORKDIR/config.h" ]; then
+	if [ ! -f "config.h" ]; then
 		OPENVPN_CFLAGS="-std=gnu99 -I${PREFIX_H}"
-		(cd "$PREFIX_PORT_WORKDIR" && autoreconf -i -v -f)
-		(cd "$PREFIX_PORT_WORKDIR" && "./configure" CFLAGS="$CFLAGS $OPENVPN_CFLAGS" LDFLAGS="$LDFLAGS" --host="${HOST}" --sbindir="$PREFIX_PROG")
+		autoreconf -i -v -f
+		"./configure" CFLAGS="$CFLAGS $OPENVPN_CFLAGS" LDFLAGS="$LDFLAGS" --host="${HOST}" --sbindir="$PREFIX_PROG"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR"
-	make -C "$PREFIX_PORT_WORKDIR" install-exec
+	make
+	make install-exec
 
 	$STRIP -o "$PREFIX_PROG_STRIPPED/openvpn" "$PREFIX_PROG/openvpn"
 	b_install "$PREFIX_PROG_TO_INSTALL/openvpn" /sbin/

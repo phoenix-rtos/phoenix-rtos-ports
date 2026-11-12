@@ -26,13 +26,13 @@
 }
 
 p_prepare() {
-	if [ ! -f "$PREFIX_PORT_WORKDIR/config.h" ]; then
-		(cd "$PREFIX_PORT_WORKDIR" && "./configure" --prefix="$PREFIX_PORT_INSTALL" \
+	if [ ! -f "config.h" ]; then
+		"./configure" --prefix="$PREFIX_PORT_INSTALL" \
 			--exec-prefix="$PREFIX_PORT_INSTALL" --libdir="$PREFIX_A" --includedir="$PREFIX_H" \
-			--host="${HOST}")
+			--host="${HOST}"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR" install
+	make install
 }

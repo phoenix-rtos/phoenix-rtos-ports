@@ -25,13 +25,13 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
-	LDFLAGS="${CFLAGS} $LDFLAGS" make -C "${PREFIX_PORT_WORKDIR}"
+	LDFLAGS="${CFLAGS} $LDFLAGS" make
 
-	cp -a "${PREFIX_PORT_WORKDIR}/picocom" "$PREFIX_PROG"
+	cp -a picocom "$PREFIX_PROG"
 	$STRIP -o "$PREFIX_PROG_STRIPPED/picocom" "${PREFIX_PROG}/picocom"
 	b_install "${PREFIX_PROG_TO_INSTALL}/picocom" /bin
 }

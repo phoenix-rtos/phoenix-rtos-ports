@@ -36,7 +36,7 @@ p_common() {
 
 p_prepare() {
 	# Fix permissions
-	chmod -R u+w "${PREFIX_PORT_WORKDIR}"
+	chmod -R u+w .
 
 	local SYSROOT_INCLUDE="${PREFIX_BUILD}/sysroot/usr/include"
 
@@ -47,7 +47,7 @@ p_prepare() {
 
 	# TODO(adamgreloch): is there really no better way to achieve correct build
 	# than sed patching?
-	mkdir -p "${PREFIX_PORT_WORKDIR}/ps_config"
+	mkdir -p ps_config
 	sed -e "s|^CC=.*$|CC=\"${CC}\"|" \
 		-e "s|^COPTS=.*$|COPTS=\"${COPTS}\"|" \
 		-e "s|^LDFLAGS=.*$|LDFLAGS=\"${CFLAGS} ${LDFLAGS}\"|" \
@@ -63,13 +63,13 @@ p_prepare() {
 		-e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
 		-e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
 		-e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
-		"${PREFIX_PORT}/files/vsxparams" >"${PREFIX_PORT_WORKDIR}/ps_config/ps_vsxparams"
+		"${PREFIX_PORT}/files/vsxparams" >"ps_config/ps_vsxparams"
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "phoenix"
+	b_port_apply_patches . "phoenix"
 }
 
 p_build() {
-	cp -ap "${PREFIX_PORT_WORKDIR}"/. "${test_sets_path}"
+	cp -ap . "${test_sets_path}"
 
 	# FIXME: tetexec.cfg doesn't exist - is it intended?
 	(

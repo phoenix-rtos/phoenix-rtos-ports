@@ -26,7 +26,7 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
@@ -40,7 +40,7 @@ p_build() {
 	LDFLAGS+=" -L${openssl_dir}/lib"
 
 	(
-		cd "${PREFIX_PORT_WORKDIR}/wpa_supplicant" &&
+		cd wpa_supplicant &&
 			cp -a "$PREFIX_PORT/config" .config &&
 			make install DESTDIR="$PREFIX_WPA_SUPPLICANT_INSTALL" LIBDIR="/lib" INCDIR="/include" BINDIR="/bin"
 	)

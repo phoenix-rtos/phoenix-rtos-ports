@@ -26,13 +26,13 @@
 }
 
 p_prepare() {
-	if [ ! -f "${PREFIX_PORT_WORKDIR}/config.h" ]; then
-		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/configure" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
+	if [ ! -f "config.h" ]; then
+		./configure CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ARFLAGS="-r" --enable-static --disable-shared --host="$HOST" \
 			--disable-cpp --prefix="${PREFIX_PORT_WORKDIR}" --libdir="${PREFIX_A}" \
-			--includedir="${PREFIX_H}")
+			--includedir="${PREFIX_H}"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR" install
+	make install
 }

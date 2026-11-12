@@ -39,19 +39,19 @@ p_common() {
 
 p_prepare() {
 	# Fix permissions
-	chmod -R u+w "${PREFIX_PORT_WORKDIR}"
-	chmod +x "${PREFIX_PORT_WORKDIR}/configure"
-	chmod +x "${PREFIX_PORT_WORKDIR}/test_sets/setup_testsets.sh"
+	chmod -R u+w .
+	chmod +x configure
+	chmod +x test_sets/setup_testsets.sh
 
-	(cd "${PREFIX_PORT_WORKDIR}" && ./configure -t lite >/dev/null)
+	./configure -t lite >/dev/null
 
 	sed -e "s|^COPTS =\(.*\)$|COPTS = \1 -std=gnu89|" \
 		-e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
 		-e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
 		-e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
-		"${PREFIX_PORT}/files/defines.mk" >"${PREFIX_PORT_WORKDIR}/src/defines.mk"
+		"${PREFIX_PORT}/files/defines.mk" >src/defines.mk
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "host"
+	b_port_apply_patches . "host"
 }
 
 p_build() {
@@ -60,12 +60,12 @@ p_build() {
 
 	mkdir -p "${lsb_install_path}"
 
-	make -C "${PREFIX_PORT_WORKDIR}/src" all
-	make -C "${PREFIX_PORT_WORKDIR}/src" install
+	make -C src all
+	make -C src install
 
-	b_install_host "${PREFIX_PORT_WORKDIR}/bin/tcc"
+	b_install_host "bin/tcc"
 
 	chmod -R u+w "${lsb_install_path}"
 
-	cp -ap "${PREFIX_PORT_WORKDIR}"/. "${lsb_install_path}"
+	cp -ap . "${lsb_install_path}"
 }

@@ -33,13 +33,13 @@ p_prepare() {
 	#
 	# Build mpy-cross for host if not already built
 	#
-	if [ ! -f "${PREFIX_PORT_WORKDIR}/mpy-cross/build/mpy-cross" ]; then
-		CFLAGS="" LDFLAGS="" make -C "${PREFIX_PORT_WORKDIR}/mpy-cross" all
+	if [ ! -f "mpy-cross/build/mpy-cross" ]; then
+		CFLAGS="" LDFLAGS="" make -C mpy-cross all
 	fi
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	cp -va "${PREFIX_PORT}/files/001_mpconfigport.mk" "${PREFIX_PORT_WORKDIR}/ports/unix/mpconfigport.mk"
+	cp -va "${PREFIX_PORT}/files/001_mpconfigport.mk" "ports/unix/mpconfigport.mk"
 }
 
 p_build() {
@@ -96,9 +96,9 @@ p_build() {
 	#
 	# Build and install micropython binary
 	#
-	make -C "${PREFIX_PORT_WORKDIR}/ports/unix" all CROSS_COMPILE="${CROSS}"
+	make -C ports/unix all CROSS_COMPILE="${CROSS}"
 
-	cp -a "${PREFIX_PORT_WORKDIR}/ports/unix/build-standard/micropython" "$PREFIX_PROG_STRIPPED"
+	cp -a ports/unix/build-standard/micropython "$PREFIX_PROG_STRIPPED"
 	b_install "$PREFIX_PROG_TO_INSTALL/micropython" /bin/
 }
 

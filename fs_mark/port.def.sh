@@ -27,13 +27,13 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
-	make -C "${PREFIX_PORT_WORKDIR}"
+	make
 
-	cp -a "$PREFIX_PORT_WORKDIR/fs_mark" "$PREFIX_PROG/fs_mark"
+	cp -a fs_mark "$PREFIX_PROG/fs_mark"
 	$STRIP -o "${PREFIX_PROG_STRIPPED}/fs_mark" "${PREFIX_PROG}/fs_mark"
 	b_install "$PREFIX_PROG_TO_INSTALL/fs_mark" /bin
 }

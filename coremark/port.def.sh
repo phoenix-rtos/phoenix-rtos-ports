@@ -27,7 +27,7 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
@@ -44,9 +44,9 @@ p_build() {
 	export XCFLAGS="${CFLAGS} -DUSE_PTHREAD -DMULTITHREAD=${PORTS_COREMARK_THREADS} ${LDFLAGS}"
 
 	# uses PORT_DIR, XCFLAGS
-	make -C "${PREFIX_PORT_WORKDIR}" compile
+	make compile
 
-	cp -a "$PREFIX_PORT_WORKDIR/coremark" "$PREFIX_PROG/coremark"
+	cp -a coremark "$PREFIX_PROG/coremark"
 	$STRIP -o "${PREFIX_PROG_STRIPPED}/coremark" "${PREFIX_PROG}/coremark"
 	b_install "$PREFIX_PROG_TO_INSTALL/coremark" /bin
 }

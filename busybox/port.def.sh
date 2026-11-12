@@ -28,15 +28,15 @@
 p_prepare() {
 	: "${BUSYBOX_CONFIG:="${PREFIX_PORT}/config"}"
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	if [ ! -f "${PREFIX_PORT_WORKDIR}/.config" ] || [ "${BUSYBOX_CONFIG}" -nt "${PREFIX_PORT_WORKDIR}/.config" ]; then
-		cp -a "${BUSYBOX_CONFIG}" "${PREFIX_PORT_WORKDIR}"/.config
-		make -C "${PREFIX_PORT_WORKDIR}" CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" clean
+	if [ ! -f .config ] || [ "${BUSYBOX_CONFIG}" -nt .config ]; then
+		cp -a "${BUSYBOX_CONFIG}" .config
+		make CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" clean
 	fi
 
 	# hackish: remove the final binary to re-link potential libc changes
-	rm -rf "$PREFIX_PORT_WORKDIR/busybox_unstripped" "$PREFIX_PORT_WORKDIR/busybox"
+	rm -rf busybox_unstripped busybox
 }
 
 p_build() {
@@ -48,14 +48,14 @@ p_build() {
 		UNSTRIPPED=n
 	fi
 
-	make -C "${PREFIX_PORT_WORKDIR}" CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" all
-	make -C "${PREFIX_PORT_WORKDIR}" CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" install
-	cp -va "$PREFIX_PORT_WORKDIR/busybox_unstripped" "$PREFIX_PROG"
+	make CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" all
+	make CROSS_COMPILE="$CROSS" CONFIG_PREFIX="$PREFIX_FS/root" SKIP_STRIP="$UNSTRIPPED" install
+	cp -va busybox_unstripped "$PREFIX_PROG"
 }
 
 p_build_test() {
 	mkdir -p "$PREFIX_ROOTFS/usr/test/busybox"
-	cp -va "$PREFIX_PORT_WORKDIR/testsuite" "$PREFIX_ROOTFS/usr/test/busybox"
+	cp -va testsuite "$PREFIX_ROOTFS/usr/test/busybox"
 	# busybox test suite requires .config file and busybox binary in the same bin directory
-	cp -v "$PREFIX_PORT_WORKDIR/.config" "$PREFIX_ROOTFS/bin"
+	cp -v .config "$PREFIX_ROOTFS/bin"
 }
