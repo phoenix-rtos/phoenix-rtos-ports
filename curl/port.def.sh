@@ -31,22 +31,21 @@ p_common() {
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
 	CONFIGURE_PARAMS=(--host="${HOST}" --sbindir="$PREFIX_PROG" --disable-pthreads --disable-threaded-resolver
 		--disable-ipv6 --prefix="$PREFIX_CURL_INSTALL" --disable-ntlm-wb --without-zlib)
 
 	b_use "mbedtls" && CONFIGURE_PARAMS+=(--without-ssl --with-mbedtls)
 
-	if [ ! -f "$PREFIX_PORT_WORKDIR/config.status" ]; then
-		(cd "$PREFIX_PORT_WORKDIR" && "$PREFIX_PORT_WORKDIR/configure" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
-			"${CONFIGURE_PARAMS[@]}")
+	if [ ! -f "config.status" ]; then
+		./configure CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" "${CONFIGURE_PARAMS[@]}"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR"
-	make -C "$PREFIX_PORT_WORKDIR" install
+	make
+	make install
 
 	cp -a "$PREFIX_CURL_INSTALL/include/curl" "$PREFIX_H"
 	cp -a "$PREFIX_CURL_INSTALL/lib/"* "$PREFIX_A"

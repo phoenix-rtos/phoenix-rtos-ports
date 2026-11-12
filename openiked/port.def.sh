@@ -25,7 +25,7 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 }
 
 p_build() {
@@ -44,7 +44,7 @@ p_build() {
 	# parsing auth/enc options (from file and server) is recursive, 65k stack is too small for minimal iked.conf
 	LDFLAGS="${LDFLAGS} -z stack-size=262144"
 
-	cmake -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -S "${PREFIX_PORT_WORKDIR}" -B "${build_dir}"
+	cmake -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -S . -B "${build_dir}"
 	make -C "${build_dir}" install DESTDIR="${build_dir}"
 
 	cp -a "${build_dir}/usr/local/sbin/ikectl" "${PREFIX_PROG}/ikectl"

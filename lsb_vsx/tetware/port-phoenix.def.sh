@@ -39,17 +39,17 @@ p_common() {
 
 p_prepare() {
 	# Fix permissions
-	chmod -R u+w "${PREFIX_PORT_WORKDIR}"
-	chmod +x "${PREFIX_PORT_WORKDIR}/configure"
-	chmod +x "${PREFIX_PORT_WORKDIR}/src/tetconfig"
-	chmod +x "${PREFIX_PORT_WORKDIR}/test_sets/setup_testsets.sh"
+	chmod -R u+w .
+	chmod +x configure
+	chmod +x src/tetconfig
+	chmod +x test_sets/setup_testsets.sh
 
 	COPTS="$(echo "$CFLAGS" | sed 's/-I[^ ]* //g')"
 
 	# TODO: needed?
 	export PATH="${TET_ROOT}/test_sets/BIN:${TET_EXECUTE}/BIN:$PATH"
 
-	(cd "${PREFIX_PORT_WORKDIR}" && ./configure -t lite >/dev/null)
+	./configure -t lite >/dev/null
 
 	sed -e "s|^CC =.*$|CC = ${CC}|" \
 		-e "s|^LD_R =.*$|LD_R = ${LD} -r|" \
@@ -60,11 +60,11 @@ p_prepare() {
 		-e "s|^THR_COPTS =\(.*\)$|THR_COPTS =\1 -std=gnu89|" \
 		-e "s|^SHLIB_COPTS =.*$|SHLIB_COPTS = SHLIB_NOT_SUPPORTED|" \
 		-e "s|^C_PLUS = .*$|C_PLUS = CPLUSPLUS_NOT_SUPPORTED|" \
-		"${PREFIX_PORT}/files/defines.mk" >"${PREFIX_PORT_WORKDIR}/src/defines.mk"
+		"${PREFIX_PORT}/files/defines.mk" >src/defines.mk
 
-	(cd "${PREFIX_PORT_WORKDIR}/src" && "./tetconfig" -t lite)
+	(cd src && "./tetconfig" -t lite)
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "phoenix"
+	b_port_apply_patches . "phoenix"
 }
 
 p_build() {
@@ -73,13 +73,13 @@ p_build() {
 
 	mkdir -p "${lsb_install_path}"
 
-	make -C "${PREFIX_PORT_WORKDIR}/src" all
-	make -C "${PREFIX_PORT_WORKDIR}/src" install
+	make -C src all
+	make -C src install
 
 	chmod -R u+w "${lsb_install_path}"
 
-	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "${PREFIX_PORT_WORKDIR}/bin/tcc"
+	"$STRIP" -o "${PREFIX_PROG_STRIPPED}/tcc" "bin/tcc"
 	b_install "${PREFIX_PROG_TO_INSTALL}/tcc" "/usr/bin"
 
-	cp -ap "${PREFIX_PORT_WORKDIR}"/. "${lsb_install_path}"
+	cp -ap . "${lsb_install_path}"
 }

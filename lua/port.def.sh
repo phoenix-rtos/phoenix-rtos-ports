@@ -28,10 +28,10 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}"
+	b_port_apply_patches . "${version}"
 
 	if b_use "safe"; then
-		b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "${version}/safe"
+		b_port_apply_patches . "${version}/safe"
 	fi
 }
 
@@ -49,8 +49,8 @@ p_build() {
 	fi
 
 	# FIXME: no out-of-tree building
-	make -C "${PREFIX_PORT_WORKDIR}/src" MYCFLAGS="${mycflags[*]}" MYLDFLAGS="${LDFLAGS}"
-	make -C "${PREFIX_PORT_WORKDIR}" install INSTALL_TOP="${PREFIX_BUILD}"
+	make -C src MYCFLAGS="${mycflags[*]}" MYLDFLAGS="${LDFLAGS}"
+	make install INSTALL_TOP="${PREFIX_BUILD}"
 
 	cp -a "${PORTS_LUA_CONFIG_DIR}/luaconf_local.h" "${PREFIX_H}/"
 
@@ -67,7 +67,7 @@ p_build_test() {
 
 	b_port_download "https://www.lua.org/tests/" "${tests_filename}"
 
-	lua_test_dir="${PREFIX_PORT_WORKDIR}/${tests_version}-tests"
+	lua_test_dir="${tests_version}-tests"
 	if [ ! -d "${lua_test_dir}" ]; then
 		echo "Extracting tests from ${tests_filename}"
 		mkdir -p "${lua_test_dir}"

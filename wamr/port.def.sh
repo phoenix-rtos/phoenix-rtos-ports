@@ -35,20 +35,20 @@
 p_prepare() {
 	: "${WAMR_THREAD_STACK_SIZE_MAX=8388608}" # Default from WAMR
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
 	# @FIXME(michal.lach): Kind of ugly to keep it that way.
 	# This should get upstreamed at some point.
-	mkdir -p "${PREFIX_PORT_WORKDIR}/core/shared/platform/phoenix"
-	cp "${PREFIX_PORT_WORKDIR}/core/shared/platform/linux/platform_internal.h" "${PREFIX_PORT_WORKDIR}/core/shared/platform/phoenix/"
-	cp "${PREFIX_PORT_WORKDIR}/core/shared/platform/linux/platform_init.c" "${PREFIX_PORT_WORKDIR}/core/shared/platform/phoenix/"
-	cp "${PREFIX_PORT_WORKDIR}/core/shared/platform/linux/shared_platform.cmake" "${PREFIX_PORT_WORKDIR}/core/shared/platform/phoenix/"
+	mkdir -p "core/shared/platform/phoenix"
+	cp "core/shared/platform/linux/platform_internal.h" "core/shared/platform/phoenix/"
+	cp "core/shared/platform/linux/platform_init.c" "core/shared/platform/phoenix/"
+	cp "core/shared/platform/linux/shared_platform.cmake" "core/shared/platform/phoenix/"
 
-	mkdir -p "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix"
-	cp "${PREFIX_PORT_WORKDIR}/product-mini/platforms/posix/main.c" "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/"
-	cp "${PREFIX_PORT_WORKDIR}/product-mini/platforms/linux/CMakeLists.txt" "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/"
-	rm -rf "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/native_libs"
-	cp -rf "${PREFIX_PORT}/platform_files/native_libs" "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/"
+	mkdir -p "product-mini/platforms/phoenix"
+	cp "product-mini/platforms/posix/main.c" "product-mini/platforms/phoenix/"
+	cp "product-mini/platforms/linux/CMakeLists.txt" "product-mini/platforms/phoenix/"
+	rm -rf "product-mini/platforms/phoenix/native_libs"
+	cp -rf "${PREFIX_PORT}/platform_files/native_libs" "product-mini/platforms/phoenix/"
 
 	CMAKE_FLAGS=(
 		"-DWAMR_BUILD_PLATFORM=phoenix"
@@ -91,20 +91,20 @@ p_prepare() {
 
 	CMAKE_FLAGS+=("-DWAMR_APP_THREAD_STACK_SIZE_MAX=${WAMR_THREAD_STACK_SIZE_MAX}")
 
-	mkdir -p "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build"
-	(cd "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build" && cmake "${CMAKE_FLAGS[@]}" ..)
+	mkdir -p "product-mini/platforms/phoenix/build"
+	(cd "product-mini/platforms/phoenix/build" && cmake "${CMAKE_FLAGS[@]}" ..)
 }
 
 p_build() {
-	make -C "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build"
+	make -C "product-mini/platforms/phoenix/build"
 
 	if ! b_use "debug"; then
-		$STRIP -o "${PREFIX_PROG_STRIPPED}/iwasm" "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build/iwasm"
+		$STRIP -o "${PREFIX_PROG_STRIPPED}/iwasm" "product-mini/platforms/phoenix/build/iwasm"
 		b_install "${PREFIX_PROG_STRIPPED}/iwasm" "/usr/bin/"
 	else
-		b_install "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build/iwasm" /usr/bin/
+		b_install "product-mini/platforms/phoenix/build/iwasm" /usr/bin/
 	fi
 
-	cp -a "${PREFIX_PORT_WORKDIR}/product-mini/platforms/phoenix/build/libiwasm.a" "${PREFIX_A}"
-	cp -a "${PREFIX_PORT_WORKDIR}/core/iwasm/include"/* "${PREFIX_H}"
+	cp -a "product-mini/platforms/phoenix/build/libiwasm.a" "${PREFIX_A}"
+	cp -a "core/iwasm/include"/* "${PREFIX_H}"
 }

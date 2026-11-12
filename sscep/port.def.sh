@@ -25,20 +25,20 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	if [ ! -f "$PREFIX_PORT_WORKDIR/configure" ]; then
-		(cd "$PREFIX_PORT_WORKDIR" && ./bootstrap.sh)
+	if [ ! -f "configure" ]; then
+		./bootstrap.sh
 	fi
 
-	if [ ! -f "$PREFIX_PORT_WORKDIR/config.status" ]; then
-		(cd "$PREFIX_PORT_WORKDIR" && ./configure --disable-shared --prefix="${PREFIX_PORT_INSTALL}" --host="$HOST" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS")
+	if [ ! -f "config.status" ]; then
+		./configure --disable-shared --prefix="${PREFIX_PORT_INSTALL}" --host="$HOST" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR"
-	make -C "$PREFIX_PORT_WORKDIR" install
+	make
+	make install
 
 	cp -a "${PREFIX_PORT_INSTALL}/bin/sscep" "${PREFIX_PROG}/sscep"
 	$STRIP -o "${PREFIX_PROG_STRIPPED}/sscep" "${PREFIX_PROG}/sscep"

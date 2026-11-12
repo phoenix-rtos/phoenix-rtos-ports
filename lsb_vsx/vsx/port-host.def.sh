@@ -33,14 +33,14 @@ p_common() {
 
 p_prepare() {
 	# Fix permissions
-	chmod -R u+w "${PREFIX_PORT_WORKDIR}"
+	chmod -R u+w .
 
 	TET_EXECUTE="${test_sets_path}/TESTROOT"
 	VSXDIR="${test_sets_path}/SRC"
 
 	# TODO(adamgreloch): is there really no better way to achieve correct build
 	# than sed patching?
-	mkdir -p "${PREFIX_PORT_WORKDIR}/host_config"
+	mkdir -p host_config
 	sed -e "s|^CC=.*$|CC=\"/bin/cc\"|" \
 		-e "s|^COPTS=.*$|COPTS=\"-std=gnu89\"|" \
 		-e "s|^INCDIRS=.*$|INCDIRS=\"/usr/include /usr/include/x86_64-linux-gnu\"|" \
@@ -52,13 +52,13 @@ p_prepare() {
 		-e "s|^SUBSETS=.*$|SUBSETS=\"base\"|" \
 		-e "s|^RPCLIB=.*$|RPCLIB=\"\"|" \
 		-e "s|^NOSPC_DEV=.*$|NOSPC_DEV=\"NOSPC_DEV\"|" \
-		"${PREFIX_PORT}/files/vsxparams" >"${PREFIX_PORT_WORKDIR}/host_config/host_vsxparams"
+		"${PREFIX_PORT}/files/vsxparams" >"host_config/host_vsxparams"
 
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}" "host"
+	b_port_apply_patches . "host"
 }
 
 p_build() {
-	cp -ap "${PREFIX_PORT_WORKDIR}"/. "${test_sets_path}"
+	cp -ap . "${test_sets_path}"
 	(
 		cd "${test_sets_path}" &&
 			TET_ROOT="${lsb_install_path}" HOME="${test_sets_path}" ./setup_testsets.sh
