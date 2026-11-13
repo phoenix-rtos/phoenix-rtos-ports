@@ -30,13 +30,13 @@ p_common() {
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
 	# Copy custom config.h
 	if [ -n "$PORTS_MBEDTLS_CONFIG_DIR" ] && [ -f "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" ]; then
-		if ! cmp -s "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" "${PREFIX_PORT_WORKDIR}/include/mbedtls/config.h"; then
+		if ! cmp -s "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" include/mbedtls/config.h; then
 			echo "copying config.h"
-			cp -a "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" "${PREFIX_PORT_WORKDIR}/include/mbedtls/config.h"
+			cp -a "${PORTS_MBEDTLS_CONFIG_DIR}/config.h" include/mbedtls/config.h
 		fi
 	fi
 }
@@ -46,7 +46,7 @@ p_build() {
 	export phoenix=1
 
 	# Build mbedtls without tests
-	(cd "${PREFIX_PORT_WORKDIR}" && make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR")
+	make install no_test DESTDIR="$PREFIX_MBEDTLS_DESTDIR"
 
 	# Copy built libraries and mbedtls header files to `lib` and `include` dirs
 	cp -a "${PREFIX_MBEDTLS_DESTDIR}/lib"/* "${PREFIX_A}"
@@ -54,9 +54,9 @@ p_build() {
 }
 
 p_build_test() {
-	PREFIX_MBEDTLS_TESTS="${PREFIX_PORT_WORKDIR}/tests"
+	PREFIX_MBEDTLS_TESTS="tests"
 
-	(cd "${PREFIX_PORT_WORKDIR}" && make tests)
+	make tests
 
 	mkdir -p "${PREFIX_ROOTFS}/mbedtls_test_configs/"
 
@@ -75,5 +75,5 @@ p_build_test() {
 		fi
 	done
 	# Files required for some tests
-	cp -ar "${PREFIX_PORT_WORKDIR}/tests/data_files" "${PREFIX_ROOTFS}"
+	cp -ar tests/data_files "${PREFIX_ROOTFS}"
 }

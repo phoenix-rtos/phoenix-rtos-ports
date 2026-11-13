@@ -43,7 +43,6 @@ p_build() {
 	)
 	(
 		set -e
-		cd "${PREFIX_PORT_WORKDIR:?}"
 		"${CC:?}" "${cflagsArray[@]}" -I"${PREFIX_H:?}" -c uECC.c -o uECC.o
 		"${AR:?}" rcs libuecc.a uECC.o
 		install -p -t "${PREFIX_A:?}" libuecc.a

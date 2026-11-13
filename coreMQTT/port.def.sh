@@ -30,9 +30,7 @@ p_prepare() {
 }
 
 p_build() {
-	build_dir="${PREFIX_PORT_WORKDIR}/build"
-
-	cmake -S "${PREFIX_PORT_BUILD}" -B "${build_dir}"
-	make -C "${build_dir}"
-	cmake --install "${build_dir}" --prefix "${PREFIX_PORT_INSTALL}"
+	cmake -S "${PREFIX_PORT_BUILD}" -B build
+	make -C build
+	cmake --install build --prefix "${PREFIX_PORT_INSTALL}"
 }

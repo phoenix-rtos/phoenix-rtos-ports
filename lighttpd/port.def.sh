@@ -27,11 +27,11 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	if [ ! -f "$PREFIX_PORT_WORKDIR/config.h" ]; then
+	if [ ! -f "config.h" ]; then
 		CONFIGFILE=$(find "${PREFIX_ROOTFS:?PREFIX_ROOTFS not set!}/etc" -name "lighttpd.conf")
-		grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" >"$PREFIX_PORT_WORKDIR"/src/plugin-static.h
+		grep mod_ "$CONFIGFILE" | cut -d'"' -f2 | xargs -L1 -I{} echo "PLUGIN_INIT({})" >src/plugin-static.h
 
 		LIGHTTPD_CFLAGS="-DLIGHTTPD_STATIC -DPHOENIX"
 
@@ -42,14 +42,14 @@ p_prepare() {
 		LDFLAGS="${LDFLAGS} -z stack-size=65536"
 
 		# FIXME: lighttpd ./configure ignores custom openssl location provided by pkg-config
-		(cd "$PREFIX_PORT_WORKDIR" && "./autogen.sh")
-		(cd "$PREFIX_PORT_WORKDIR" && "./configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
+		"./autogen.sh"
+		"./configure" LIGHTTPD_STATIC=yes CFLAGS="${LIGHTTPD_CFLAGS} ${CFLAGS}" CPPFLAGS="" LDFLAGS="${LDFLAGS}" AR_FLAGS="-r" \
 			-C --disable-ipv6 --disable-mmap --with-bzip2=no \
 			--with-zlib="$WITH_ZLIB" --enable-shared=no --enable-static=yes --disable-shared --host="$HOST" \
 			--with-openssl="$(b_dependency_dir 'openssl')" \
 			--with-pcre="$(b_dependency_dir "pcre")" \
 			--enable-silent-rules \
-			--prefix="$PREFIX_PORT_WORKDIR" --sbindir="$PREFIX_PROG")
+			--prefix="$PREFIX_PORT_WORKDIR" --sbindir="$PREFIX_PROG"
 
 		sed -i.bak \
 			-e '/HAVE_MMAP 1/d' \
@@ -58,12 +58,12 @@ p_prepare() {
 			-e '/HAVE_SYS_POLL_H 1/d' \
 			-e '/HAVE_SIGACTION 1/d' \
 			-e '/HAVE_DLFCN_H 1/d' \
-			"$PREFIX_PORT_WORKDIR/config.h"
+			"config.h"
 	fi
 }
 
 p_build() {
-	make -C "${PREFIX_PORT_WORKDIR}" install
+	make install
 
 	$STRIP -o "$PREFIX_PROG_STRIPPED/lighttpd" "$PREFIX_PROG/lighttpd"
 	b_install "$PREFIX_PROG_TO_INSTALL/lighttpd" /usr/sbin

@@ -27,20 +27,20 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
-	cp -a "${PREFIX_PORT}/make/"*.mak "${PREFIX_PORT_WORKDIR}/util/make/"
+	b_port_apply_patches .
+	cp -a "${PREFIX_PORT}/make/"*.mak "util/make/"
 }
 
 p_build() {
 	# Disable parallel building as it may cause failures: https://github.com/eembc/coremark-pro/issues/9
 	local -x MAKEFLAGS="${MAKEFLAGS}${MAKEFLAGS:+ }-j1"
 
-	make -C "${PREFIX_PORT_WORKDIR}" TARGET="${HOST}" build
+	make TARGET="${HOST}" build
 
 	# Remove empty data directory (not needed)
-	rmdir "${PREFIX_PORT_WORKDIR}/builds/${HOST}/phoenix-gcc/bin/data"
+	rmdir "builds/${HOST}/phoenix-gcc/bin/data"
 	mkdir -p "${PREFIX_PROG}/coremark-pro"
-	cp -a "${PREFIX_PORT_WORKDIR}/builds/${HOST}/phoenix-gcc/bin/"* "${PREFIX_PROG}/coremark-pro/"
+	cp -a "builds/${HOST}/phoenix-gcc/bin/"* "${PREFIX_PROG}/coremark-pro/"
 	mkdir -p "${PREFIX_PROG_STRIPPED}/coremark-pro"
 
 	# Strip the binaries

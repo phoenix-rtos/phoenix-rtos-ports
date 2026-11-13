@@ -39,23 +39,23 @@ install_binary() {
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
 	# FIXME! This is a conditional patching and should be avoided
 
 	if grep -q "armv7m7-imxrt106x" <<<"${TARGET}"; then
-		b_port_apply_patches "${PREFIX_PORT_WORKDIR}" armv7m7-imxrt106x
+		b_port_apply_patches . armv7m7-imxrt106x
 	fi
 
 	if b_use "longtest"; then
 		# WARN: submodules are outside of SHA256 checksum
-		(cd "${PREFIX_PORT_WORKDIR}" && git submodule update --init --recursive)
-		b_port_apply_patches "${PREFIX_PORT_WORKDIR}" long_test
+		git submodule update --init --recursive
+		b_port_apply_patches . long_test
 	fi
 
 	if [ -n "$AZURE_CONNECTION_STRING" ]; then
 		sed -i "s/\"\[device connection string\]\"/\"${AZURE_CONNECTION_STRING}\"/g" \
-			"${PREFIX_PORT_WORKDIR}/iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample.c" &&
+			"iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample.c" &&
 			echo "Connection string has been set properly."
 	fi
 }
@@ -68,19 +68,17 @@ p_build() {
 
 	# Build (http and amqp protocols are currently not supported yet)
 	# Treat Phoenix-RTOS as Linux and providing toolchain file was the most suitable solution
-	(cd "${PREFIX_PORT_WORKDIR}/build_all/linux" && ./build.sh \
+	(cd "build_all/linux" && ./build.sh \
 		--toolchain-file "${PREFIX_PORT}/toolchain-phoenix.cmake" -cl --sysroot="${PHOENIX_SYSROOT}" \
 		--no-http --no-amqp)
 
 	# Copy azure sdk libraries
-	(cd "${PREFIX_PORT_WORKDIR}/cmake/" && cp "iothub_client/"*.a \
-		"umqtt/libumqtt.a" "c-utility/libaziotsharedutil.a" "${PREFIX_A}")
+	cp cmake/iothub_client/*.a cmake/umqtt/libumqtt.a cmake/c-utility/libaziotsharedutil.a "${PREFIX_A}"
 
 	# Copy azure sdk headers
-	(cd "${PREFIX_PORT_WORKDIR}/" && cp -r "iothub_client/inc/." \
-		"deps/azure-macro-utils-c/inc/." "deps/umock-c/inc/." "c-utility/inc/." "${PREFIX_H}")
+	cp -r "iothub_client/inc/." "deps/azure-macro-utils-c/inc/." "deps/umock-c/inc/." "c-utility/inc/." "${PREFIX_H}"
 
-	install_binary "${PREFIX_PORT_WORKDIR}/cmake/iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample"
+	install_binary "cmake/iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample"
 }
 
 p_build_test() {
@@ -92,7 +90,7 @@ p_build_test() {
 		[uniqueid_ut]="uniqueid_ut_linux_exe"
 	)
 
-	for dir in "${PREFIX_PORT_WORKDIR}/cmake/c-utility/tests"/*; do
+	for dir in cmake/c-utility/tests/*; do
 		DIR_NAME="$(basename "$dir")"
 
 		# There may be other files, which are not test directories - skip them

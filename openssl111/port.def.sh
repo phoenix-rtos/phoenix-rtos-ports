@@ -26,17 +26,17 @@
 }
 
 p_prepare() {
-	b_port_apply_patches "${PREFIX_PORT_WORKDIR}"
+	b_port_apply_patches .
 
-	if [ ! -f "${PREFIX_PORT_WORKDIR}/Makefile" ]; then
-		cp "$PREFIX_PORT/30-phoenix.conf" "$PREFIX_PORT_WORKDIR/Configurations/"
-		(cd "${PREFIX_PORT_WORKDIR}" && "${PREFIX_PORT_WORKDIR}/Configure" "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" LDFLAGS="${LDFLAGS}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl")
+	if [ ! -f "Makefile" ]; then
+		cp "$PREFIX_PORT/30-phoenix.conf" "Configurations/"
+		./Configure "phoenix-${TARGET_FAMILY}-${TARGET_SUBFAMILY}" LDFLAGS="${LDFLAGS}" --prefix="$PREFIX_PORT_INSTALL" --openssldir="/etc/ssl"
 	fi
 }
 
 p_build() {
-	make -C "$PREFIX_PORT_WORKDIR" all
-	make -C "$PREFIX_PORT_WORKDIR" install_sw
+	make all
+	make install_sw
 
 	cp -a "$PREFIX_PORT_INSTALL/bin/openssl" "$PREFIX_PROG"
 	$STRIP -o "$PREFIX_PROG_STRIPPED/openssl" "$PREFIX_PROG/openssl"
